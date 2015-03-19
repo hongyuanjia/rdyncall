@@ -1,0 +1,284 @@
+Initial Announcement: Package rdyncall released on CRAN. (Version 0.7.3)
+
+Short Introduction
+------------------
+The package facilities dynamic R bindings to the C interface of some common 
+shared libraries and a flexible Foreign Function Interface for the 
+interoperability between R and C. 
+
+Since the initial presentation of the package at Use!R 2009, a number of
+improvements have been done to rdyncall, the low-level DynCall libraries
+and the build system for an official release on CRAN.
+
+Overview
+--------
+The package comprises a toolkit to work with C interfaces to native code from 
+within the dynamic R interpreter without the need for C wrapper compilation:
+
+  - Dynamic R bindings to some common C shared libraries, across platforms.
+  - Foreign Function Interface that supports almost all C arg/return types
+    and has built-in type-checking facility.
+  - Portable naming and loading of shared libraries across platforms.
+  - Handling of aggregate C struct and union data types.
+  - Wrapping of R functions as C callbacks.
+  - Binding of C functions to R in batches.
+
+The intended audience for this package are developers experienced with C, that
+
+ .. need complete R bindings of C libraries.
+ .. want to write cross-platform portable system-level code in R.
+ .. need a FFI that supports almost all C fundamental types for arguments 
+    and return types and thus does not need compilation of wrapper C code
+ .. want to work with C struct/union types directly in R
+ .. are interested in dynamic binding techniques between static and dynamic
+    languages and cross-platform binding strategies.
+
+
+Brief Tour 1/2: Dynamic R Bindings to C Libraries
+-------------------------------------------------
+
+The dynamic binding interface consists of a single function, similar to
+'library' or 'require':
+
+  > dynport(portname)
+
+portname refers to a 'DynPort' file name that represents an R binding to a
+common C interface and library.
+The function the above has the side effect of attaching a newly created R name 
+space, populated with thin R helper objects to C entities of the underlying 
+C library:
+
+  - call wrapper to C functions
+  - symbolic constants of C macros and enums,
+  - type information objects for C struct and union data types.
+
+The package contains a repository of the following DynPort files:
+
+  Port Name   | Description of C Shared Library/API
+  ------------+-------------------------------------------------
+  expat       | Expat XML Parser Library
+  GL          | OpenGL 1.1 API
+  GLU         | OpenGL Utility Library
+  SDL         | Simple DirectMedia Layer library        
+  SDL_image   | Loading of image files (png,jpeg..)
+  SDL_mixer   | Loading/Playing of ogg/mp3/mod music files.
+  SDL_ttf     | Loading/Rendering of True Type Fonts.
+  glew        | OpenGL Extension Wrangler (includes OpenGL 3.0)
+  gl3         | strict OpenGL 3 (untested)
+  R           | R shared library
+  ode         | Open Dynamics (Physics-) Engine (untested)
+  cuda        | NVIDIA Cuda (untested)
+  opencl      | OpenCL (untested)
+  stdio       | C Standard Library I/O Functions
+
+In order to use a DynPort on a host system, the shared C libraries 
+need to be installed first.
+
+See manual page on 'rdyncall-demos' (type ?'rdyncall-demos') for a detailed 
+description of the installation notes for several libraries the above,
+collected for a large range of operating-systems and OS distributions. 
+
+Since the rdyncall package is alredy ported across major R platforms, code
+that uses a DynPort can run cross-platform without compilation.
+
+Here is a small example for using the SDL and OpenGL for multimedia/3D:
+
+-- snip
+
+# load SDL and OpenGL bindings
+dynport(SDL)  
+dynport(GL)  
+
+# initialize video sub-system
+SDL_Init(SDL_INIT_VIDEO)
+
+# open double-buffered OpenGL window surface
+surface <- SDL_SetVideoMode(640,480,32,SDL_OPENGL+SDL_DOUBLEBUF)
+
+# print dimension by accessing fields external C pointer to struct SDL_Surface
+print( paste("dimenstion:", surface$w, "x", surface$h ))
+
+# clear buffer
+glClearColor(0.3,0.6,0.8,0)
+glClear(GL_COLOR_BUFFER_BIT)
+
+# update display
+SDL_GL_SwapBuffers()
+
+-- snap
+
+A more detailed version including user-interface handling is available
+in 'demo(SDL)'.
+
+
+Brief Tour 2/2: Alternative FFI via '.dyncall'
+----------------------------------------------
+
+The alternative foreign function interface offered by '.dyncal' has a similar 
+intend such as '.C'. It allows to call shared library functions directly from R,
+but without additional wrapper C code needed, because it supports almost all 
+fundamental C data types and uses a function type signature text specification
+for type-checking and flexible conversions between R and C values.
+
+The interface is as following:
+
+  > .dyncall(address, signature, ...)
+
+'signature' is a character string that encodes the arguments and return-type of 
+a C function. 
+Here is an example of C function from the OpenGL API:
+
+   void glClearColor(float red, float green, float blue, float alpha);
+
+one would specify the function type via "ffff)v" as type signature and 
+pass additional arguments for '...':
+
+  > .dyncall(addressOf_glClearColor, "ffff)v", 0.3,0.7,1,0)
+
+Support for pointers (low-level void and typed pointers to struct/union) and
+wrapping of R functions to first-level C function pointers is also available.
+
+-- snip
+
+# load C math library across major platforms (Windows,Mac OS X,Linux)
+mathlib <- dynfind(c("msvcrt","m","m.so.6"))
+
+# resolve symbol 'sqrt'
+x <- .dynsym(mathlib,"sqrt")
+
+# C function call 'double sqrt(double x)' with x=144
+.dyncall(x, "d)d", 144)
+
+# .dyncall uses complex mapping of types, same works with 'integer' argument:
+.dyncall(x, "d)d", 144L)
+
+-- snap
+
+
+Implementation Details
+----------------------
+
+This package contains low-level services related to the generic invocation
+of machine-code functions using official calling convention specifications 
+as the binary interface. A similar service exists for the oppositve direction 
+in order to write R functions and wrap them as first-level C function callback 
+pointers.
+
+The implementation is based on libraries from the DynCall Project that
+implement a small amount of code in Assembly and have to play closely 
+together with the calling conventions of various processor-architectures and 
+platforms.
+The implementation can be tricky has to be done on a calling-convention
+basis. The efforts legitimate this non-portsble approach due to a 
+very small code size and a generic machine-call solution designed for
+dynamic interpreters. (total size of shared lib object in rdyncall is ~60kb )
+
+
+Portability and Platforms
+-------------------------
+
+A large set of platforms and calling conventions are already supported and a 
+suite of testing tools ensure a stable implementation at low-level.
+
+Processor-Architectures:
+- Intel i386 32-bit and AMD 64-bit Platforms
+- PowerPC 32-bit (support for callbacks on System V systems not yet implemented)
+- ARM 32-bit (with support for Thumb)
+- MIPS 32- and 64-bit (support for callbacks not yet implemented)
+- SPARC 32-bit and 64-bit (support for callbacks not yet implemented)
+
+The DynCall libraries are tested on Linux, Mac OS X, Windows, BSD derivates,
+Solaris and more exotic platforms such as game consoles, Plan9, Haiku and Minix.
+The R Package has been tested on several major 32- and 64-bit R platforms
+including Windows 32/64-bit, Linux (i386,amd64,ppc,arm), NetBSD (i386,amd64),
+Solaris (i386,amd64).
+
+As of this release, no support for callbacks is available on MIPS or SPARC.
+Callbacks on PowerPC 32-bit for Mac OS X work fine, for other
+ELF/System V-based PowerPC systems, callbacks are not yet implemented.
+
+
+Known Bugs
+----------
+
+* PowerPC/Mac OS X 10.4: Building Universal Binaries are broken.. in particular 
+  the as for i386 assembler. 
+  Workaround for PowerPC users: install with "--no-multiarch" or use prebuilt 
+  binaries built on OS X >= 10.5.
+
+* SPARC Assembly sources are currently implemented for GNU assembler and do 
+  not assemble using the 'fbe' Assembler tool on Solaris. 
+
+
+More Information
+----------------
+
+More demos and examples are in the package.
+A 20-page vignette with the title "Foreign Library Interface" is available via
+  > vignette("FLI")
+
+A cross-platform audio/visual OpenGL-based demo-scene production 
+written in 100% pure R is available here:
+
+  http://dyncall.org/demos/soulsalicious/
+
+A video of demo is also at the website.
+
+
+The website of the DynCall Project is at
+
+  http://dyncall.org/
+
+
+Help and Feedback
+-----------------
+The package contains new methods for dynamic binding of native code to R
+that were designed to work cross-platform. Thus the package required intensive 
+testing on a large range of processor/OS/tool-chain combinations.
+It was (and still is!) also very helpful to run tests on different 
+'distributions' of the same OS for checking e.g. the search algorithm for
+locating shared libraries by a short name across operating-systems 
+(see '?dynfind' for details on this).
+
+I am very thankful for any feedback including bug-reports, success and 
+failure stories or ideas of improvements. If you feel that an important 
+architecture, platform or build-tool is missing here please let me know too.
+
+The DynCall authors appreciate any support for porting the DynCall libraries 
+and the R package e.g. remote development accounts, qemu/gxemul images, 
+hardware. In particular we are currently looking for the following 
+arch/os/compilers environment for porting the DynCall libraries and rdyncall:
+
+  - Sparc/Solaris/SunPro
+  - PowerPC/AIX/XL C 
+  - MIPS/IRIX/MIPSpro
+
+If you can help us out, please get in contact us.
+
+
+ChangeLog
+---------
+
+0.7.3: [2011-07-19] Added vignette, new ports, new tool-chain an fixes for bugs
+ o bugfix for Fedora/x64: added search path 'lib64' folder for 'dynfind'.
+ o added support for Sun make, DynCall uses Makefile.embedded.
+ o added sparc and sparc64 support using gcc tool-chain.
+ o added support for amd64 using solaris tool-chain.
+ o added vignette "foreign library interface".
+ o bugfix for solaris/x64: added search path 'amd64' folder for 'dynfind'.
+ o bugfix in examples for libm using 'm.so.6' besides 'm' on unix 
+   (needed by debian 6 sid unstable)
+
+0.7.2: [2011-04-27] Minor fixes 
+ o added win64/mingw64 support.
+
+0.7.1: [2011-04-26] Minor fixes      
+ o minor Makevars fix for parallel builds.
+
+0.7.0: [2011-04-20] Initial Release 
+ o first upload to CRAN.
+
+
+enjoy,
+- Daniel
+

@@ -1,0 +1,49 @@
+ChangeLog for R Package rdyncall
+-------------------------------------------------------------------------------
+
+0.8   [2014-09-19]:
+ o reimplemented 'simplified' version of dynfind
+ o added dynports: pcap
+ o minor documentation update for SDL installation on Solaris/OpenCSW
+ o fixes for ARMv7 Thumb-2 ISA and SPARC-v7/v9, x86_64-x64 and mips-o32 ABIs
+
+0.7.5 [2012-09-12]:
+ o added: support for new ARM ABI 'armhf' (ARM hardfloat).
+   Tested on Raspberry Pi (armv6), Efika MX Smartbook (armv7)
+ o added: NULL is accepted for typed pointer arguments.
+ o added: support for '*v' (void*) return type signature in .dyncall
+ o added: support for '**c' and externalptr (to support strptrarray()).
+ o update: changed 'dynport' containers from R name spaces to environment objects
+   to get rid of .Internal calls; this removes usage of '::' operators on
+   dynports - dynports are unloaded via detach(dynport:<PORTNAME>).
+ o improved finalizer management of callbacks
+ o added backward compatibility with R 2.10 for leagacy Mac OS X 10.4/PowerPC
+   R port.
+ o new dynports: csound, GLUT, glfw, EGL, glpk
+ o new demos: glpk, gles (partial work)
+
+0.7.4: [2011-12-13] Minor bugfix and improvements
+ o update: dyncall support for SPARC 32/64 and SunPro with fixes for SPARC 64-bit
+ o added: dynport SDL_net 
+ o added: public helper function offsetPtr
+ o bugfix for R 2.14: Namespace handling, missing 'lazyData' field in Env. 
+
+0.7.3: [2011-07-18] Added vignette, new ports, new tool-chain an fixes for bugs
+ o bugfix for Fedora/x64: added search path 'lib64' folder for 'dynfind'.
+ o added support for Sun make, DynCall uses Makefile.embedded.
+ o added sparc and sparc64 support using gcc tool-chain.
+ o added support for amd64 using solaris tool-chain.
+ o added vignette "foreign library interface".
+ o bugfix for solaris/x64: added search path 'amd64' folder for 'dynfind'.
+ o bugfix in examples for libm using 'm.so.6' besides 'm' on unix 
+   (needed by debian 6 sid unstable)
+
+0.7.2: [2011-04-27] Minor fixes 
+ o added win64/mingw64 support.
+
+0.7.1: [2011-04-26] Minor fixes      
+ o minor Makevars fix for parallel builds.
+
+0.7.0: [2011-04-20] Initial Release 
+ o first upload to CRAN.
+

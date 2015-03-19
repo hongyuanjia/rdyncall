@@ -1,0 +1,8 @@
+Package: rdc
+Version: 0.1
+License: bsd
+Description: flexible foreign function interface for direct and dynamic calls to arbitrary C libraries
+Title: R bindings for dyncall library
+Author: Daniel Adler <dadler@uni-goettingen.de>
+Maintainer: Daniel Adler <dadler@uni-goettingen.de>
+URL: http://dyncall.org

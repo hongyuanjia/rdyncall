@@ -1,0 +1,39 @@
+
+{
+  "name": "gl",
+  "meta": {
+  }
+  "bind": {
+    "libs": {
+      "windows": "OpenGL",
+       
+    },
+    
+    # or
+    
+     #"libs": "GL",
+      
+    "functions": {
+      "hallo": "iii)v",
+      "SDL_SetVideoMode": { "x": "int", "y": "int", "z": "int" }
+    } 
+    "structures": {
+      "SDL_Surface": {
+        "x": "i",
+        "y": "i",
+      }
+      "SDL_Surface{ii<sub>i}x y z;"
+    },
+    "unions": {
+      "SDL_Event": {
+        "x": "i",
+        "y": "i"
+      }
+    },
+    "enums": {      
+    },
+    "defines": {
+      "
+    }
+  }
+}

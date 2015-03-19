@@ -1,0 +1,3 @@
+PKG_CPPFLAGS=-I@DC_PREFIX@/include
+PKG_LIBS=-L@DC_PREFIX@/lib -ldyncall_s -ldynload_s
+

@@ -1,0 +1,37 @@
+TODO:
+- update manual
+  - document new dynports
+  - check signature format markup (.dyncall)
+
+- updates from dyncall (compare svn 1284 -> 1381)
+- name mangling R <-> C ... exchange the first '_' in C -> '.' in R.
+- feature: support for function pointers arguments,
+    if R closure is passed, auto wrap function a callback object 
+    the callback object is appended in a global list 
+- bugfix for using callconv prefixes via .dyncall and not .dyncall.*.
+  using a different callvm for .dyncall that may be setup via prefixes and
+  resets to default always.
+- test R build on solaris and sparc(64).
+- document win32 expat binary installation
+- callbacks should fail with "not yet implemented" on unsupported platforms
+- use raw vectors for 1-to-1 bit encoding of values e.g. raw(8) for (u)int64 values
+- handling of Csingle attribute on double vectors
+- character encoding support, R supports UTF-8.
+- Fortran calling conventions
+- attr("struct") -> attr("CType")
+- parseStructInfos -> cstruct
+- parseUnionInfos -> cunion
+- .dyncall typed pointer
+- as.struct -> as.ctype
+- new.struct -> cdata
+- new.callback -> cfunction
+- planed dynports:glut, curl, openal    
+
+BUGS:
+- OpenBSD 4.8/amd64: SDL failed due to pthread.
+  R version on OpenBSD does not provide a shared R library, thus
+  the symbols are not resolvable.
+  Additional Test for resolving self:
+  While .dynsym(as.extptr(NULL), "R_ShowMessage") works on Mac OS X, it fails on OpenBSD.
+- demo(ttf) failed on Mac OS X 10.6
+

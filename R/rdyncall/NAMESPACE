@@ -1,0 +1,36 @@
+useDynLib(rdyncall)
+export(
+# --- dyncall.R --------------------------------------------------------------
+  .dyncall, 
+  .dyncall.default,
+  .dyncall.cdecl, 
+  .dyncall.stdcall, 
+  .dyncall.thiscall, .dyncall.thiscall.gcc, .dyncall.thiscall.msvc, 
+  .dyncall.fastcall, .dyncall.fastcall.gcc, .dyncall.fastcall.msvc,
+# --- dynload.R --------------------------------------------------------------
+  .dynload, .dynunload, .dynsym,
+# --- dynfind.R --------------------------------------------------------------
+  dynfind, 
+# --- dynbind.R -------------------------------------------------------------- 
+  dynbind,
+# --- dynstruct.R ------------------------------------------------------------
+  new.struct, as.struct, 
+  parseStructInfos, parseUnionInfos, 
+# --- pack.R -----------------------------------------------------------------
+  .pack, .unpack, 
+# --- callback.R -------------------------------------------------------------
+  new.callback,
+# --- utils.R ----------------------------------------------------------------
+  is.nullptr, as.extptr, is.externalptr, offsetPtr,
+# --- utils_str.R ------------------------------------------------------------
+  ptr2str, strarrayptr, strptr, 
+# --- utils_float.R ----------------------------------------------------------
+  floatraw, as.floatraw, floatraw2numeric, 
+# --- dynport.R --------------------------------------------------------------
+  dynport
+)
+# --- dynstruct.R ------------------------------------------------------------
+S3method("$<-", struct)
+S3method("$", struct)
+S3method(print,struct)
+

@@ -1,0 +1,8 @@
+:lib
+
+.
+:fun
+getenv(Z)Z;
+malloc(i)p;
+.
+.

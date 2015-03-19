@@ -1,0 +1,244 @@
+% \VignetteIndexEntry{Multimedia programming with R, rdyncall, libSDL and OpenGL}
+% \VignetteKeyword{low-level}
+% \VignetteKeyword{rdyncall}
+% \VignetteKeyword{dyncall}
+% \VignetteKeyword{multimedia}
+\documentclass{article}
+\usepackage{url}
+\begin{document}
+\title{Multimedia programming with R, rdyncall, libSDL and OpenGL}
+\author{Daniel Adler}
+\maketitle
+\section{Introduction}
+
+Via the rdyncall package it is possible to write system-level
+software in R. In this vignette we focus on multimedia programming
+in R using the SDL and OpenGL shared libraries.
+This vignette describes several issues involved in using the rdyncall
+package with C level interfaces of OpenGL and SDL. This text is
+not at all a reference to OpenGL or SDL. There are other much better
+text books and tutorials available.
+
+See \url{http://www.libsdl.org} and \url{http://www.opengl.org} for further
+links to tutorials.
+
+\section{Dynamic R bindings of shared libraries}
+
+Initially, one needs to dynamically link SDL, OpenGL and OpenGL Utility 
+Library to the R session.
+This can be done using the rdyncall package and the dynports.
+
+<<>>=
+library(rdyncall)
+dynport(SDL)
+dynport(GL)
+dynport(GLU)
+@
+
+\section{Initialize SDL}
+
+We need to initialize the SDL library using the \verb@SDL_Init()@ function
+giving a bitmask of subsystems to be enabled (such as Video, Audio, Joystick etc.).
+
+<<>>=
+subsystems <- SDL_INIT_VIDEO
+SDL_Init(subsystems)
+@
+
+The variable subsystem is a bitmask encoded in a double constant, also
+the C API expects to have an unsigned int. rdyncall cares for a correct
+coercion to unsigned int. By addition of several double constants, 
+we can initialize multiple subsystems.
+
+To see what subsystems SDL offers, we can explore the SDL dynport using e.g.
+the apropos base R command:
+
+<<>>=
+apropos("SDL_INIT_")
+@
+
+\section{Opening an SDL/OpenGL Video Surface}
+
+Let us open a new OpenGL Display using \verb@SDL_SetVideoMode()@. The parameters are:
+
+\begin{description}
+\item[width] The width in pixel.
+\item[height] The height in pixel
+\item[bpp]
+\item[flags] Bit flags to be combined with '+'. \verb@SDL_OPENGL@ and \verb@SDL_DOUBLEBUF@ are typical for OpenGL real-time applications.
+\end{description}
+
+Some useful Flags:
+
+\begin{description}
+\item[SDL\_OPENGL] Request an OpenGL context to be initialized for this surfacce.
+\item[SDL\_DOUBLEBUF] Rendering into a back buffer and allow to flip the surfaces in one shot.
+\item[SDL\_FULLSCREEN] Put the display in fullscreen mode.
+\end{description}
+
+<<eval=FALSE>>=
+width <- 640
+height <- 480
+bitsperpixel <- 32
+flags <- SDL_OPENGL+SDL_DOUBLEBUF
+surface <- SDL_SetVideoMode(width,height,bitsperpixel,flags)
+@
+
+The surface object can be printed in R:
+
+<<eval=FALSE>>=
+print(surface)
+@
+
+\section{Clear the screen and update}
+
+To clear the display with a constant color value, one needs to specifying the
+\emph{clear color} first and then clear the \emph{color buffer}.
+
+<<eval=FALSE>>=
+glClearColor(0.1,0.2,0.3,0.0)
+glClear(GL_COLOR_BUFFER_BIT)
+@
+
+To see the results, we need to flip the surface - all operations in
+\emph{double buffering} graphics mode are done in the back and will
+be presented in one shot to prevent semi-finished drawing artefacts.
+
+<<eval=FALSE>>=
+SDL_GL_SwapBuffers()
+@
+
+\section{Writing the mainloop}
+
+This was interactive, but SDL and OpenGL are designed for writing
+multimedia applications and we do this in R.
+
+These types of applications run a simple loop such as the interactive
+loop of R (read-evaluate-print loop).
+The loop will run until the application should quit. A reference play time
+will be computed for each loop iteration using \verb@SDL_GetTicks()@ (divided by 1000
+gives seconds).
+We will clear our display using a blinking color which changes intensity from
+black to a specified color. We drop the loop after 3 seconds.
+
+<<eval=FALSE>>=
+blinkspeed <- 2.0 
+
+draw <- function(t) {
+  intensity <- t %% blinkspeed / blinkspeed
+  glClearColor(0.8*intensity,0.6*intensity,1.0*intensity,0.0)
+  glClear(GL_COLOR_BUFFER_BIT)
+}
+
+mainloop <- function()
+{
+  quit <- FALSE
+
+  starttime <- SDL_GetTicks() / 1000
+
+  playtime  <- 0
+  while(!quit) {
+    # blink the screen using an intensity blending from 0 to 1 
+    
+    draw(playtime)
+    
+    SDL_GL_SwapBuffers()
+  
+    # update playtime:
+    now <- SDL_GetTicks() / 1000.0
+    playtime <- now - starttime
+
+    # stop after three seconds
+    if (playtime > 3.0) quit <- TRUE
+  }
+}
+# run the loop
+mainloop()
+@
+
+\section{Rendering 3D graphics} 
+
+To render a 3D scene, one specifies the 3D projection first, sets up the
+camera position in space and then specifies the positions and primitive
+geometries such as points, lines and triangles.
+
+First we specify the attributes of our virtual camera, that is 
+the field of view angle, the aspect ratio between width and height (which
+should match the one of our surface) and the near and far z-plane orthogonal
+to the camera center projection vector.
+
+<<eval=FALSE>>=
+setupProjection <- function()
+{
+  glMatrixMode(GL_PROJECTION)
+  glLoadIdentity()
+  fovy   <- 60.0
+  aspect <- width / height
+  znear  <- 10
+  zfar   <- 100
+  gluPerspective(fovy, aspect, znear, zfar)
+}
+@
+
+Next, we need to setup the position of our camera in space using
+the gluLookAt API which gets three vectors eye, center and up.
+
+<<eval=FALSE>>=
+setupCamera <- function(eye=c(0,0,-2),center=c(0,0,0),up=c(0,1,0))
+{
+  glMatrixMode(GL_MODELVIEW)
+  glLoadIdentity()
+  gluLookAt(eye[[1]],eye[[2]],eye[[3]],center[[1]],center[[2]],center[[3]],up[[1]],up[[2]],up[[3]])
+}
+@
+
+What follows is a short routine to draw a million 3D coordinates generated
+by rnorm.
+
+<<eval=FALSE>>=
+draw <- function()
+{
+  npoints <- 1000000
+  dims    <- 3
+  data    <- rnorm(npoints*dims)
+  type    <- GL_DOUBLE
+  stride  <- 0
+  glEnableClientState(GL_VERTEX_ARRAY_POINTER)
+  glVertexPointer(dims,type,stride,data)
+  stgrtindex <- 0
+  glDrawArrays(GL_POINTS, startindex, npoints)
+  glDisableClientState(GL_VERTEX_ARRAY_POINTER)
+}
+@
+
+\section{Handling User-Input Events}
+
+We will exchange the default behaviour of stopping after three seconds
+with processing user-input events such as mouse, keyboard and joystick input
+or pressing the close window button.
+
+SDL uses a C structure to report user-interface events. One calls
+a function called \verb@SDL_PollEvent()@ given the reference of this structure.
+
+<<eval=FALSE>>=
+processEvents <- function(env)
+{
+  evt <- new.struct(SDL_Event)
+  quit <- FALSE
+  while(!quit) {
+    while( SDL_PollEvent(evt) ) {
+      type <- evt$type
+      if (type == SDL_QUIT) {
+        env$quit <- TRUE
+      } else if (type == SDL_MOUSEMOTION) {
+        motion <- evt$motion
+        cat(motion$xrel,",",motion$yrel,"\n")
+      }
+    }
+  }
+}
+@
+
+\end{document}
+
+

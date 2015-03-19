@@ -1,0 +1,17 @@
+
+1. library resource management
+
+  lib
+
+  funcs ref libs
+
+2. mode selection
+
+
+
+callvm = dc.newCallVM()
+
+callvm:mode(dc.DEFAULT_C)
+callvm:call(f, "iSSi)v", 1, 2, 3, 4)
+
+callvm:call

@@ -1,0 +1,19 @@
+TODO
+- helper utility "cocoa.m" for OS X - should be built on OS X
+  currently renamed to cocoa.m_off
+  configure should copy cocoa.m_off to cocoa.m on OS X
+
+BOOTSTRAP R PACKAGE
+
+Download DynCall C library zip package and unpack in rdc/src as "dyncall" folder.
+For your convienience ... do
+
+   cd rdc ; sh bootstrap
+
+
+Then build
+
+   cd ..
+   R CMD INSTALL rdc
+
+LazyLoad: yes

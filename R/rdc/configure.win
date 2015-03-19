@@ -1,0 +1,7 @@
+#!/bin/sh
+# rdc package
+# coonfigure script (for windows)
+# (C) 2009 Daniel Adler
+cd src/dyncall
+sh ./configure --target-x86 --target-windows --tool-gcc --prefix=\$\(TOP\)
+

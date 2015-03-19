@@ -1,0 +1,17 @@
+See ANNOUNCEMENT.txt for an Introduction.
+
+
+Building R package from subversion source tree
+----------------------------------------------
+
+1. install R package source from subversion
+  $ svn co http://dyncall.org/svn/dyncall/trunk/bindings/R/rdyncall
+
+2. install dyncall sources under rdyncall/src
+  $ ( cd rdyncall ; sh ./tools/bootstrap )
+
+3. build & install it
+  $ R CMD build rdyncall
+  $ R CMD INSTALL rdyncall_<VERSION>.tar.gz
+
+

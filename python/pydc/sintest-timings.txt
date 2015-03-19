@@ -1,0 +1,16 @@
+sintest.py!
+==========!
+
+
+* f2
+
+  C:\lab\dyncall\bindings\python\pydc\examples>sintest.py
+  (0.1875, 26.265625, 0.0, 0.0, 0.0)
+
+
+* f1
+
+  C:\lab\dyncall\bindings\python\pydc\examples>sintest.py                         
+  (0.171875, 4.1875, 0.0, 0.0, 0.0)                                               
+
+

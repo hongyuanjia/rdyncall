@@ -1,0 +1,8 @@
+:lib
+AppKit
+.
+:fun
+NSApplicationLoad()B;
+NSApplicationMain(ip)i;
+.
+

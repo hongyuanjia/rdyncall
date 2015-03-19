@@ -1,0 +1,6 @@
+#!/bin/bash
+svn co https://dyncall.org/svn/dyncall/trunk/dyncall
+pushd dyncall 1>/dev/null
+svn update
+popd 1>/dev/null
+

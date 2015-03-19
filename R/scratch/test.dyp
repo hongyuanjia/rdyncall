@@ -1,0 +1,11 @@
+!info
+!lib
+win32=OpenGL
+!funs
+a();
+b();
+c();
+!enums
+a=a,b,c,d,e,f
+b=d,f,g,h,h,f
+!funvars

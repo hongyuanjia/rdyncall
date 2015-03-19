@@ -1,0 +1,12 @@
+Call:
+-----
+$ ./shdc -c /usr/lib/libm.so sqrt "d)d" 3
+1.73205
+$ ./shdc -c /usr/lib/libm.so powf "ff)f" 3 2.5
+15.5885
+$ ./shdc -c /usr/lib/libc.so printf "_eZZi)v" "Hi! Say hi to %s, l%ier!" "Daniel" 8
+Hi! Say hi to Daniel, l8er!
+
+List:
+-----
+$ ./shdc -l /usr/lib/libm.so

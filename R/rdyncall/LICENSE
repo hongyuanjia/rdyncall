@@ -1,0 +1,70 @@
+-------------------------------------------------------------------------------
+License for rdyncall R Package
+
+Copyright (c) 2009-2011 Daniel Adler <dadler@uni-goettingen.de>, 
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+-------------------------------------------------------------------------------
+Sub-directory: src/dyncall
+
+License for DynCall libraries (dynload,dyncall,dyncallback)
+
+Copyright (c) 2007-2011 Daniel Adler <dadler@uni-goettingen.de>, 
+                        Tassilo Philipp <tphilipp@potion-studios.com>
+
+in addition, dynload has improvements from
+Copyright (c) 2007-2011 Olivier Chafik <olivier.chafik@gmail.com>
+
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+-------------------------------------------------------------------------------
+File: inst/demo-files/external.xm
+
+Credits to Quazar of Sanxion for this great tune! 
+
+Downloaded from modarchive.org (module id 66187)
+Licensed under the Mod Archive Distrbution license
+
+Internal text:
+- Funky Stars -
+
+Composed in jan. -96 
+by: Quazar of Sanxion 
+
+
+
+In these days of 
+1meg/32chnl/16bit- 
+tunes, we have to 
+preserve the memory 
+of the tiny-tunes, 
+from which we all 
+come from. 
+
+-------------------------------------------------------------------------------
+File : inst/demo-files/nuskool-krome-64x64.png
+
+Credits to the unknown artist.
+Downloaded from a free font pack and available from various other sites as well.
+

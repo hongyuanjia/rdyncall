@@ -1,0 +1,6 @@
+DYNCALL		?=/usr/local
+LUA 		?=/opt/local
+BOOST           ?=/opt/local
+BOOST_INCDIR    ?=$(BOOST)/include
+CC 		?=gcc
+LINKCMD		?=$(CC) $(CFLAGS) -dynamiclib
