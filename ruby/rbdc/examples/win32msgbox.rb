@@ -1,7 +1,7 @@
 #//////////////////////////////////////////////////////////////////////
 #
 #	win32msgbox.rb
-#	Copyright 2007-2014 Tassilo Philipp
+#	Copyright 2007-2015 Tassilo Philipp
 #
 #	Dyncall sample loading user32.dll on windows, listing all user32
 #   symbols and displaying a #	native windows message box by calling

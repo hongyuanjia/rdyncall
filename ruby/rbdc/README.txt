@@ -1,11 +1,11 @@
 dyncall ruby bindings
-Copyright 2007-2014 Tassilo Philipp
+Copyright 2007-2015 Tassilo Philipp
 
 
 BUILD
 
   Build and install this gem with:
-    (cd ../../../dyncall; make distclean) || (gem build rbdc.gemspec && gem install ../../../rbdc-*.gem)
+    (cd $DYNCALL_DIR; make distclean) || (gem build rbdc.gemspec && gem install ../../../rbdc-*.gem)
 
 
 SIGNATURE FORMAT

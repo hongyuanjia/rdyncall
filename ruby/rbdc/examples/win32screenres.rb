@@ -1,7 +1,7 @@
 #//////////////////////////////////////////////////////////////////////
 #
 #	win32screeninfo.rb
-#	Copyright 2007 Tassilo Philipp
+#	Copyright 2015 Tassilo Philipp
 #
 #	Dyncall sample loading user32.dll on windows and displaying a
 #	native windows message box by calling MessageBoxA(...).

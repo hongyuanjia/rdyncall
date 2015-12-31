@@ -1,7 +1,7 @@
 #//////////////////////////////////////////////////////////////////////
 #
 #	unix_math.rb
-#	Copyright 2014 Tassilo Philipp
+#	Copyright 2015 Tassilo Philipp
 #
 #	Dyncall sample loading libm and calling functions
 #

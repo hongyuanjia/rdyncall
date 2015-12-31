@@ -3,7 +3,7 @@
  File: bindings/shell.c
  Description: printf(1) style function call mechanism
  License:
- Copyright (c) 2007-2014 Daniel Adler <dadler@uni-goettingen.de>, 
+ Copyright (c) 2007-2015 Daniel Adler <dadler@uni-goettingen.de>, 
                          Tassilo Philipp <tphilipp@potion-studios.com>
 
  Permission to use, copy, modify, and distribute this software for any
@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h> /* needed on some platforms to make atof work _at_runtime_ */
 
-#define SHDC_VERSION "0.8"
+#define SHDC_VERSION "0.9"
 
 
 void usage(const char* s)
