@@ -2,7 +2,17 @@ dyncall python bindings
 (C) 2007 Daniel Adler.
 2007 04. December
 
+INSTALLATION
+------------
+
+1) make sure dyncall is built and libraries/headers are in include paths or
+   CFLAGS points to them, etc.
+
+2) python setup.py install
+
+
 API
+---
 
 libhandle = load(libpath)
 funcptr = find(libhandle, symbolname )
@@ -32,11 +42,12 @@ SIGNATURE FORMAT
     'd' double -> PyFloat
 
 BUGS
+----
 
 * build on osx/ppc - link error i386 something...  [MacPython 2.4]
 
   solution:
-  installation of latest pytho for os x (MacPython 2.5)  
+  installation of latest python for os x (MacPython 2.5)  
 
   build log:
 
