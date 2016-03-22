@@ -1,6 +1,8 @@
 dyncall python bindings
-(C) 2007 Daniel Adler.
-2007 04. December
+(C) 2007-2016 Daniel Adler.
+Dec 4, 2007: initial
+Mar 22,2016: brought up to dyncall 0.9
+
 
 INSTALLATION
 ------------
@@ -15,8 +17,8 @@ API
 ---
 
 libhandle = load(libpath)
-funcptr = find(libhandle, symbolname )
-call( funcptr,signature, ... )
+funcptr   = find(libhandle, symbolname)
+call(funcptr, signature, ...)
 
 SIGNATURE FORMAT
 
@@ -26,20 +28,31 @@ SIGNATURE FORMAT
 
     x is positional parameter-type charcode
 
-    'b' C++: bool         <- Python: PyBool
+    'B' C++: bool         <- Python: PyBool
+    'c' C: char           <- Python: PyInt (range checked)
+    's' C: short          <- Python: PyInt (range checked)
     'i' C: int            <- Python: PyInt
+    'j' C: long           <- Python: PyLong
     'l' C: long long      <- Python: PyLongLong
+    'f' C: float          <- Python: PyFloat (cast to single precision)
+    'd' C: double         <- Python: PyFloat
     'p' C: void*          <- Python: PyCObject
-    's' C: const char*    <- Python: PyString
+    'Z' C: const char*    <- Python: PyString
 
     y is result-type charcode  
 
     'v' void
+    'B' bool              -> PyBool
+    'c' char              -> PyInt
+    's' short             -> PyInt
     'i' int               -> PyInt
-    'l' long              -> PyLong
+    'j' long              -> PyLong
+    'l' long long         -> PyLongLong
+    'f' float             -> PyFloat (cast to double precision)
+    'd' double            -> PyFloat
     'p' ptr               -> PyCObject encapsulating a void*
-    'f' float             -> PyFloat (upcast to double)
-    'd' double -> PyFloat
+    'Z' const char*       -> PyString
+
 
 BUGS
 ----

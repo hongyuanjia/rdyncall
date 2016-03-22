@@ -221,7 +221,7 @@ pydc_call(PyObject* self, PyObject* in_args)
         dcArgPointer(gpCall, ptr );
       }
       break;
-      case 'S':
+      case DC_SIGCHAR_STRING:
       {
         char* p;
         if (!PyString_Check(po) ) return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting a string", index );
@@ -244,15 +244,15 @@ pydc_call(PyObject* self, PyObject* in_args)
 
   switch(ch) 
   {
-    case DC_SIGCHAR_VOID: dcCallVoid(gpCall, pfunc); Py_RETURN_NONE;
-    case DC_SIGCHAR_BOOL: return Py_BuildValue("i", dcCallBool(gpCall, pfunc) );
-    case DC_SIGCHAR_INT: return Py_BuildValue("i", dcCallInt(gpCall, pfunc) ); 
-    case DC_SIGCHAR_LONGLONG: return Py_BuildValue("L", (unsigned long long) dcCallLongLong(gpCall, pfunc) );
-    case DC_SIGCHAR_FLOAT: return Py_BuildValue("f", dcCallFloat(gpCall, pfunc) ); 
-    case DC_SIGCHAR_DOUBLE: return Py_BuildValue("d", dcCallDouble(gpCall, pfunc) ); 
-    case 's': return Py_BuildValue("s", dcCallPointer(gpCall, pfunc) ); 
-    case DC_SIGCHAR_POINTER: return Py_BuildValue("p", dcCallPointer(gpCall, pfunc) ); 
-    default:  return PyErr_Format( PyExc_RuntimeError, "invalid return type signature" );
+    case DC_SIGCHAR_VOID:                                                   dcCallVoid    (gpCall, pfunc); Py_RETURN_NONE;
+    case DC_SIGCHAR_BOOL:     return Py_BuildValue("i",                     dcCallBool    (gpCall, pfunc));
+    case DC_SIGCHAR_INT:      return Py_BuildValue("i",                     dcCallInt     (gpCall, pfunc)); 
+    case DC_SIGCHAR_LONGLONG: return Py_BuildValue("L", (unsigned long long)dcCallLongLong(gpCall, pfunc));
+    case DC_SIGCHAR_FLOAT:    return Py_BuildValue("f",                     dcCallFloat   (gpCall, pfunc)); 
+    case DC_SIGCHAR_DOUBLE:   return Py_BuildValue("d",                     dcCallDouble  (gpCall, pfunc)); 
+    case DC_SIGCHAR_STRING:   return Py_BuildValue("s",                     dcCallPointer (gpCall, pfunc)); 
+    case DC_SIGCHAR_POINTER:  return Py_BuildValue("p",                     dcCallPointer (gpCall, pfunc)); 
+    default:                  return PyErr_Format( PyExc_RuntimeError, "invalid return type signature");
   }
 }
 

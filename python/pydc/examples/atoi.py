@@ -1,15 +1,22 @@
 from pydc import *
-from sys  import platform
+import sys
+import platform
 
-if platform == "win32":
+if sys.platform == "win32":
   libc = load("msvcrt")
-elif platform == "darwin":
+elif sys.platform == "darwin":
   libc = load("/usr/lib/libc.dylib")
+elif "bsd" in sys.platform:
+  libc = load("/usr/lib/libc.so")
+elif platform.architecture()[0] == "64bit":
+  libc = load("/lib64/libc.so.6")
 else:
   libc = load("/lib/libc.so.6")
 
 fp_atoi = find(libc,"atoi")
 fp_atof = find(libc,"atof")
+
+
 
 def atoi(s): return call(fp_atoi,"p)i",s)
 def atod(s): return call(fp_atof,"p)d",s)
