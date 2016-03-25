@@ -26,9 +26,9 @@
 require 'mkmf'
 
 dir_config 'rbdc'
-base_dir = '../../../dyncall/'
+base_dir = 'dyncall/'
 
-$CFLAGS << ' -I../../../dyncall/dyncall '
+$CFLAGS << ' -Idyncall/dyncall '
 
 # Build dyncall libs.
 puts 'Building dyncall libraries:'

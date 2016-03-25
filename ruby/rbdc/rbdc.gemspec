@@ -21,8 +21,8 @@
 #///////////////////////////////////////////////////////////////////////
 
 require 'rake'
-base_dir = '../../..'
-Dir.chdir(base_dir)
+#dyncall_dir = ENV['DC_DIR']
+#FileUtils.symlink dyncall_dir, 'dyncall'#, :force => true
 
 Gem::Specification.new do |spec|
 	spec.name                  = 'rbdc'
@@ -37,6 +37,8 @@ Gem::Specification.new do |spec|
 	spec.required_ruby_version = '>= 1.9.1'
 	spec.license               = 'ISC'
 
-	spec.files                 = FileList['dyncall/**/*', 'dyncall-bindings/ruby/rbdc/rbdc.c'].exclude('dyncall/doc/**/*').exclude('dyncall/test/**/*').to_a
-	spec.extensions            << 'dyncall-bindings/ruby/rbdc/extconf.rb'
+	# Note that this requires dyncall to live in this directory, create a symlink to the dyncall directory.
+	spec.files                 = FileList['dyncall/**/*', 'rbdc.c'].exclude('dyncall/doc/**/*').exclude('dyncall/test/**/*').to_a
+	spec.extensions            << 'extconf.rb'
 end
+
