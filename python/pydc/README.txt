@@ -4,13 +4,14 @@ Dec 4, 2007: initial
 Mar 22,2016: brought up to dyncall 0.9
 
 
-INSTALLATION
-------------
+BUILD/INSTALLATION
+------------------
 
 1) make sure dyncall is built and libraries/headers are in include paths or
    CFLAGS points to them, etc.
 
-2) python setup.py install
+2) Build and install this gem with:
+   python setup.py install
 
 
 API
@@ -20,7 +21,9 @@ libhandle = load(libpath)
 funcptr   = find(libhandle, symbolname)
 call(funcptr, signature, ...)
 
+
 SIGNATURE FORMAT
+----------------
 
   is a formated string
 
@@ -41,17 +44,17 @@ SIGNATURE FORMAT
 
     y is result-type charcode  
 
-    'v' void
-    'B' bool              -> PyBool
-    'c' char              -> PyInt
-    's' short             -> PyInt
-    'i' int               -> PyInt
-    'j' long              -> PyLong
-    'l' long long         -> PyLongLong
-    'f' float             -> PyFloat (cast to double precision)
-    'd' double            -> PyFloat
-    'p' ptr               -> PyCObject encapsulating a void*
-    'Z' const char*       -> PyString
+    'v' C: void
+    'B' C++: bool         -> Python: PyBool
+    'c' C: char           -> Python: PyInt
+    's' C: short          -> Python: PyInt
+    'i' C: int            -> Python: PyInt
+    'j' C: long           -> Python: PyLong
+    'l' C: long long      -> Python: PyLongLong
+    'f' C: float          -> Python: PyFloat (cast to double precision)
+    'd' C: double         -> Python: PyFloat
+    'p' C: ptr            -> Python: PyCObject encapsulating a void*
+    'Z' C: const char*    -> Python: PyString
 
 
 BUGS
