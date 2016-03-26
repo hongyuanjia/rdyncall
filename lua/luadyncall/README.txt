@@ -3,7 +3,7 @@ luadyncall - lua dyncall bindings
 
 
 Build
------
+=====
 ./bootstrap
 ./configure
 make
@@ -11,7 +11,7 @@ make install
 
 
 Package contents
-----------------
+================
 
 dynload   dynamic loading of code and resolving of symbols
 dyncall   dynamic call to code
@@ -48,5 +48,3 @@ Build source package (maintainers only)
 =======================================
 make srcpkg
 
-
- 

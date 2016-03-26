@@ -22,6 +22,3 @@ lua bindings for dyncall
 
    dc.call(f, signature, args... )
 
-   
-   
-

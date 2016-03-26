@@ -4,17 +4,19 @@ February 23, 2014
 
 
 BUILD/INSTALLATION
-------------------
+==================
 
 1) make sure dyncall is built and libraries/headers are in include paths or
-   CGO_CFLAGS points to them, etc.
+
+     CGO_CFLAGS points to them, etc.
 
 2) Build this nut with:
-   go build
+
+     go build
 
 
 API
----
+===
 
 Since go is low level, dyncall's public functions are pretty much exposed
 function by function. Referg to dyncall(3) and godc.go.
@@ -43,7 +45,7 @@ vm.Arg....
 
 
 SIGNATURE FORMAT
-----------------
+================
 
 Signature string is only used by ArgF function, rest uses type info from Go.
 
@@ -69,8 +71,11 @@ TYPE CONVERSIONS (and reserved signature char)
   'Z' | string              | void*              | string
 
 
-ToDo:
+TODO
+====
+
 - structs
 - callbacks
 - callf wrap (argf already there)
+- update cconv modes, so they are up to date
 
