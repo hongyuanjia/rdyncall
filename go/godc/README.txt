@@ -1,7 +1,51 @@
 dyncall go bindings
-Copyright 2014 Tassilo Philipp
+Copyright 2014-2016 Tassilo Philipp
 February 23, 2014
 
+
+BUILD/INSTALLATION
+------------------
+
+1) make sure dyncall is built and libraries/headers are in include paths or
+   CGO_CFLAGS points to them, etc.
+
+2) Build this nut with:
+   go build
+
+
+API
+---
+
+Since go is low level, dyncall's public functions are pretty much exposed
+function by function. Referg to dyncall(3) and godc.go.
+
+l := new(ExtLib)
+err := l.Load(libpath)
+defer l.Free()
+err := l.SymsInit(libpath)
+defer l.SymsCleanup()
+
+l.lib // Address lib is loaded at
+l.FindSymbol(symbolname)
+l.SymsCount()
+l.SymsNameFromValue(l.FindSymbol(synbolname))
+l.SymsName(index)
+
+vm := new(CallVM)
+err := vm.InitCallVM()
+defer vm.Free()
+vm.Mode(DC_CALL_C_DEFAULT)
+vm.Reset()
+vm.ArgFloat(36)
+rf := vm.CallFloat(l.FindSymbol("sqrtf"))
+
+vm.Arg....
+
+
+SIGNATURE FORMAT
+----------------
+
+Signature string is only used by ArgF function, rest uses type info from Go.
 
 TYPE CONVERSIONS (and reserved signature char)
 
@@ -27,4 +71,6 @@ TYPE CONVERSIONS (and reserved signature char)
 
 ToDo:
 - structs
-- callf wrap
+- callbacks
+- callf wrap (argf already there)
+

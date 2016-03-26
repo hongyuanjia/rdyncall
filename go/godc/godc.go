@@ -21,13 +21,13 @@
 // Go/dyncall extension implementation.
 package godc
 
-// #cgo LDFLAGS: -L../../../dyncall/ -ldyncall_s
-// #cgo LDFLAGS: -L../../../dynload/ -ldynload_s
-// #cgo LDFLAGS: -L../../../dyncallback/ -ldyncallback_s
+// #cgo LDFLAGS: -ldyncall_s
+// #cgo LDFLAGS: -ldynload_s
+// #cgo LDFLAGS: -ldyncallback_s
 // #include <stdlib.h>
-// #include "../../../dyncall/dyncall/dyncall.h"
-// #include "../../../dyncall/dynload/dynload.h"
-// #include "../../../dyncall/dyncall/dyncall_signature.h"
+// #include "dyncall.h"
+// #include "dynload.h"
+// #include "dyncall_signature.h"
 import "C"
 import (
 	"unsafe"
