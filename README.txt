@@ -23,14 +23,14 @@ Code style
 
   - Without objects:
 
-      Wrap dyncall as close as direct
+      Wrap dyncall as close as possible, exposing function by function
 
-  - Statically typed (and no direct way wrap types in a generic way and or RTTI):
+  - Statically typed (and no reflection/RTTI):
 
       Expose all dcArg, etc. calls
       Expose formatted call ('...') if possible, but as ArgF (instead of CallF), b/c return type is statically typed
 
-  - with RTTI:
+  - with reflection/RTTI:
 
       Write a single call function and let users pass arguments, directly - if needed for type-conversion, this
       should be done via call signature
@@ -39,7 +39,7 @@ Code style
 
 * Functional:
 
-  @@@ ToDo
+  ... nothing really different from imparative guidelines above?
 
 
 
@@ -47,7 +47,7 @@ Code style
 
  - Namespaces/modules/packages
 
-     Use and name dyncall or dc (@@@ choose one)
+     Use and name dyncall or dc (prefer former)
      Use casing depending on language requirements (e.g. 'Dyncall' for ruby as modules are const)
 
  - Function overloading or default arguments
