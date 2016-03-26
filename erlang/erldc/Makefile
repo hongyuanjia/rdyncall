@@ -12,7 +12,7 @@ all: $(OUTPUTS)
 
 priv/erldc.so: c_src/dyncallnif.c
 	[ -d priv ] || mkdir priv
-	$(CC) -o $@ -shared -fPIC $(CFLAGS) -ldyncall_s c_src/dyncallnif.c
+	$(CC) -o $@ -shared -fPIC $(CFLAGS) c_src/dyncallnif.c -ldyncall_s
 
 priv/erldc_testtargets.so: c_src/erldctesttargets.c
 	[ -d priv ] || mkdir priv
