@@ -1,15 +1,24 @@
-BUILDING
-========
+BUILD/INSTALLATION
+==================
 
-To build erldc:
+1) make sure dyncall is built and libraries/headers are in include paths or
+   CFLAGS points to them, etc.. Same goes for erlang headers/libs.
 
-    make DYNCALL_SRC_PATH=../dyncall ERLANG_INST_DIR=/erlang/in/this/dir all
-    sudo make ERLANG_INST_DIR=/erlang/in/this/dir install
+2) Build this erlang NIF:
 
-Erlang doesn't use pkg-config, so you must specify ERLANG_INC (and
-ERLANG_INST_DIR at install-time).
+     make
+
+3) To install, pick correct install paths by defining PREFIX (if needed, e.g.
+   for stage dir) and ERLANG_INST_DIR (e.g. /usr/lib64/erlang,
+   /usr/local/lib/erlang, ...):
+
+      make ERLANG_INST_DIR=/erlang/in/this/dir install
+
+Erlang doesn't use pkg-config, so it's up to you to point to set the flags to
+point to correct paths at build and install-time.
 
 The makefile is meant to be portable, at least across *nix.
+
 
 RUNNING TESTS
 =============
@@ -23,12 +32,15 @@ Static analysis (via dialyzer):
     make build-plt
     make dialyze
 
+
 USING
 =====
+
 Examine the test suites for several examples.
 
 Dyncall is built as an OTP library application, so there's nothing
 to start or stop.
+
 
 TODO
 ====
@@ -37,3 +49,4 @@ TODO
 AUTHORS
 =======
 Erik Mackdanz <erikmack@gmail.com>
+
