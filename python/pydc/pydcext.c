@@ -15,7 +15,7 @@
 
 /* PyCObject destructor callback for libhandle */
 
-void free_library(void* libhandle) 
+void free_library(void* libhandle)
 {
   if (libhandle != 0)
     dlFreeLibrary(libhandle);
@@ -49,13 +49,13 @@ pydc_find(PyObject* self, PyObject* args)
   void* funcptr;
 
   if ( !PyArg_ParseTuple(args,"Os", &pcobj, &symbol) ) return PyErr_Format(PyExc_RuntimeError, "argument mismatch");
-  
+
   libhandle = PyCObject_AsVoidPtr(pcobj);
-  
+
   if (!libhandle) return PyErr_Format(PyExc_RuntimeError, "libhandle is null");
 
   funcptr = dlFindSymbol(libhandle, symbol);
-  if (!funcptr) 
+  if (!funcptr)
     return PyErr_Format(PyExc_RuntimeError, "symbol '%s' not found", symbol);
 
   return PyCObject_FromVoidPtr(funcptr, NULL);
@@ -70,9 +70,9 @@ pydc_free(PyObject* self, PyObject* args)
   void* libhandle;
 
   if ( !PyArg_ParseTuple(args,"o", &pcobj) ) return PyErr_Format(PyExc_RuntimeError, "argument mismatch");
-  
+
   libhandle = PyCObject_AsVoidPtr(pcobj);
-  
+
   if (!libhandle) return PyErr_Format(PyExc_RuntimeError, "libhandle is NULL");
 
   dlFreeLibrary(libhandle);
@@ -98,18 +98,18 @@ pydc_call(PyObject* self, PyObject* in_args)
   char        ch;
   int         pos;
   void*       pfunc;
-  
+
   if ( !PyArg_ParseTuple(in_args,"OsO", &pcobj_funcptr, &signature, &args) ) return PyErr_Format(PyExc_RuntimeError, "argument mismatch");
-  pfunc = PyCObject_AsVoidPtr(pcobj_funcptr);  
+  pfunc = PyCObject_AsVoidPtr(pcobj_funcptr);
   if ( !pfunc ) return PyErr_Format( PyExc_RuntimeError, "function pointer is NULL" );
   l = PyTuple_Size(args);
 
   ptr = signature;
-  pos = 0; 
+  pos = 0;
 
   dcReset(gpCall);
-  
-  while ( (ch = *ptr) != '\0' && ch != ')' ) 
+
+  while ( (ch = *ptr) != '\0' && ch != ')' )
   {
     PyObject* po;
 
@@ -119,17 +119,18 @@ pydc_call(PyObject* self, PyObject* in_args)
 
     po = PyTuple_GetItem(args,pos);
 
-    switch(ch) 
+    switch(ch)
     {
       case DC_SIGCHAR_BOOL:
       {
         DCbool b;
-        if ( !PyBool_Check(po) ) return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting a bool", index ); 
+        if ( !PyBool_Check(po) ) return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting a bool", index );
         b = (Py_True == po) ? DC_TRUE : DC_FALSE;
         dcArgBool(gpCall, b);
       }
       break;
       case DC_SIGCHAR_CHAR:
+      case DC_SIGCHAR_UCHAR:
       {
         DCchar c;
         if ( PyString_Check(po) )
@@ -138,51 +139,55 @@ pydc_call(PyObject* self, PyObject* in_args)
           size_t l;
           char* s;
           l = PyString_GET_SIZE(po);
-          if (l != 1) return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting a string with length of 1 (a char string)", index );          
-          s = PyString_AsString(po);          
+          if (l != 1) return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting a string with length of 1 (a char string)", index );
+          s = PyString_AsString(po);
           c = (DCchar) s[0];
         }
-        else if ( PyInt_Check(po) ) 
+        else if ( PyInt_Check(po) )
         {
           long l;
           l = PyInt_AsLong(po);
           if ( (l > CHAR_MAX) || (l < CHAR_MIN)) return PyErr_Format( PyExc_RuntimeError, "value out of range at argument %d - expecting a char code", index );
           c = (DCchar) l;
         }
-        else return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting a char", index );        
+        else return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting a char", index );
         dcArgChar(gpCall, c);
       }
       break;
       case DC_SIGCHAR_SHORT:
+      case DC_SIGCHAR_USHORT:
       {
         DCshort s;
         long v;
         if ( !PyInt_Check(po) )
-          return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting a short int", index ); 
+          return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting a short int", index );
         v = PyInt_AS_LONG(po);
-        if ( (v < SHRT_MIN) || (v > SHRT_MAX) ) 
+        if ( (v < SHRT_MIN) || (v > SHRT_MAX) )
           return PyErr_Format( PyExc_RuntimeError, "value out of range at argument %d - expecting a short value", index );
         s = (DCshort) v;
         dcArgShort(gpCall, s);
-      } 
+      }
       break;
       case DC_SIGCHAR_INT:
+      case DC_SIGCHAR_UINT:
       {
         long v;
-        if ( !PyInt_Check(po) ) return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting an int", index ); 
+        if ( !PyInt_Check(po) ) return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting an int", index );
         v = PyInt_AS_LONG(po);
         dcArgInt(gpCall, (DCint) v );
       }
       break;
       case DC_SIGCHAR_LONG:
+      case DC_SIGCHAR_ULONG:
       {
         long v;
-        if ( !PyInt_Check(po) ) return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting an int", index ); 
+        if ( !PyInt_Check(po) ) return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting an int", index );
         v = PyInt_AsLong(po);
-        
+
       }
       break;
       case DC_SIGCHAR_LONGLONG:
+      case DC_SIGCHAR_ULONGLONG:
       {
         PY_LONG_LONG pl;
         DClonglong dl;
@@ -205,7 +210,7 @@ pydc_call(PyObject* self, PyObject* in_args)
         double d;
         if (!PyFloat_Check(po)) return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expeecting a float", index );
         d = PyFloat_AsDouble(po);
-        dcArgDouble(gpCall, d);      
+        dcArgDouble(gpCall, d);
       }
       break;
       case DC_SIGCHAR_POINTER:
@@ -242,17 +247,25 @@ pydc_call(PyObject* self, PyObject* in_args)
 
   ch = *++ptr;
 
-  switch(ch) 
+  switch(ch)
   {
-    case DC_SIGCHAR_VOID:                                                   dcCallVoid    (gpCall, pfunc); Py_RETURN_NONE;
-    case DC_SIGCHAR_BOOL:     return Py_BuildValue("i",                     dcCallBool    (gpCall, pfunc));
-    case DC_SIGCHAR_INT:      return Py_BuildValue("i",                     dcCallInt     (gpCall, pfunc)); 
-    case DC_SIGCHAR_LONGLONG: return Py_BuildValue("L", (unsigned long long)dcCallLongLong(gpCall, pfunc));
-    case DC_SIGCHAR_FLOAT:    return Py_BuildValue("f",                     dcCallFloat   (gpCall, pfunc)); 
-    case DC_SIGCHAR_DOUBLE:   return Py_BuildValue("d",                     dcCallDouble  (gpCall, pfunc)); 
-    case DC_SIGCHAR_STRING:   return Py_BuildValue("s",                     dcCallPointer (gpCall, pfunc)); 
-    case DC_SIGCHAR_POINTER:  return Py_BuildValue("p",                     dcCallPointer (gpCall, pfunc)); 
-    default:                  return PyErr_Format( PyExc_RuntimeError, "invalid return type signature");
+    case DC_SIGCHAR_VOID:                                dcCallVoid    (gpCall, pfunc); Py_RETURN_NONE;
+    case DC_SIGCHAR_BOOL:      return Py_BuildValue("i", dcCallBool    (gpCall, pfunc));
+    case DC_SIGCHAR_CHAR:      return Py_BuildValue("b", dcCallChar    (gpCall, pfunc));
+    case DC_SIGCHAR_UCHAR:     return Py_BuildValue("B", dcCallChar    (gpCall, pfunc));
+    case DC_SIGCHAR_SHORT:     return Py_BuildValue("h", dcCallShort   (gpCall, pfunc));
+    case DC_SIGCHAR_USHORT:    return Py_BuildValue("H", dcCallShort   (gpCall, pfunc));
+    case DC_SIGCHAR_INT:       return Py_BuildValue("i", dcCallInt     (gpCall, pfunc));
+    case DC_SIGCHAR_UINT:      return Py_BuildValue("I", dcCallInt     (gpCall, pfunc));
+    case DC_SIGCHAR_LONG:      return Py_BuildValue("l", dcCallLong    (gpCall, pfunc));
+    case DC_SIGCHAR_ULONG:     return Py_BuildValue("k", dcCallLong    (gpCall, pfunc));
+    case DC_SIGCHAR_LONGLONG:  return Py_BuildValue("L", dcCallLongLong(gpCall, pfunc));
+    case DC_SIGCHAR_ULONGLONG: return Py_BuildValue("K", dcCallLongLong(gpCall, pfunc));
+    case DC_SIGCHAR_FLOAT:     return Py_BuildValue("f", dcCallFloat   (gpCall, pfunc));
+    case DC_SIGCHAR_DOUBLE:    return Py_BuildValue("d", dcCallDouble  (gpCall, pfunc));
+    case DC_SIGCHAR_STRING:    return Py_BuildValue("s", dcCallPointer (gpCall, pfunc));
+    case DC_SIGCHAR_POINTER:   return Py_BuildValue("p", dcCallPointer (gpCall, pfunc));  // @@@ probably not working, there is no "p"
+    default:                   return PyErr_Format(PyExc_RuntimeError, "invalid return type signature");
   }
 }
 
@@ -274,5 +287,4 @@ initpydcext(void)
     return;
   gpCall = dcNewCallVM(4096);
 }
-
 

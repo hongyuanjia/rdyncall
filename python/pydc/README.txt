@@ -1,21 +1,24 @@
 dyncall python bindings
-(C) 2007-2016 Daniel Adler.
+(C) 2007-2016 Daniel Adler
 Dec 4, 2007: initial
-Mar 22,2016: brought up to dyncall 0.9
+Mar 22,2016: update to dyncall 0.9, includes breaking sig char changes
 
 
 BUILD/INSTALLATION
-------------------
+==================
 
 1) make sure dyncall is built and libraries/headers are in include paths or
    CFLAGS points to them, etc.
 
 2) Build and install this extension with:
-   python setup.py install
+
+     python setup.py install
+
+Building an egg isn't supported, currently.
 
 
 API
----
+===
 
 libhandle = load(libpath)
 funcptr   = find(libhandle, symbolname)
@@ -23,42 +26,43 @@ call(funcptr, signature, ...)
 
 
 SIGNATURE FORMAT
-----------------
+================
 
   is a formated string
 
   format: "xxxxx)y"
 
-    x is positional parameter-type charcode
+    x is positional parameter-type charcode, y is result-type charcode
 
-    'B' C++: bool         <- Python: PyBool
-    'c' C: char           <- Python: PyInt (range checked)
-    's' C: short          <- Python: PyInt (range checked)
-    'i' C: int            <- Python: PyInt
-    'j' C: long           <- Python: PyLong
-    'l' C: long long      <- Python: PyLongLong
-    'f' C: float          <- Python: PyFloat (cast to single precision)
-    'd' C: double         <- Python: PyFloat
-    'p' C: void*          <- Python: PyCObject
-    'Z' C: const char*    <- Python: PyString
+  SIG | FROM PYTHON                        | C/C++              | TO PYTHON
+  ----+------------------------------------+--------------------+-----------------------------------
+  'v' |                                    | void               |
+  'B' | PyBool                             | bool               | PyBool
+  'c' | PyInt (range checked)              | char               | PyInt
+  'C' | PyInt (range checked)              | unsigned char      | PyInt
+  's' | PyInt (range checked)              | short              | PyInt
+  'S' | PyInt (range checked)              | unsigned short     | PyInt
+  'i' | PyInt                              | int                | PyInt
+  'I' | PyInt                              | unsigned int       | PyInt
+  'j' | PyLong                             | long               | PyLong
+  'J' | PyLong                             | unsigned long      | PyLong
+  'l' | PyLongLong                         | long long          | PyLongLong
+  'L' | PyLongLong                         | unsigned long long | PyLongLong
+  'f' | PyFloat (cast to single precision) | float              | PyFloat (cast to double precision)
+  'd' | PyFloat                            | double             | PyFloat
+  'p' | PyCObject                          | void*              | PyCObject encapsulating a void*
+  'Z' | PyString                           | const char*        | PyString
 
-    y is result-type charcode  
 
-    'v' C: void
-    'B' C++: bool         -> Python: PyBool
-    'c' C: char           -> Python: PyInt
-    's' C: short          -> Python: PyInt
-    'i' C: int            -> Python: PyInt
-    'j' C: long           -> Python: PyLong
-    'l' C: long long      -> Python: PyLongLong
-    'f' C: float          -> Python: PyFloat (cast to double precision)
-    'd' C: double         -> Python: PyFloat
-    'p' C: ptr            -> Python: PyCObject encapsulating a void*
-    'Z' C: const char*    -> Python: PyString
+TODO
+====
+
+- support signature suffixes used to indicate calling conventions, are not supported yet!
+- not sure if returning 'p' is working, creating PyCObject, check and write test code
 
 
 BUGS
-----
+====
 
 * build on osx/ppc - link error i386 something...  [MacPython 2.4]
 
