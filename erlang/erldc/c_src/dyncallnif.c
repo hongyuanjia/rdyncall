@@ -15,8 +15,8 @@
 */
 
 #include "erl_nif.h"
-#include "dyncall/dyncall.h"
-#include "dyncall/dyncall_signature.h"
+#include "dyncall.h"
+#include "dyncall_signature.h"
 
 #include <string.h>
 #include <stdio.h>
