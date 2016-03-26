@@ -1,12 +1,12 @@
 dyncall ruby bindings
-Copyright 2007-2015 Tassilo Philipp
+Copyright 2007-2016 Tassilo Philipp
 
 
 BUILD/INSTALLATION
 ------------------
 
 1) The extension isn't built here, but its code along with dyncall's source is bundled
-   in a .gem file to then be built and installed on the platform where the gem is installed.
+   in a .gem file to then be built and installed on the target platform.
    So, you need dyncall's full source code to be included. Unfortunately, the .gemspec isn't
    flexible enough to pull from different paths, so building the .gem file requires dyncall
    to be found next to rbdc.c and extconf.rb. This means either copy dyncall's base directory
