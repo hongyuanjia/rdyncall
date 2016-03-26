@@ -44,6 +44,7 @@ to start or stop.
 
 TODO
 ====
+- callback support
 
 
 AUTHORS
