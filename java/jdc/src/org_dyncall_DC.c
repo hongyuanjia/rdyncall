@@ -1,112 +1,155 @@
 #include "org_dyncall_DC.h"
-#include "../../../../dyncall/dyncall.h"
-jlong JNICALL Java_org_dyncall_DC_newCallVM
-  (JNIEnv *pEnv, jclass clazz, jint mode, jint size)
+#include "dyncall.h"
+
+jlong JNICALL Java_org_dyncall_DC_newCallVM(JNIEnv *pEnv, jclass clazz, jint mode, jint size)
 {
-	return (jlong) dcNewCallVM(mode,size);
+	return (jlong)dcNewCallVM(mode, size);
+//@@@ free
 }
 
-void JNICALL Java_org_dyncall_DC_reset (JNIEnv *, jclass, jlong vm)
+jlong JNICALL Java_org_dyncall_DC_load(JNIEnv *, jclass, jstring s)
 {
-	DCCallVM* vm = (DCCallVM*) in_vm;
-	dcReset(vm);
+	return dlLoadLibrary((const char*)s);
+//@@@ free
 }
 
-void JNICALL Java_org_dyncall_DC_argBool(JNIEnv *, jclass, jlong vm, jboolean b)
+jlong JNICALL Java_org_dyncall_DC_find(JNIEnv *, jclass, jlong libhandle, jstring s)
 {
-	DCCallVM* vm = (DCCallVM*) in_vm;
-	dcPushBool(vm,b);
+	return dlFindSymbol((DLLib*)libhandle, (const char*)s);
 }
 
-void JNICALL Java_org_dyncall_DC_argByte (JNIEnv *, jclass, jlong in_vm, jbyte b)
+//jint JNICALL Java_org_dyncall_DC_symsCount(JNIEnv *, jclass, jlong symshandle)
+//{
+//	return dlSymsCount((DLSyms*)symshandle);
+//}
+
+//jstring JNICALL Java_org_dyncall_DC_symsName(JNIEnv *, jclass, jlong symshandle, jint i)
+//{
+//	return dlSymsName((DLSyms*)symshandle, i);
+//}
+
+void JNICALL Java_org_dyncall_DC_mode(JNIEnv *, jclass, jlong in_vm, jint i)
 {
-	DCCallVM* vm = (DCCallVM*) in_vm;
-	dcPushChar(vm,b);
+	dcMode((DCCallVM*)in_vm, i);
 }
+
+void JNICALL Java_org_dyncall_DC_reset(JNIEnv *, jclass, jlong in_vm)
+{
+	dcReset((DCCallVM*)in_vm);
+}
+
+void JNICALL Java_org_dyncall_DC_argBool(JNIEnv *, jclass, jlong in_vm, jboolean b)
+{
+	dcPushBool((DCCallVM*)in_vm, b);
+}
+
+void JNICALL Java_org_dyncall_DC_argChar(JNIEnv *, jclass, jlong in_vm, jbyte b)
+{
+	dcPushChar((DCCallVM*)in_vm, b);
+}
+
 void JNICALL Java_org_dyncall_DC_argShort(JNIEnv *, jclass, jlong in_vm, jshort s)
 {
-	DCCallVM* vm = (DCCallVM*) in_vm;
-	dcPushShort(vm,s);
+	dcPushShort((DCCallVM*)in_vm, s);
 }
 
 void JNICALL Java_org_dyncall_DC_argInt(JNIEnv *, jclass, jlong in_vm, jint i)
 {
-	DCCallVM* vm = (DCCallVM*) in_vm;
-	dcPushInt(vm,i);
-
-}
-void JNICALL Java_org_dyncall_DC_argLong (JNIEnv *, jclass, jlong in_vm, jlong l)
-{
-	DCCallVM* vm = (DCCallVM*) in_vm;
-	dcPushLong(vm,l);
+	dcPushInt((DCCallVM*)in_vm, i);
 }
 
-void JNICALL Java_org_dyncall_DC_argChar(JNIEnv *, jclass, jlong in_vm, jchar c)
+void JNICALL Java_org_dyncall_DC_argLong(JNIEnv *, jclass, jlong in_vm, jlong l)
 {
-	DCCallVM* vm = (DCCallVM*) in_vm;
-	dcPushChar(vm,c);	
+	dcPushLong((DCCallVM*)in_vm, l);
+}
+
+void JNICALL Java_org_dyncall_DC_argLongLong(JNIEnv *, jclass, jlong in_vm, jlong l)
+{
+	dcPushLongLong((DCCallVM*)in_vm, l);
 }
 
 void JNICALL Java_org_dyncall_DC_argFloat(JNIEnv *, jclass, jlong in_vm, jfloat f)
 {
-	DCCallVM* vm = (DCCallVM*) in_vm;
-	dcPushFloat(vm,f);	
+	dcPushFloat((DCCallVM*)in_vm, f);	
 }
 
 void JNICALL Java_org_dyncall_DC_argDouble(JNIEnv *, jclass, jlong in_vm, jdouble d)
 {
-	DCCallVM* vm = (DCCallVM*) in_vm;
-	dcPushDouble(vm,d);		
+	dcPushDouble((DCCallVM*)in_vm, d);	
 }
 
 void JNICALL Java_org_dyncall_DC_argPointer__JJ(JNIEnv *, jclass, jlong in_vm, jlong l)
 {
-	DCCallVM* vm = (DCCallVM*) in_vm;
-	dcPushPointer(vm, (DCpointer) l );			
+	dcPushPointer((DCCallVM*)in_vm, (DCpointer)l);
 }
 
 void JNICALL Java_org_dyncall_DC_argPointer__JLjava_lang_Object_2(JNIEnv *, jclass, jlong in_vm, jobject o)
 {
-	DCCallVM* vm = (DCCallVM*) in_vm;
-	dcPushPointer(vm, (DCpointer) o );			
+	dcPushPointer((DCCallVM*)in_vm, (DCpointer)o);
 }
 
-void JNICALL Java_org_dyncall_DC_argString(JNIEnv *, jclass, jlong, jstring)
+void JNICALL Java_org_dyncall_DC_argString(JNIEnv *, jclass, jlong in_vm, jstring s)
 {
-	DCCallVM* vm = (DCCallVM*) in_vm;
-	dcPushPointer(vm, (DCpointer) o );	
+	dcPushPointer((DCCallVM*)in_vm, (DCpointer)s);
 }
 
 void JNICALL Java_org_dyncall_DC_callVoid (JNIEnv *, jclass, jlong in_vm, jlong in_target)
 {
-	DCCallVM* vm = (DCCallVM*) in_vm;
-	dcCallVoid(vm, (DCpointer) target)
+	dcCallVoid((DCCallVM*)in_vm, (DCpointer)target)
 }
 
-/*
- * Class:     org_dyncall_DC
- * Method:    callBoolean
- * Signature: (JJ)Z
- */
-jboolean JNICALL Java_org_dyncall_DC_callBoolean(JNIEnv *, jclass, jlong in_vm, jlong target)
+jboolean JNICALL Java_org_dyncall_DC_callBool(JNIEnv *, jclass, jlong in_vm, jlong target)
 {
-	DCCallVM* vm = (DCCallVM*) in_vm;
-	dcCallBoolean(vm, (DCpointer) target)
+	return dcCallBool((DCCallVM*)in_vm, (DCpointer)target)
 }
 
-/*
- * Class:     org_dyncall_DC
- * Method:    callInt
- * Signature: (JJ)I
- */
-JNIEXPORT jint JNICALL Java_org_dyncall_DC_callInt
-  (JNIEnv *, jclass, jlong, jlong);
+jbyte JNICALL Java_org_dyncall_DC_callChar(JNIEnv *, jclass, jlong in_vm, jlong target)
+{
+	return dcCallChar((DCCallVM*)in_vm, (DCpointer)target)
+}
 
-/*
- * Class:     org_dyncall_DC
- * Method:    callLong
- * Signature: (JJ)J
- */
-JNIEXPORT jlong JNICALL Java_org_dyncall_DC_callLong
-  (JNIEnv *, jclass, jlong, jlong);
+jshort JNICALL Java_org_dyncall_DC_callShort(JNIEnv *, jclass, jlong in_vm, jlong target)
+{
+	return dcCallShort((DCCallVM*)in_vm, (DCpointer)target)
+}
+
+jint JNICALL Java_org_dyncall_DC_callInt(JNIEnv *, jclass, jlong in_vm, jlong target)
+{
+	return dcCallInt((DCCallVM*)in_vm, (DCpointer)target)
+}
+
+jlong JNICALL Java_org_dyncall_DC_callLong(JNIEnv *, jclass, jlong in_vm, jlong target)
+{
+	return dcCallLong((DCCallVM*)in_vm, (DCpointer)target)
+}
+
+jlong JNICALL Java_org_dyncall_DC_callLongLong(JNIEnv *, jclass, jlong in_vm, jlong target)
+{
+	return dcCallLongLong((DCCallVM*)in_vm, (DCpointer)target)
+}
+
+jfloat JNICALL Java_org_dyncall_DC_callFloat(JNIEnv *, jclass, jlong in_vm, jlong target)
+{
+	return dcCallFloat((DCCallVM*)in_vm, (DCpointer)target)
+}
+
+jdouble JNICALL Java_org_dyncall_DC_callDouble(JNIEnv *, jclass, jlong in_vm, jlong target)
+{
+	return dcCallDouble((DCCallVM*)in_vm, (DCpointer)target)
+}
+
+jlong JNICALL Java_org_dyncall_DC_callPointer(JNIEnv *, jclass, jlong in_vm, jlong target)
+{
+	return dcCallPointer((DCCallVM*)in_vm, (DCpointer)target)
+}
+
+jstring JNICALL Java_org_dyncall_DC_callString(JNIEnv *, jclass, jlong in_vm, jlong target)
+{
+	return dcCallPointer((DCCallVM*)in_vm, (DCpointer)target)
+}
+
+jint JNICALL Java_org_dyncall_DC_getError(JNIEnv *, jclass, jlong in_vm)
+{
+	return dcGetError((DCCallVM*)in_vm);
+}
 
