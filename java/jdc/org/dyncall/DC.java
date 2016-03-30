@@ -50,7 +50,7 @@ public class DC
 	, ERROR_UNSUPPORTED_MODE = -1
   ;
 
-  public static native long newCallVM(int type, int size);
+  public static native long newCallVM(int size);
 
   public static native long   load(String libname);
   public static native long   find(long libhandle, String symbol);
