@@ -10,10 +10,10 @@ clean:
 
 $(SO): org_dyncall_DC.h org_dyncall_DC.c
 	# @@@ support different compilers @@@ esp. on windows
-	$(CC) -shared -fPIC -o $@ org_dyncall_DC.c
+	$(CC) -shared -fPIC -o $@ org_dyncall_DC.c -ldyncall_s -ldynload_s
 
 org_dyncall_DC.h: org/dyncall/DC.class
-	javah org.dyncall.DC
+	javah -jni org.dyncall.DC
 
 org/dyncall/DC.class:
 	cd org/dyncall/ && javac DC.java

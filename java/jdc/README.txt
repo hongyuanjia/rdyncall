@@ -8,3 +8,12 @@ BUILD
 
      make
 
+
+RUNNING EXAMPLES
+================
+
+For example, having build jdc, build and run UnixMathExample from this folder:
+
+     javac -d . examples/UnixMathExample.java
+     java -Djava.library.path=. UnixMathExample
+
