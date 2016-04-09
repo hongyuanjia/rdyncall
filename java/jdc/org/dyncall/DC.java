@@ -51,9 +51,11 @@ public class DC
   ;
 
   public static native long newCallVM(int size);
+  public static native void freeCallVM(long vmhandle);
 
-  public static native long   load(String libname);
-  public static native long   find(long libhandle, String symbol);
+  public static native long loadLibrary(String libname);
+  public static native void freeLibrary(long libhandle);
+  public static native long find(long libhandle, String symbol);
   //public static native int    symsCount(long libhandle);
   //public static native String symsName (long libhandle, int index);
 

@@ -1,23 +1,49 @@
+#include <stdlib.h>
 #include "org_dyncall_DC.h"
 #include "dyncall.h"
 #include "dynload.h"
 
+// Bookkeping to clean up on reset.
+static int          gc_snum = 0;
+static jobject*     gc_jstr = NULL;
+static const char** gc_cstr = NULL;
+static void cleanupHeldStrings(JNIEnv *pEnv)
+{
+	for(int i=0; i<gc_snum; ++i)
+		(*pEnv)->ReleaseStringUTFChars(pEnv, gc_jstr[i], gc_cstr[i]);
+
+	free(gc_jstr); gc_jstr = NULL;
+	free(gc_cstr); gc_cstr = NULL;
+	gc_snum = 0;
+
+}
+
+
 jlong JNICALL Java_org_dyncall_DC_newCallVM(JNIEnv *pEnv, jclass clazz, jint size)
 {
 	return (jlong)dcNewCallVM(size);
-//@@@ free
 }
 
-jlong JNICALL Java_org_dyncall_DC_load(JNIEnv *pEnv, jclass clazz, jstring s)
+void JNICALL Java_org_dyncall_DC_freeCallVM(JNIEnv *pEnv, jclass clazz, jlong vm)
+{
+	cleanupHeldStrings(pEnv);
+	dcFree((DCCallVM*)vm);
+}
+
+jlong JNICALL Java_org_dyncall_DC_loadLibrary(JNIEnv *pEnv, jclass clazz, jstring s)
 {
 	jlong l = 0;
 	const char *sz = (*pEnv)->GetStringUTFChars(pEnv, s, NULL);
 	if(sz != NULL) {
 		l = (jlong)dlLoadLibrary(sz);
 		(*pEnv)->ReleaseStringUTFChars(pEnv, s, sz);
-//@@@ free
 	}
 	return l;
+}
+
+void JNICALL Java_org_dyncall_DC_freeLibrary(JNIEnv *pEnv, jclass clazz, jlong libhandle)
+{
+	dlFreeLibrary((DLLib*)libhandle);
 }
 
 jlong JNICALL Java_org_dyncall_DC_find(JNIEnv *pEnv, jclass clazz, jlong libhandle, jstring s)
@@ -43,13 +69,13 @@ jlong JNICALL Java_org_dyncall_DC_find(JNIEnv *pEnv, jclass clazz, jlong libhand
 
 void JNICALL Java_org_dyncall_DC_mode(JNIEnv *pEnv, jclass clazz, jlong vm, jint i)
 {
-	dcMode((DCCallVM*)vm, i);//@@@test
+	dcMode((DCCallVM*)vm, i);
 }
 
 void JNICALL Java_org_dyncall_DC_reset(JNIEnv *pEnv, jclass clazz, jlong vm)
 {
+	cleanupHeldStrings(pEnv);
 	dcReset((DCCallVM*)vm);
-//@@@add cleanup code here for temporary memory held by jni
 }
 
 void JNICALL Java_org_dyncall_DC_argBool(JNIEnv *pEnv, jclass clazz, jlong vm, jboolean b)
@@ -69,7 +95,7 @@ void JNICALL Java_org_dyncall_DC_argShort(JNIEnv *pEnv, jclass clazz, jlong vm, 
 
 void JNICALL Java_org_dyncall_DC_argInt(JNIEnv *pEnv, jclass clazz, jlong vm, jint i)
 {
-	dcArgInt((DCCallVM*)vm, i);//@@@test
+	dcArgInt((DCCallVM*)vm, i);
 }
 
 void JNICALL Java_org_dyncall_DC_argLong(JNIEnv *pEnv, jclass clazz, jlong vm, jlong l)
@@ -107,8 +133,13 @@ void JNICALL Java_org_dyncall_DC_argString(JNIEnv *pEnv, jclass clazz, jlong vm,
 	const char *sz = (*pEnv)->GetStringUTFChars(pEnv, s, NULL);
 	if(sz != NULL) {
 		dcArgPointer((DCCallVM*)vm, (DCpointer)sz);
-		//(*pEnv)->ReleaseStringUTFChars(pEnv, s, sz);
-		//@@@ free this string when vm is destroyed, reset
+
+		// Bookkeeping, to later release on reset or destruction of vm.
+		gc_jstr = realloc(gc_jstr, (gc_snum+1)*sizeof(jobject));
+		gc_cstr = realloc(gc_cstr, (gc_snum+1)*sizeof(const char*));
+		gc_jstr[gc_snum] = s;
+		gc_cstr[gc_snum] = sz;
+ 		++gc_snum;
 	}
 }
 
@@ -134,7 +165,7 @@ jshort JNICALL Java_org_dyncall_DC_callShort(JNIEnv *pEnv, jclass clazz, jlong v
 
 jint JNICALL Java_org_dyncall_DC_callInt(JNIEnv *pEnv, jclass clazz, jlong vm, jlong target)
 {
-	return dcCallInt((DCCallVM*)vm, (DCpointer)target);//@@@test
+	return dcCallInt((DCCallVM*)vm, (DCpointer)target);
 }
 
 jlong JNICALL Java_org_dyncall_DC_callLong(JNIEnv *pEnv, jclass clazz, jlong vm, jlong target)
@@ -159,16 +190,16 @@ jdouble JNICALL Java_org_dyncall_DC_callDouble(JNIEnv *pEnv, jclass clazz, jlong
 
 jlong JNICALL Java_org_dyncall_DC_callPointer(JNIEnv *pEnv, jclass clazz, jlong vm, jlong target)
 {
-	return (jlong)dcCallPointer((DCCallVM*)vm, (DCpointer)target);//@@@test
+	return (jlong)dcCallPointer((DCCallVM*)vm, (DCpointer)target);
 }
 
 jstring JNICALL Java_org_dyncall_DC_callString(JNIEnv *pEnv, jclass clazz, jlong vm, jlong target)
 {
-	return (*pEnv)->NewStringUTF(pEnv, dcCallPointer((DCCallVM*)vm, (DCpointer)target));//@@@test
+	return (*pEnv)->NewStringUTF(pEnv, dcCallPointer((DCCallVM*)vm, (DCpointer)target));
 }
 
 jint JNICALL Java_org_dyncall_DC_getError(JNIEnv *pEnv, jclass clazz, jlong vm)
 {
-	return dcGetError((DCCallVM*)vm);//@@@test
+	return dcGetError((DCCallVM*)vm);
 }
 

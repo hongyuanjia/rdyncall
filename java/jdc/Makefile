@@ -15,7 +15,7 @@ $(SO): org_dyncall_DC.h org_dyncall_DC.c
 org_dyncall_DC.h: org/dyncall/DC.class
 	javah -jni org.dyncall.DC
 
-org/dyncall/DC.class:
+org/dyncall/DC.class: org/dyncall/DC.java
 	cd org/dyncall/ && javac DC.java
 
 .PHONY: build clean
