@@ -9,7 +9,8 @@ static jobject*     gc_jstr = NULL;
 static const char** gc_cstr = NULL;
 static void cleanupHeldStrings(JNIEnv *pEnv)
 {
-	for(int i=0; i<gc_snum; ++i)
+	int i;
+	for(i=0; i<gc_snum; ++i)
 		(*pEnv)->ReleaseStringUTFChars(pEnv, gc_jstr[i], gc_cstr[i]);
 
 	free(gc_jstr); gc_jstr = NULL;
