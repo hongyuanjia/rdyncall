@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h> /* needed on some platforms to make atof work _at_runtime_ */
 
-#define SHDC_VERSION "0.9"
+#define SHDC_VERSION "1.0"
 
 
 void usage(const char* s)

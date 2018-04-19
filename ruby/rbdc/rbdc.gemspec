@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
 	spec.summary               = 'foreign function interface for C calls'
 	spec.description           = 'Ruby interface to dyncall, allowing programmers to call C functions in shared libraries from ruby without writing any glue code at all (e.g. "l.load(\'/usr/lib/libm.so\'); puts \'pow(2.0, 10.0) = \' + l.call(:pow, \'dd)d\', 2.0, 10.0).to_s")'
 
-	spec.version               = '0.9.0'
+	spec.version               = '1.0.0'
 	spec.required_ruby_version = '>= 1.9.1'
 	spec.license               = 'ISC'
 

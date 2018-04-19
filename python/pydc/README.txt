@@ -2,6 +2,7 @@ dyncall python bindings
 (C) 2007-2016 Daniel Adler
 Dec 4, 2007: initial
 Mar 22,2016: update to dyncall 0.9, includes breaking sig char changes
+Apr 19,2018: update to dyncall 1.0
 
 
 BUILD/INSTALLATION
