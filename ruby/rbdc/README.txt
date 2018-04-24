@@ -10,7 +10,7 @@ BUILD/INSTALLATION
    So, you need dyncall's full source code to be included. Unfortunately, the .gemspec isn't
    flexible enough to pull from different paths, so building the .gem file requires dyncall
    to be found next to rbdc.c and extconf.rb. This means either copy dyncall's base directory
-   do ./dyncall or create a symlink ./dyncall, that points to it.
+   to ./dyncall or create a symlink ./dyncall, that points to it.
 
 2) Then, build this gem with:
 
