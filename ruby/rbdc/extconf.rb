@@ -1,7 +1,7 @@
 #//////////////////////////////////////////////////////////////////////
 #
 # extconf.rb
-# Copyright (c) 2007-2015 Daniel Adler <dadler@uni-goettingen.de>, 
+# Copyright (c) 2007-2018 Daniel Adler <dadler@uni-goettingen.de>,
 #                         Tassilo Philipp <tphilipp@potion-studios.com>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -35,7 +35,7 @@ puts 'Building dyncall libraries:'
 Dir.chdir(base_dir) do
 	cmd = case
 		when RUBY_PLATFORM =~ /mswin/  then 'configure.bat && nmake /f Nmakefile'
-		else './configure && env CFLAGS="-fPIC" make'
+		else './configure && make'
 	end
 	puts cmd
 	raise "'#{cmd}' failed" unless system(cmd)

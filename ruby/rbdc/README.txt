@@ -1,5 +1,5 @@
 dyncall ruby bindings
-Copyright 2007-2016 Tassilo Philipp
+Copyright 2007-2018 Tassilo Philipp
 
 
 BUILD/INSTALLATION
