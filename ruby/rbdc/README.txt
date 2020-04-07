@@ -63,7 +63,7 @@ format: "xxxxx)y"
 TODO
 ====
 
-- support signature suffixes used to indicate calling conventions, are not supported yet!
+- signature suffixes used to indicate calling conventions are not supported yet!
 - C pointer -> ruby... array?
 - callback support
 

@@ -7,7 +7,8 @@ if sys.platform == "win32":
 elif sys.platform == "darwin":
   libc = load("/usr/lib/libc.dylib")
 elif "bsd" in sys.platform:
-  libc = load("/usr/lib/libc.so")
+  #libc = load("/usr/lib/libc.so")
+  libc = load("/lib/libc.so.7")
 elif platform.architecture()[0] == "64bit":
   libc = load("/lib64/libc.so.6")
 else:
@@ -18,9 +19,9 @@ fp_atof = find(libc,"atof")
 
 
 
-def atoi(s): return call(fp_atoi,"p)i",s)
-def atod(s): return call(fp_atof,"p)d",s)
+def atoi(s): return call(fp_atoi,"Z)i",s)
+def atod(s): return call(fp_atof,"Z)d",s)
 
-print atoi( "3".join(["12","45"]) )
-print atod( "3".join(["12","45"]) )
+print(atoi("3".join(["12","45"])))
+print(atod("3".join(["12","45"])))
 

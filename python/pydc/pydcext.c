@@ -3,9 +3,14 @@
  **       pydc - python dyncall package
  **
  **       python extension package in C
- **       Copyright 2007 Daniel Adler.
+ **       Copyright 2007-2016 Daniel Adler
+ **                 2018-2020 Tassilo Philipp
  **
- **       December 04, 2007
+ **       December 04, 2007: initial
+ **       March    22, 2016: update to dyncall 0.9, includes breaking sig char changes
+ **       April    19, 2018: update to dyncall 1.0
+ **       April     7, 2020: update to dyncall 1.1, Python 3 support, using the Capsule
+ **                          API, as well as support for python unicode strings
  **
  *****************************************************************************/
 
@@ -13,13 +18,51 @@
 #include "dynload.h"
 #include <limits.h>
 
+
+
+#if (    (PY_VERSION_HEX <  0x02070000) \
+     || ((PY_VERSION_HEX >= 0x03000000) \
+      && (PY_VERSION_HEX <  0x03010000)) )
+#  define DcPyCObject_FromVoidPtr(ptr, dtor)   PyCObject_FromVoidPtr((ptr), (dtor))
+#  define DcPyCObject_AsVoidPtr(ppobj)         PyCObject_AsVoidPtr((ppobj))
+#  define DcPyCObject_SetVoidPtr(ppobj, ptr)   PyCObject_SetVoidPtr((ppobj), (ptr))
+#else
+#  define USE_CAPSULE_API
+#  define DcPyCObject_FromVoidPtr(ptr, dtor)   PyCapsule_New((ptr), NULL, (dtor))
+#  define DcPyCObject_AsVoidPtr(ppobj)         PyCapsule_GetPointer((ppobj), NULL)
+#  define DcPyCObject_SetVoidPtr(ppobj, ptr)   PyCapsule_SetPointer((ppobj), (ptr))  // this might need to call the dtor to behave like PyCObject_SetVoidPtr?
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+#  define DcPyString_GET_SIZE PyBytes_GET_SIZE
+#  define DcPyString_Check    PyBytes_Check
+#  define DcPyString_AsString PyBytes_AsString
+#  define DcPyInt_Check       PyLong_Check
+#  define DcPyInt_AsLong      PyLong_AsLong
+#  define DcPyInt_AS_LONG     PyLong_AS_LONG
+#else
+#  define DcPyString_GET_SIZE PyString_GET_SIZE
+#  define DcPyString_Check    PyString_Check
+#  define DcPyString_AsString PyString_AsString
+#  define DcPyInt_Check       PyInt_Check
+#  define DcPyInt_AsLong      PyInt_AsLong
+#  define DcPyInt_AS_LONG     PyInt_AS_LONG
+#endif
+
 /* PyCObject destructor callback for libhandle */
 
+#if defined(USE_CAPSULE_API)
+void free_library(PyObject* capsule)
+{
+  void* libhandle = PyCapsule_GetPointer(capsule, NULL);
+#else
 void free_library(void* libhandle)
 {
+#endif
   if (libhandle != 0)
     dlFreeLibrary(libhandle);
 }
+
 
 /* load function */
 
@@ -29,13 +72,15 @@ pydc_load(PyObject* self, PyObject* args)
   const char* libpath;
   void* libhandle;
 
-  if ( !PyArg_ParseTuple(args,"s", &libpath) ) return PyErr_Format(PyExc_RuntimeError, "libpath argument (string) missing");
+  if (!PyArg_ParseTuple(args,"s", &libpath))
+    return PyErr_Format(PyExc_RuntimeError, "libpath argument (string) missing");
 
   libhandle = dlLoadLibrary(libpath);
 
-  if (!libhandle) return PyErr_Format(PyExc_RuntimeError, "dlLoadLibrary('%s') failed", libpath);
+  if (!libhandle)
+    return PyErr_Format(PyExc_RuntimeError, "dlLoadLibrary('%s') failed", libpath);
 
-  return PyCObject_FromVoidPtr(libhandle, &free_library);
+  return DcPyCObject_FromVoidPtr(libhandle, &free_library);
 }
 
 /* find function */
@@ -48,17 +93,18 @@ pydc_find(PyObject* self, PyObject* args)
   void* libhandle;
   void* funcptr;
 
-  if ( !PyArg_ParseTuple(args,"Os", &pcobj, &symbol) ) return PyErr_Format(PyExc_RuntimeError, "argument mismatch");
+  if (!PyArg_ParseTuple(args, "Os", &pcobj, &symbol))
+    return PyErr_Format(PyExc_RuntimeError, "argument mismatch");
 
-  libhandle = PyCObject_AsVoidPtr(pcobj);
-
-  if (!libhandle) return PyErr_Format(PyExc_RuntimeError, "libhandle is null");
+  libhandle = DcPyCObject_AsVoidPtr(pcobj);
+  if (!libhandle)
+    return PyErr_Format(PyExc_RuntimeError, "libhandle is null");
 
   funcptr = dlFindSymbol(libhandle, symbol);
   if (!funcptr)
     return PyErr_Format(PyExc_RuntimeError, "symbol '%s' not found", symbol);
 
-  return PyCObject_FromVoidPtr(funcptr, NULL);
+  return DcPyCObject_FromVoidPtr(funcptr, NULL);
 }
 
 /* free function */
@@ -69,16 +115,19 @@ pydc_free(PyObject* self, PyObject* args)
   PyObject* pcobj;
   void* libhandle;
 
-  if ( !PyArg_ParseTuple(args,"o", &pcobj) ) return PyErr_Format(PyExc_RuntimeError, "argument mismatch");
+  if (!PyArg_ParseTuple(args, "o", &pcobj))
+    return PyErr_Format(PyExc_RuntimeError, "argument mismatch");
 
-  libhandle = PyCObject_AsVoidPtr(pcobj);
-
-  if (!libhandle) return PyErr_Format(PyExc_RuntimeError, "libhandle is NULL");
+  libhandle = DcPyCObject_AsVoidPtr(pcobj);
+  if (!libhandle)
+    return PyErr_Format(PyExc_RuntimeError, "libhandle is NULL");
 
   dlFreeLibrary(libhandle);
-  PyCObject_SetVoidPtr(pcobj,0);
+  DcPyCObject_SetVoidPtr(pcobj, NULL);
+
   Py_RETURN_NONE;
 }
+
 
 #include "dyncall.h"
 #include "dyncall_signature.h"
@@ -99,9 +148,13 @@ pydc_call(PyObject* self, PyObject* in_args)
   int         pos;
   void*       pfunc;
 
-  if ( !PyArg_ParseTuple(in_args,"OsO", &pcobj_funcptr, &signature, &args) ) return PyErr_Format(PyExc_RuntimeError, "argument mismatch");
-  pfunc = PyCObject_AsVoidPtr(pcobj_funcptr);
-  if ( !pfunc ) return PyErr_Format( PyExc_RuntimeError, "function pointer is NULL" );
+  if (!PyArg_ParseTuple(in_args,"OsO", &pcobj_funcptr, &signature, &args))
+    return PyErr_Format(PyExc_RuntimeError, "argument mismatch");
+
+  pfunc = DcPyCObject_AsVoidPtr(pcobj_funcptr);
+  if (!pfunc)
+    return PyErr_Format( PyExc_RuntimeError, "function pointer is NULL" );
+
   l = PyTuple_Size(args);
 
   ptr = signature;
@@ -133,20 +186,20 @@ pydc_call(PyObject* self, PyObject* in_args)
       case DC_SIGCHAR_UCHAR:
       {
         DCchar c;
-        if ( PyString_Check(po) )
+        if ( DcPyString_Check(po) )
         {
           // Py_ssize_t l;
           size_t l;
           char* s;
-          l = PyString_GET_SIZE(po);
+          l = DcPyString_GET_SIZE(po);
           if (l != 1) return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting a string with length of 1 (a char string)", index );
-          s = PyString_AsString(po);
+          s = DcPyString_AsString(po);
           c = (DCchar) s[0];
         }
-        else if ( PyInt_Check(po) )
+        else if ( DcPyInt_Check(po) )
         {
           long l;
-          l = PyInt_AsLong(po);
+          l = DcPyInt_AsLong(po);
           if ( (l > CHAR_MAX) || (l < CHAR_MIN)) return PyErr_Format( PyExc_RuntimeError, "value out of range at argument %d - expecting a char code", index );
           c = (DCchar) l;
         }
@@ -159,9 +212,9 @@ pydc_call(PyObject* self, PyObject* in_args)
       {
         DCshort s;
         long v;
-        if ( !PyInt_Check(po) )
+        if ( !DcPyInt_Check(po) )
           return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting a short int", index );
-        v = PyInt_AS_LONG(po);
+        v = DcPyInt_AS_LONG(po);
         if ( (v < SHRT_MIN) || (v > SHRT_MAX) )
           return PyErr_Format( PyExc_RuntimeError, "value out of range at argument %d - expecting a short value", index );
         s = (DCshort) v;
@@ -172,8 +225,8 @@ pydc_call(PyObject* self, PyObject* in_args)
       case DC_SIGCHAR_UINT:
       {
         long v;
-        if ( !PyInt_Check(po) ) return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting an int", index );
-        v = PyInt_AS_LONG(po);
+        if ( !DcPyInt_Check(po) ) return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting an int", index );
+        v = DcPyInt_AS_LONG(po);
         dcArgInt(gpCall, (DCint) v );
       }
       break;
@@ -181,8 +234,8 @@ pydc_call(PyObject* self, PyObject* in_args)
       case DC_SIGCHAR_ULONG:
       {
         long v;
-        if ( !PyInt_Check(po) ) return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting an int", index );
-        v = PyInt_AsLong(po);
+        if ( !DcPyInt_Check(po) ) return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting an int", index );
+        v = DcPyInt_AsLong(po);
 
       }
       break;
@@ -215,23 +268,40 @@ pydc_call(PyObject* self, PyObject* in_args)
       break;
       case DC_SIGCHAR_POINTER:
       {
-        DCpointer ptr;
-        if ( PyString_Check(po) ) {
-          ptr = (DCpointer) PyString_AsString(po);
+        DCpointer p;
+        if ( PyUnicode_Check(po) ) {
+          PyObject* bo = PyUnicode_AsEncodedString(po, "utf-8", "strict"); // Owned reference @@@
+          if (bo) {
+            p = PyBytes_AS_STRING(bo); // Borrowed pointer
+            //p = strdup(my_result);
+            //Py_DECREF(bo);
+          }
+        } else if ( DcPyString_Check(po) ) {
+          p = (DCpointer) DcPyString_AsString(po);
         } else if ( PyLong_Check(po) ) {
-          ptr = (DCpointer) ( (DCint) PyLong_AsLongLong(po) );
+          p = (DCpointer) PyLong_AsVoidPtr(po);
         } else {
           return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting a promoting pointer-type (int,string)", index );
         }
-        dcArgPointer(gpCall, ptr );
+        dcArgPointer(gpCall, p);
       }
       break;
       case DC_SIGCHAR_STRING:
       {
-        char* p;
-        if (!PyString_Check(po) ) return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting a string", index );
-        p = PyString_AsString(po);
-        dcArgPointer(gpCall, (DCpointer) p );
+        const char* p;
+        if ( PyUnicode_Check(po) ) {
+          PyObject* bo = PyUnicode_AsEncodedString(po, "utf-8", "strict"); // Owned reference @@@
+          if (bo) {
+            p = PyBytes_AS_STRING(bo); // Borrowed pointer
+            //p = strdup(my_result);
+            //Py_DECREF(bo);
+          }
+        } else if ( DcPyString_Check(po) ) {
+          p = DcPyString_AsString(po);
+        } else {
+          return PyErr_Format( PyExc_RuntimeError, "argument mismatch at pos %d - expecting a string", index );
+        }
+        dcArgPointer(gpCall, (DCpointer) p);
       }
       break;
       default: return PyErr_Format( PyExc_RuntimeError, "unknown signature character '%c'", ch);
@@ -264,27 +334,55 @@ pydc_call(PyObject* self, PyObject* in_args)
     case DC_SIGCHAR_FLOAT:     return Py_BuildValue("f", dcCallFloat   (gpCall, pfunc));
     case DC_SIGCHAR_DOUBLE:    return Py_BuildValue("d", dcCallDouble  (gpCall, pfunc));
     case DC_SIGCHAR_STRING:    return Py_BuildValue("s", dcCallPointer (gpCall, pfunc));
-    case DC_SIGCHAR_POINTER:   return Py_BuildValue("p", dcCallPointer (gpCall, pfunc));  // @@@ probably not working, there is no "p"
+    case DC_SIGCHAR_POINTER:   return Py_BuildValue("n", dcCallPointer (gpCall, pfunc)); // @@@test, this used to be 'p' which doesn't exist, 'n' is for "Py_ssize_t"
     default:                   return PyErr_Format(PyExc_RuntimeError, "invalid return type signature");
   }
 }
 
 
-static PyMethodDef pydcMethods[] = {
-  {"load", pydc_load, METH_VARARGS, "load library"},
-  {"find", pydc_find, METH_VARARGS, "find symbols"},
-  {"free", pydc_free, METH_VARARGS, "free library"},
-  {"call", pydc_call, METH_VARARGS, "call function"},
-  {NULL,NULL,0,NULL}
-};
+
+
+
+#define PYDC_TO_STR_(x)     #x
+#define PYDC_TO_STR(x)      PYDC_TO_STR_(x)
+#define PYDC_CONCAT_(x, y)  x ## y
+#define PYDC_CONCAT(x, y)   PYDC_CONCAT_(x, y)
+
+#define PYDC_MOD_NAME       pydcext
+#define PYDC_MOD_NAME_STR   PYDC_TO_STR(PYDC_MOD_NAME)
+#define PYDC_MOD_DESC_STR  "dyncall bindings for python"
+
+#if PY_MAJOR_VERSION >= 3
+#  define PY_MOD_INIT_FUNC_NAME  PYDC_CONCAT(PyInit_, PYDC_MOD_NAME)
+#else
+#  define PY_MOD_INIT_FUNC_NAME  PYDC_CONCAT(init, PYDC_MOD_NAME)
+#endif
+
 
 PyMODINIT_FUNC
-initpydcext(void)
+PY_MOD_INIT_FUNC_NAME(void)
 {
+  static PyMethodDef pydcMethods[] = {
+    {"load", pydc_load, METH_VARARGS, "load library"},
+    {"find", pydc_find, METH_VARARGS, "find symbols"},
+    {"free", pydc_free, METH_VARARGS, "free library"},
+    {"call", pydc_call, METH_VARARGS, "call function"},
+    {NULL,NULL,0,NULL}
+  };
+
   PyObject* m;
-  m = Py_InitModule("pydcext", pydcMethods);
-  if (m == NULL)
-    return;
-  gpCall = dcNewCallVM(4096);
+#if PY_MAJOR_VERSION >= 3
+  static struct PyModuleDef moddef = { PyModuleDef_HEAD_INIT, PYDC_MOD_NAME_STR, PYDC_MOD_DESC_STR, -1, pydcMethods, NULL, NULL, NULL, NULL };
+  m = PyModule_Create(&moddef);
+#else
+  m = Py_InitModule3(PYDC_MOD_NAME_STR, pydcMethods, PYDC_MOD_DESC_STR);
+#endif
+
+  if(m)
+    gpCall = dcNewCallVM(4096);
+
+#if PY_MAJOR_VERSION >= 3
+  return m;
+#endif
 }
 

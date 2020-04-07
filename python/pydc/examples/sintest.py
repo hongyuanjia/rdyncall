@@ -15,28 +15,32 @@ elif platform.architecture()[0] == "64bit":
 else:
   libm = pydc.load("/lib/libm.so.6")
 
-fpsin = pydc.find(libm,"sin")
+fp_sin = pydc.find(libm,"sin")
 
 
 
 def f1(n):
-  for x in xrange(n):
+  x = 0
+  while x < n:
     math.sin(x)
+    x += 1
 #  filter( math.sin, range(0,n) )
 
-def libmsin(x): pass
+#def libmsin(x): pass
 
 def f2(n):
-  for x in xrange(n):
-    pydc.call(fpsin,"d)d",float(x))
+  x = 0
+  while x < n:
+    pydc.call(fp_sin,"d)d",float(x))
+    x += 1
 #    libmsin(i)
 
 #  filter( libmsin , range(0,n) )
 
 
-print "start_native"+str(os.times())
+print("start_native "+str(os.times()))
 f1(10000000)
-print "start_dc"+str(os.times())
+print("start_dc "+str(os.times()))
 f2(10000000)
-print "end"+str(os.times())
+print("end "+str(os.times()))
 
