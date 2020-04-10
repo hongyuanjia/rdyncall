@@ -75,7 +75,7 @@ pydc_load(PyObject* self, PyObject* args)
 	void* libhandle;
 
 	if (!PyArg_ParseTuple(args,"s", &libpath))
-		return PyErr_Format(PyExc_RuntimeError, "libpath argument (string) missing");
+		return PyErr_Format(PyExc_RuntimeError, "libpath argument (str) missing");
 
 	libhandle = dlLoadLibrary(libpath);
 
@@ -196,7 +196,7 @@ pydc_call(PyObject* self, PyObject* in_args)
 						Py_UCS4 cu;
 						if (PyUnicode_GET_LENGTH(po) != 1)
 #endif
-							return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a string with length of 1 (a char string)", pos );
+							return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a str with length of 1 (a char string)", pos );
 
 #if (PY_VERSION_HEX < 0x03030000)
 						cu = PyUnicode_AS_UNICODE(po)[0];
@@ -205,7 +205,7 @@ pydc_call(PyObject* self, PyObject* in_args)
 #endif
 						// check against UCHAR_MAX in every case b/c Py_UCS4 is unsigned
 						if ( (cu > UCHAR_MAX))
-							return PyErr_Format( PyExc_RuntimeError, "arg %d out of range - expecting a char code", pos ); //@@@ error message needs to specify python types
+							return PyErr_Format( PyExc_RuntimeError, "arg %d out of range - expecting a char code", pos );
 						c = (DCchar) cu;
 					}
 					else if ( DcPyString_Check(po) )
@@ -214,7 +214,7 @@ pydc_call(PyObject* self, PyObject* in_args)
 						char* s;
 						l = DcPyString_GET_SIZE(po);
 						if (l != 1)
-							return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a string with length of 1 (a char string)", pos );
+							return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a str with length of 1 (a char string)", pos );
 						s = DcPyString_AsString(po);
 						c = (DCchar) s[0];
 					}
@@ -311,7 +311,7 @@ pydc_call(PyObject* self, PyObject* in_args)
 				else if ( PyLong_Check(po) )
 					p = (DCpointer) PyLong_AsVoidPtr(po);
 				else
-					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a promoting pointer-type (int,string)", pos ); //@@@ error message could be better
+					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a promoting pointer-type (int,str)", pos );
 				dcArgPointer(gpCall, p);
 				Py_XDECREF(bo);
 			}
@@ -327,7 +327,7 @@ pydc_call(PyObject* self, PyObject* in_args)
 				} else if ( DcPyString_Check(po) ) {
 					p = DcPyString_AsString(po);
 				} else
-					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a string", pos );
+					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a str", pos );
 				dcArgPointer(gpCall, (DCpointer) p);
 				Py_XDECREF(bo);
 			}
