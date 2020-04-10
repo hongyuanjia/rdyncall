@@ -71,3 +71,10 @@ TODO
 - signature suffixes used to indicate calling conventions are not supported yet!
 - callback support
 
+BUGS
+====
+
+- when using Python 2, the dyncall call vm object is never dcFree'd, as there
+  is no way to call a "freefunc" as introduced with Python 3 module definitions
+  (see PEP 3121 for details)
+

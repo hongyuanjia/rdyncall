@@ -23,12 +23,12 @@
 #if (    (PY_VERSION_HEX <  0x02070000) \
      || ((PY_VERSION_HEX >= 0x03000000) \
       && (PY_VERSION_HEX <  0x03010000)) )
-#  define DcPyCObject_FromVoidPtr(ptr, dtor)   PyCObject_FromVoidPtr((ptr), (dtor))
+#  define DcPyCObject_FromVoidPtr(ptr, dtor)   PyCObject_FromVoidPtr((ptr), (dtor))  // !new ref!
 #  define DcPyCObject_AsVoidPtr(ppobj)         PyCObject_AsVoidPtr((ppobj))
 #  define DcPyCObject_SetVoidPtr(ppobj, ptr)   PyCObject_SetVoidPtr((ppobj), (ptr))
 #else
 #  define USE_CAPSULE_API
-#  define DcPyCObject_FromVoidPtr(ptr, dtor)   PyCapsule_New((ptr), NULL, (dtor))
+#  define DcPyCObject_FromVoidPtr(ptr, dtor)   PyCapsule_New((ptr), NULL, (dtor))    // !new ref!
 #  define DcPyCObject_AsVoidPtr(ppobj)         PyCapsule_GetPointer((ppobj), NULL)
 #  define DcPyCObject_SetVoidPtr(ppobj, ptr)   //@@@ unsure what to do, cannot/shouldn't call this with a null pointer as this wants to call the dtor, so not doing anything: PyCapsule_SetPointer((ppobj), (ptr))  // this might need to call the dtor to behave like PyCObject_SetVoidPtr?
 #endif
@@ -82,7 +82,7 @@ pydc_load(PyObject* self, PyObject* args)
 	if (!libhandle)
 		return PyErr_Format(PyExc_RuntimeError, "dlLoadLibrary('%s') failed", libpath);
 
-	return DcPyCObject_FromVoidPtr(libhandle, &free_library);
+	return DcPyCObject_FromVoidPtr(libhandle, &free_library);  // !new ref!
 }
 
 /* find function */
@@ -106,7 +106,7 @@ pydc_find(PyObject* self, PyObject* args)
 	if (!funcptr)
 		return PyErr_Format(PyExc_RuntimeError, "symbol '%s' not found", symbol);
 
-	return DcPyCObject_FromVoidPtr(funcptr, NULL);
+	return DcPyCObject_FromVoidPtr(funcptr, NULL);  // !new ref!
 }
 
 /* free function */
@@ -127,6 +127,9 @@ pydc_free(PyObject* self, PyObject* args)
 	dlFreeLibrary(libhandle);
 	DcPyCObject_SetVoidPtr(pcobj, NULL);
 
+	//don't think I need to release it, as the pyobj is not equivalent to the held handle
+	//Py_XDECREF(pcobj); // release ref from pydc_load()
+
 	Py_RETURN_NONE;
 }
 
@@ -134,7 +137,7 @@ pydc_free(PyObject* self, PyObject* args)
 #include "dyncall.h"
 #include "dyncall_signature.h"
 
-DCCallVM* gpCall;
+DCCallVM* gpCall = NULL;
 
 
 /* call function */
@@ -294,14 +297,11 @@ pydc_call(PyObject* self, PyObject* in_args)
 
 			case DC_SIGCHAR_POINTER:
 			{
+				PyObject* bo = NULL;
 				DCpointer p;
 				if ( PyUnicode_Check(po) ) {
-					PyObject* bo = PyUnicode_AsEncodedString(po, "utf-8", "strict"); // Owned reference @@@
-					if (bo) {
+					if((bo = PyUnicode_AsEncodedString(po, "utf-8", "strict")))  // !new ref!
 						p = PyBytes_AS_STRING(bo); // Borrowed pointer
-						//p = strdup(my_result);
-						//Py_DECREF(bo);
-					}
 				} else if ( DcPyString_Check(po) )
 					p = (DCpointer) DcPyString_AsString(po);
 #if PY_MAJOR_VERSION < 3
@@ -311,27 +311,25 @@ pydc_call(PyObject* self, PyObject* in_args)
 				else if ( PyLong_Check(po) )
 					p = (DCpointer) PyLong_AsVoidPtr(po);
 				else
-					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a promoting pointer-type (int,string)", pos ); //@@@ error message needs to specify python types
+					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a promoting pointer-type (int,string)", pos ); //@@@ error message could be better
 				dcArgPointer(gpCall, p);
+				Py_XDECREF(bo);
 			}
 			break;
 
 			case DC_SIGCHAR_STRING:
 			{
+				PyObject* bo = NULL;
 				const char* p;
 				if ( PyUnicode_Check(po) ) {
-					PyObject* bo = PyUnicode_AsEncodedString(po, "utf-8", "strict"); // Owned reference @@@
-					if (bo) {
+					if((bo = PyUnicode_AsEncodedString(po, "utf-8", "strict")))  // !new ref!
 						p = PyBytes_AS_STRING(bo); // Borrowed pointer
-						//p = strdup(my_result);@@@
-						//Py_DECREF(bo);@@@
-					}
 				} else if ( DcPyString_Check(po) ) {
 					p = DcPyString_AsString(po);
-				} else {
-					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a string", pos ); //@@@ error message needs to specify python types
-				}
+				} else
+					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a string", pos );
 				dcArgPointer(gpCall, (DCpointer) p);
+				Py_XDECREF(bo);
 			}
 			break;
 
@@ -350,28 +348,37 @@ pydc_call(PyObject* self, PyObject* in_args)
 	ch = *++ptr;
 	switch(ch)
 	{
-		case DC_SIGCHAR_VOID:                                dcCallVoid    (gpCall, pfunc); Py_RETURN_NONE;
-		case DC_SIGCHAR_BOOL:      return                    dcCallBool    (gpCall, pfunc)?Py_True:Py_False;
-		case DC_SIGCHAR_CHAR:      return Py_BuildValue("b", dcCallChar    (gpCall, pfunc));
-		case DC_SIGCHAR_UCHAR:     return Py_BuildValue("B", dcCallChar    (gpCall, pfunc));
-		case DC_SIGCHAR_SHORT:     return Py_BuildValue("h", dcCallShort   (gpCall, pfunc));
-		case DC_SIGCHAR_USHORT:    return Py_BuildValue("H", dcCallShort   (gpCall, pfunc));
-		case DC_SIGCHAR_INT:       return Py_BuildValue("i", dcCallInt     (gpCall, pfunc));
-		case DC_SIGCHAR_UINT:      return Py_BuildValue("I", dcCallInt     (gpCall, pfunc));
-		case DC_SIGCHAR_LONG:      return Py_BuildValue("l", dcCallLong    (gpCall, pfunc));
-		case DC_SIGCHAR_ULONG:     return Py_BuildValue("k", dcCallLong    (gpCall, pfunc));
-		case DC_SIGCHAR_LONGLONG:  return Py_BuildValue("L", dcCallLongLong(gpCall, pfunc));
-		case DC_SIGCHAR_ULONGLONG: return Py_BuildValue("K", dcCallLongLong(gpCall, pfunc));
-		case DC_SIGCHAR_FLOAT:     return Py_BuildValue("f", dcCallFloat   (gpCall, pfunc));
-		case DC_SIGCHAR_DOUBLE:    return Py_BuildValue("d", dcCallDouble  (gpCall, pfunc));
-		case DC_SIGCHAR_STRING:    return Py_BuildValue("s", dcCallPointer (gpCall, pfunc));
-		case DC_SIGCHAR_POINTER:   return Py_BuildValue("n", dcCallPointer (gpCall, pfunc)); // @@@test, this used to be 'p' which doesn't exist, 'n' is for "Py_ssize_t"
+		// every line creates a new reference passed back to python
+		case DC_SIGCHAR_VOID:                                dcCallVoid    (gpCall, pfunc); Py_RETURN_NONE;                        // !new ref!
+		case DC_SIGCHAR_BOOL:                             if(dcCallBool    (gpCall, pfunc)){Py_RETURN_TRUE;}else{Py_RETURN_FALSE;} // !new ref!
+		case DC_SIGCHAR_CHAR:      return Py_BuildValue("b", dcCallChar    (gpCall, pfunc));                                       // !new ref!
+		case DC_SIGCHAR_UCHAR:     return Py_BuildValue("B", dcCallChar    (gpCall, pfunc));                                       // !new ref!
+		case DC_SIGCHAR_SHORT:     return Py_BuildValue("h", dcCallShort   (gpCall, pfunc));                                       // !new ref!
+		case DC_SIGCHAR_USHORT:    return Py_BuildValue("H", dcCallShort   (gpCall, pfunc));                                       // !new ref!
+		case DC_SIGCHAR_INT:       return Py_BuildValue("i", dcCallInt     (gpCall, pfunc));                                       // !new ref!
+		case DC_SIGCHAR_UINT:      return Py_BuildValue("I", dcCallInt     (gpCall, pfunc));                                       // !new ref!
+		case DC_SIGCHAR_LONG:      return Py_BuildValue("l", dcCallLong    (gpCall, pfunc));                                       // !new ref!
+		case DC_SIGCHAR_ULONG:     return Py_BuildValue("k", dcCallLong    (gpCall, pfunc));                                       // !new ref!
+		case DC_SIGCHAR_LONGLONG:  return Py_BuildValue("L", dcCallLongLong(gpCall, pfunc));                                       // !new ref!
+		case DC_SIGCHAR_ULONGLONG: return Py_BuildValue("K", dcCallLongLong(gpCall, pfunc));                                       // !new ref!
+		case DC_SIGCHAR_FLOAT:     return Py_BuildValue("f", dcCallFloat   (gpCall, pfunc));                                       // !new ref!
+		case DC_SIGCHAR_DOUBLE:    return Py_BuildValue("d", dcCallDouble  (gpCall, pfunc));                                       // !new ref!
+		case DC_SIGCHAR_STRING:    return Py_BuildValue("s", dcCallPointer (gpCall, pfunc));                                       // !new ref!
+		case DC_SIGCHAR_POINTER:   return Py_BuildValue("n", dcCallPointer (gpCall, pfunc));                                       // !new ref!
 		default:                   return PyErr_Format(PyExc_RuntimeError, "invalid return type signature");
 	}
 }
 
 
 
+// module deinit
+static void deinit_pydc(void* x)
+{
+	if(gpCall) {
+		dcFree(gpCall);
+		gpCall = NULL;
+	}
+}
 
 
 #define PYDC_TO_STR_(x)     #x
@@ -403,10 +410,11 @@ PY_MOD_INIT_FUNC_NAME(void)
 
 	PyObject* m;
 #if PY_MAJOR_VERSION >= 3
-	static struct PyModuleDef moddef = { PyModuleDef_HEAD_INIT, PYDC_MOD_NAME_STR, PYDC_MOD_DESC_STR, -1, pydcMethods, NULL, NULL, NULL, NULL };
+	static struct PyModuleDef moddef = { PyModuleDef_HEAD_INIT, PYDC_MOD_NAME_STR, PYDC_MOD_DESC_STR, -1, pydcMethods, NULL, NULL, NULL, deinit_pydc };
 	m = PyModule_Create(&moddef);
 #else
 	m = Py_InitModule3(PYDC_MOD_NAME_STR, pydcMethods, PYDC_MOD_DESC_STR);
+	// NOTE: there is no way to pass a pointer to deinit_pydc - see PEP 3121 for details
 #endif
 
 	if(m)
