@@ -133,6 +133,36 @@ pydc_free(PyObject* self, PyObject* args)
 	Py_RETURN_NONE;
 }
 
+/* get_path function */
+
+static PyObject*
+pydc_get_path(PyObject* self, PyObject* args)
+{
+	PyObject* pcobj;
+	PyObject* retobj;
+	void* libhandle;
+	char* path;
+	int path_bufSize;
+
+	if (!PyArg_ParseTuple(args, "O", &pcobj))
+		return PyErr_Format(PyExc_RuntimeError, "argument mismatch");
+
+	libhandle = (pcobj == Py_None)?NULL:DcPyCObject_AsVoidPtr(pcobj);
+	path_bufSize = dlGetLibraryPath(libhandle, NULL, 0);
+	if (!path_bufSize)
+		return PyErr_Format(PyExc_RuntimeError, "library path cannot be found");
+
+	path = malloc(path_bufSize);
+	if (path_bufSize != dlGetLibraryPath(libhandle, path, path_bufSize)) {
+		free(path);
+		return PyErr_Format(PyExc_RuntimeError, "library path cannot be queried");
+	}
+
+	retobj = Py_BuildValue("s", path);  // !new ref!  @@@ UTF-8 input...
+	free(path);
+	return retobj;
+}
+
 
 #include "dyncall.h"
 #include "dyncall_signature.h"
@@ -401,10 +431,11 @@ PyMODINIT_FUNC
 PY_MOD_INIT_FUNC_NAME(void)
 {
 	static PyMethodDef pydcMethods[] = {
-		{"load", pydc_load, METH_VARARGS, "load library"},
-		{"find", pydc_find, METH_VARARGS, "find symbols"},
-		{"free", pydc_free, METH_VARARGS, "free library"},
-		{"call", pydc_call, METH_VARARGS, "call function"},
+		{"load",     pydc_load,     METH_VARARGS, "load library"    },
+		{"find",     pydc_find,     METH_VARARGS, "find symbols"    },
+		{"free",     pydc_free,     METH_VARARGS, "free library"    },
+		{"get_path", pydc_get_path, METH_VARARGS, "get library path"},
+		{"call",     pydc_call,     METH_VARARGS, "call function"   },
 		{NULL,NULL,0,NULL}
 	};
 
