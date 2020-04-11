@@ -74,7 +74,7 @@ pydc_load(PyObject* self, PyObject* args)
 	const char* libpath;
 	void* libhandle;
 
-	if (!PyArg_ParseTuple(args,"s", &libpath))
+	if (!PyArg_ParseTuple(args,"z", &libpath))
 		return PyErr_Format(PyExc_RuntimeError, "libpath argument (str) missing");
 
 	libhandle = dlLoadLibrary(libpath);
