@@ -325,15 +325,11 @@ pydc_call(PyObject* self, PyObject* in_args)
 				dcArgDouble(gpCall, PyFloat_AsDouble(po));
 				break;
 
-			case DC_SIGCHAR_POINTER:
+			case DC_SIGCHAR_POINTER: // this will only accept integers or mutable array types (meaning only bytearray)
 			{
-				PyObject* bo = NULL;
 				DCpointer p;
-				if ( PyUnicode_Check(po) ) {
-					if((bo = PyUnicode_AsEncodedString(po, "utf-8", "strict")))  // !new ref!
-						p = PyBytes_AS_STRING(bo); // Borrowed pointer
-				} else if ( DcPyString_Check(po) )
-					p = (DCpointer) DcPyString_AsString(po);
+				if ( PyByteArray_Check(po) )
+					p = (DCpointer) PyByteArray_AsString(po); // adds an extra '\0', but that's ok
 #if PY_MAJOR_VERSION < 3
 				else if ( PyInt_Check(po) )
 					p = (DCpointer) PyInt_AS_LONG(po);
@@ -341,25 +337,34 @@ pydc_call(PyObject* self, PyObject* in_args)
 				else if ( PyLong_Check(po) )
 					p = (DCpointer) PyLong_AsVoidPtr(po);
 				else
-					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a promoting pointer-type (int,str)", pos );
+					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a promoting pointer-type (int, bytearray)", pos );
 				dcArgPointer(gpCall, p);
-				Py_XDECREF(bo);
 			}
 			break;
 
-			case DC_SIGCHAR_STRING:
+			case DC_SIGCHAR_STRING: // strings are considered to be immutable objects
 			{
 				PyObject* bo = NULL;
 				const char* p;
+				char* p_;
+				size_t s;
 				if ( PyUnicode_Check(po) ) {
 					if((bo = PyUnicode_AsEncodedString(po, "utf-8", "strict")))  // !new ref!
 						p = PyBytes_AS_STRING(bo); // Borrowed pointer
-				} else if ( DcPyString_Check(po) ) {
-					p = DcPyString_AsString(po);
-				} else
+				} else if ( DcPyString_Check(po) )
+					p = DcPyString_AsString(po); //@@@ must not be modified in any way
+				else if ( PyByteArray_Check(po) )
+					p = (DCpointer) PyByteArray_AsString(po); // adds an extra '\0', but that's ok //@@@ not sure if allowed to modify
+				else
 					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a str", pos );
-				dcArgPointer(gpCall, (DCpointer) p);
+
+				// pointer points in any case to a buffer that shouldn't be modified, so pass a copy of the string to dyncall
+				s = strlen(p)+1;
+				p_ = malloc(s);
+				strncpy(p_, p, s);
 				Py_XDECREF(bo);
+				dcArgPointer(gpCall, (DCpointer)p_);
+				free(p_);
 			}
 			break;
 

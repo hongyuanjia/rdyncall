@@ -1,37 +1,9 @@
-#from dynload test
-## path to default libc.so file, easier to do via shell than in code (see main() in dynload_plain.c)
-## for compat: first gmake style, then assignment op which will use ! as part of var name on gmake<4
-##             and thus not override previously set var
-#DEF_C_DYLIB=$(shell ((ldd `which ls` | grep -o '/.*/libc.so[^ ]*' || ls /lib*/libc.so* || ls /usr/lib/libc.so*) | grep -v '\.a$$' | (sort -V -r || sort -t . -n -k 2)) 2>/dev/null | head -1)
-#DEF_C_DYLIB!=((ldd `which ls` | grep -o '/.*/libc.so[^ ]*' || ls /lib*/libc.so* || ls /usr/lib/libc.so*) | grep -v '\.a$$' | (sort -V -r || sort -t . -n -k 2)) 2>/dev/null | head -1
-#
-#APP        = dynload_plain
-#OBJS       = dynload_plain.o
-#TEST_U8_SO = dynload_plain_ß_test # @@@ unsure if every platform handles ß, here (ANSI, UTF-8, ...)
-#SRCTOP     = ${VPATH}/../..
-#BLDTOP     = ../..
-#CFLAGS    += -I${SRCTOP}/dynload -DDEF_C_DYLIB=\"${DEF_C_DYLIB}\"
-#LDLIBS_D  += -L${BLDTOP}/dynload -ldynload_s
-#
-## Works on: Darwin, NetBSD.
-# Linux: add '-ldl'
-#.PHONY: all clean install
-#all: ${APP} ${TEST_U8_SO}
-#${APP}: ${OBJS}
-#	${CC} ${LDFLAGS} ${OBJS} ${LDLIBS_D} ${LDLIBS} -o ${APP}
-#${TEST_U8_SO}:
-#	echo 'int dynload_plain_testfunc() { return 5; }' | ${CC} -`[ \`uname\` = Darwin ] && echo dynamiclib || echo shared` -x c - -o ${TEST_U8_SO}
-#clean:
-#	rm -f ${APP} ${OBJS} ${TEST_U8_SO}
-#install:
-#	mkdir -p ${PREFIX}/test
-#	cp ${APP} ${TEST_U8_SO} ${PREFIX}/test
-
 .PHONY: test.so
 
 test.so:
-	for i in char 'unsigned char' short 'unsigned short' int 'unsigned int' long 'unsigned long' 'long long' 'unsigned long long' float double 'const char*'; do \
-		echo "$$i `echo $$i | sed -E 's/(^| )([a-z])[^ ]*/\2/g'`_plus_one($$i v) { return v+1; }"; \
-	done | ${CC} -`[ \`uname\` = Darwin ] && echo dynamiclib || echo shared` -x c - -o $@
-	echo Done! Now you can run types.py
+	(for i in char 'unsigned char' short 'unsigned short' int 'unsigned int' long 'unsigned long' 'long long' 'unsigned long long' float double 'const char*'; do \
+		echo "$$i `echo $$i | sed -E 's/\*/ p/;s/(^| )([a-z])[^ ]*/\2/g'`_plus_one($$i v) { return v+1; }"; \
+	done; \
+	echo 'void cp_head_incr(char* v) { v[0]+=1; }') | ${CC} -`[ \`uname\` = Darwin ] && echo dynamiclib || echo shared` -x c - -o $@
+	@echo Done! Now you can run types.py
 
