@@ -227,6 +227,7 @@ pydc_call(PyObject* self, PyObject* in_args)
 						case DC_SIGCHAR_CC_SYSCALL:          dcMode(gpCall, DC_CALL_SYS_DEFAULT         ); break;
 					}
 				}
+				--pos; // didn't count as arg
 			}
 			break;
 
