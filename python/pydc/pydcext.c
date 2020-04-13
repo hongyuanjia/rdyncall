@@ -193,6 +193,7 @@ pydc_call(PyObject* self, PyObject* in_args)
 	ts  = PyTuple_Size(args);
 
 	dcReset(gpCall);
+	dcMode(gpCall, DC_CALL_C_DEFAULT);
 
 	for (ch = *ptr; ch != '\0' && ch != ')'; ch = *++ptr)
 	{

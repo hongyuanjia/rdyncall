@@ -7,11 +7,11 @@ pydcext = Extension('pydcext',
 
 setup(
   name             = 'pydc'
-, version          = '1.1.1'
-, author           = 'Daniel Adler'
-, author_email     = 'dadler@dyncall.org'
-, maintainer       = 'Daniel Adler'
-, maintainer_email = 'dadler@dyncall.org'
+, version          = '1.1.2'
+, author           = 'Daniel Adler, Tassilo Philipp'
+, author_email     = 'dadler@dyncall.org, tphilip@dyncall.org'
+, maintainer       = 'Daniel Adler, Tassilo Philipp'
+, maintainer_email = 'dadler@dyncall.org, tphilip@dyncall.org'
 , url              = 'https://www.dyncall.org'
 , download_url     = 'https://www.dyncall.org/download'
 , classifiers      = []

@@ -10,6 +10,7 @@ Apr  7, 2020: update to dyncall 1.1, Python 3 support, using the Capsule
 Apr 11, 2020: support for getting loaded library path
 Apr 12, 2020: breaking change: restrict 'Z' conversions to immutable types
               and 'p' to mutable types (and handles)
+Apr 13, 2020: added signature char support to specify calling conventions
 
 
 BUILD/INSTALLATION
@@ -28,10 +29,16 @@ Building a wheel package isn't supported, currently.
 API
 ===
 
-libhandle = load(libpath)
+libhandle = load(libpath)               # if path == None => handle to running process
+libpath   = get_path(libhandle)         # if handle == None => path to executable
 funcptr   = find(libhandle, symbolname)
 call(funcptr, signature, ...)
 free(libhandle)
+
+Note that there are no functions to set the calling convention mode. However,
+it can be set using the signature.
+Not specifying any calling convention in the signature string will use the
+platform's default one.
 
 
 SIGNATURE FORMAT
@@ -73,6 +80,7 @@ SIGNATURE FORMAT
       | -                               | bytes (PyBytes)               ! | const char* (UTF-8 for unicode) | int (PyString)                       | str (PyUnicode)
       | bytearray (PyByteArray)       ! | bytearray (PyByteArray)       ! | const char* (UTF-8 for unicode) | int (PyString)                       | str (PyUnicode)
 
+  Annotations:
   # converted to 1 if True and 0 otherwise
   @ converted to False if 0 and True otherwise
   % range/length checked
@@ -82,8 +90,24 @@ SIGNATURE FORMAT
   ! immutable buffer when passed to C, as strings (in any form) are considered objects, not buffers
 
 
-  also supported are specifying calling convention mode switches using
-  '_'-prefixed signature characters; consult the dyncall docs for a list
+  Also supported are specifying calling convention switches using '_'-prefixed
+  signature characters:
+
+  SIG | DESCRIPTION
+  ----+-----------------------------------------------------------------------------------------------------------
+  '_' | prefix indicating that next signature character specifies calling convention; char is one of the following
+  ':' | platform's default calling convention
+  'e' | vararg function
+  '.' | vararg function's variadic/ellipsis part (...), to be specified before first vararg
+  'c' | only on x86: cdecl
+  's' | only on x86: stdcall
+  'F' | only on x86: fastcall (MS)
+  'f' | only on x86: fastcall (GNU)
+  '+' | only on x86: thiscall (MS)
+  '#' | only on x86: thiscall (GNU)
+  'A' | only on ARM: ARM mode
+  'a' | only on ARM: THUMB mode
+  '$' | syscall
 
 
 TODO
