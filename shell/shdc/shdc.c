@@ -126,11 +126,18 @@ int main(int argc, char* argv[])
 			switch(*i) {
 				case DC_SIGCHAR_CC_PREFIX:
 					switch(*++i) {
-						case DC_SIGCHAR_CC_ELLIPSIS:     dcMode(vm, DC_CALL_C_ELLIPSIS);           break;
-						case DC_SIGCHAR_CC_STDCALL:      dcMode(vm, DC_CALL_C_X86_WIN32_STD);      break;
-						case DC_SIGCHAR_CC_FASTCALL_GNU: dcMode(vm, DC_CALL_C_X86_WIN32_FAST_GNU); break;
-						case DC_SIGCHAR_CC_FASTCALL_MS:  dcMode(vm, DC_CALL_C_X86_WIN32_FAST_MS);  break;
-						case DC_SIGCHAR_CC_THISCALL_MS:  dcMode(vm, DC_CALL_C_X86_WIN32_THIS_MS);  break;
+						case DC_SIGCHAR_CC_DEFAULT:          dcMode(vm, DC_CALL_C_DEFAULT           ); break;
+						case DC_SIGCHAR_CC_ELLIPSIS:         dcMode(vm, DC_CALL_C_ELLIPSIS          ); break;
+						case DC_SIGCHAR_CC_ELLIPSIS_VARARGS: dcMode(vm, DC_CALL_C_ELLIPSIS_VARARGS  ); break;
+						case DC_SIGCHAR_CC_CDECL:            dcMode(vm, DC_CALL_C_X86_CDECL         ); break;
+						case DC_SIGCHAR_CC_STDCALL:          dcMode(vm, DC_CALL_C_X86_WIN32_STD     ); break;
+						case DC_SIGCHAR_CC_FASTCALL_MS:      dcMode(vm, DC_CALL_C_X86_WIN32_FAST_MS ); break;
+						case DC_SIGCHAR_CC_FASTCALL_GNU:     dcMode(vm, DC_CALL_C_X86_WIN32_FAST_GNU); break;
+						case DC_SIGCHAR_CC_THISCALL_MS:      dcMode(vm, DC_CALL_C_X86_WIN32_THIS_MS ); break;
+						case DC_SIGCHAR_CC_THISCALL_GNU:     dcMode(vm, DC_CALL_C_X86_WIN32_THIS_GNU); break;
+						case DC_SIGCHAR_CC_ARM_ARM:          dcMode(vm, DC_CALL_C_ARM_ARM           ); break;
+						case DC_SIGCHAR_CC_ARM_THUMB:        dcMode(vm, DC_CALL_C_ARM_THUMB         ); break;
+						case DC_SIGCHAR_CC_SYSCALL:          dcMode(vm, DC_CALL_SYS_DEFAULT         ); break;
 						/* @@@ extend with other modes when they become available */
 					}
 					sig += 2;
