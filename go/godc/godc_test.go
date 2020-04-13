@@ -199,7 +199,7 @@ func TestGoDC(t *testing.T) {
 	if(rd != 61.4) { t.FailNow() }
 
 
-	// Ellipse
+	// Ellipsis
 	vm.Mode(DC_CALL_C_ELLIPSIS)
 	vm.Reset()
 	buf := make([]byte, 1000)
