@@ -37,11 +37,13 @@ free(libhandle)
 SIGNATURE FORMAT
 ================
 
-  is a formated string
+  ignoring calling convention mode switching for simplicity, the signature is
+  a string with the following format (using * as regex-like repetition):
 
-  format: "xxxxx)y"
+    "x*)y"
 
-    x is positional parameter-type charcode, y is result-type charcode
+  where x is positional parameter-type charcode (per argument), y is result-type charcode
+
 
   SIG | FROM PYTHON 2                   | FROM PYTHON 3                   | C/C++                           | TO PYTHON 2                          | TO PYTHON 3
   ----+---------------------------------+---------------------------------+---------------------------------+--------------------------------------+---------------------------------------
@@ -71,19 +73,24 @@ SIGNATURE FORMAT
       | -                               | bytes (PyBytes)               ! | const char* (UTF-8 for unicode) | int (PyString)                       | str (PyUnicode)
       | bytearray (PyByteArray)       ! | bytearray (PyByteArray)       ! | const char* (UTF-8 for unicode) | int (PyString)                       | str (PyUnicode)
 
-# converted to 1 if True and 0 otherwise
-@ converted to False if 0 and True otherwise
-% range/length checked
-$ cast to single precision
-^ cast to double precision
-& mutable buffer when passed to C
-! immutable buffer when passed to C, as strings (in any form) are considered objects, not buffers
+  # converted to 1 if True and 0 otherwise
+  @ converted to False if 0 and True otherwise
+  % range/length checked
+  $ cast to single precision
+  ^ cast to double precision
+  & mutable buffer when passed to C
+  ! immutable buffer when passed to C, as strings (in any form) are considered objects, not buffers
+
+
+  also supported are specifying calling convention mode switches using
+  '_'-prefixed signature characters; consult the dyncall docs for a list
+
 
 TODO
 ====
 
-- signature suffixes used to indicate calling conventions are not supported yet!
 - callback support
+
 
 BUGS
 ====

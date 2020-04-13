@@ -207,6 +207,29 @@ pydc_call(PyObject* self, PyObject* in_args)
 
 		switch(ch)
 		{
+			case DC_SIGCHAR_CC_PREFIX:
+			{
+				if(*(ptr+1) != '\0')
+				{
+					// @@@ this is easily going out of sync with dyncall, abstract this sigchar->mode lookup somewhere inside dyncall
+					switch(*++ptr) {
+						case DC_SIGCHAR_CC_DEFAULT:          dcMode(gpCall, DC_CALL_C_DEFAULT           ); break;
+						case DC_SIGCHAR_CC_ELLIPSIS:         dcMode(gpCall, DC_CALL_C_ELLIPSIS          ); break;
+						case DC_SIGCHAR_CC_ELLIPSIS_VARARGS: dcMode(gpCall, DC_CALL_C_ELLIPSIS_VARARGS  ); break;
+						case DC_SIGCHAR_CC_CDECL:            dcMode(gpCall, DC_CALL_C_X86_CDECL         ); break;
+						case DC_SIGCHAR_CC_STDCALL:          dcMode(gpCall, DC_CALL_C_X86_WIN32_STD     ); break;
+						case DC_SIGCHAR_CC_FASTCALL_MS:      dcMode(gpCall, DC_CALL_C_X86_WIN32_FAST_MS ); break;
+						case DC_SIGCHAR_CC_FASTCALL_GNU:     dcMode(gpCall, DC_CALL_C_X86_WIN32_FAST_GNU); break;
+						case DC_SIGCHAR_CC_THISCALL_MS:      dcMode(gpCall, DC_CALL_C_X86_WIN32_THIS_MS ); break;
+						case DC_SIGCHAR_CC_THISCALL_GNU:     dcMode(gpCall, DC_CALL_C_X86_WIN32_THIS_GNU); break;
+						case DC_SIGCHAR_CC_ARM_ARM:          dcMode(gpCall, DC_CALL_C_ARM_ARM           ); break;
+						case DC_SIGCHAR_CC_ARM_THUMB:        dcMode(gpCall, DC_CALL_C_ARM_THUMB         ); break;
+						case DC_SIGCHAR_CC_SYSCALL:          dcMode(gpCall, DC_CALL_SYS_DEFAULT         ); break;
+					}
+				}
+			}
+			break;
+
 			case DC_SIGCHAR_BOOL:
 				if ( !PyBool_Check(po) )
 					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a bool", pos );
