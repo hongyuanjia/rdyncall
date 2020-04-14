@@ -1,5 +1,5 @@
 # Be sure to 'make clean' after changing the version
-VERSION=1.0
+VERSION=1.1
 
 OUTPUTS = priv/erldc.so ebin/dyncall.beam ebin/erldc.app
 

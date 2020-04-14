@@ -47,6 +47,7 @@ to start or stop.
 
 TODO
 ====
+- signature chars used to indicate calling conventions are not supported yet!
 - callback support
 
 

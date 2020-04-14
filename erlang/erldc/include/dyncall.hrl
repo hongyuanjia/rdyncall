@@ -40,9 +40,15 @@
 -define(DC_CALL_C_X86_PLAN9,           19).
 -define(DC_CALL_C_SPARC32,             20).
 -define(DC_CALL_C_SPARC64,             21).
+-define(DC_CALL_C_ARM64,               22).
+-define(DC_CALL_C_PPC64,               23).
+-define(DC_CALL_C_PPC64_LINUX,        ?DC_CALL_C_PPC64).
 -define(DC_CALL_SYS_DEFAULT,          200).
 -define(DC_CALL_SYS_X86_INT80H_LINUX, 201).
 -define(DC_CALL_SYS_X86_INT80H_BSD,   202).
+-define(DC_CALL_SYS_X64_SYSCALL_SYSV, 204).
+-define(DC_CALL_SYS_PPC32,            210).
+-define(DC_CALL_SYS_PPC64,            211).
 
 -define(DC_ERROR_NONE,               0).
 -define(DC_ERROR_UNSUPPORTED_MODE,  -1).
