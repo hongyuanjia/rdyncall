@@ -77,5 +77,6 @@ TODO
 - structs
 - callbacks
 - callf wrap (argf already there)
+  - signature chars used to indicate calling conventions are not supported yet!
 - update cconv modes, so they are up to date
 
