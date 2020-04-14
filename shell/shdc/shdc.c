@@ -24,6 +24,7 @@
 #include "../../dyncall/dynload/dynload.h"
 #include "../../dyncall/dyncall/dyncall_signature.h"
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h> /* needed on some platforms to make atof work _at_runtime_ */
 
 #define SHDC_VERSION "1.0"
@@ -77,14 +78,14 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-
-	libPath = argv[2];
+	/* if lib path is empty string, use NULL as reference to own process/exe */
+	libPath = argv[2][0] == '\0' ? NULL : argv[2];
 
 	/* List symbols, if 'ls', else it must be 'call', so proceed to call. */
 	if(l == 0) {
 		dlSyms = dlSymsInit(libPath);
 		if(!dlSyms) {
-			printf("Can't load \"%s\".\n", libPath);
+			printf("Can't load \"%s\".\n", libPath?libPath:"<NULL>");
 			usage(argv[0]);
 			return 1;
 		}
@@ -102,7 +103,7 @@ int main(int argc, char* argv[])
 		/* Load library and get a pointer to the symbol to call. */
 		dlLib = dlLoadLibrary(libPath);
 		if(!dlLib) {
-			printf("Can't load \"%s\".\n", libPath);
+			printf("Can't load \"%s\".\n", libPath?libPath:"<NULL>");
 			usage(argv[0]);
 			return 1;
 		}
@@ -112,10 +113,15 @@ int main(int argc, char* argv[])
     
 		sym = dlFindSymbol(dlLib, symName);
 		if(!sym) {
-			printf("Can't find symbol \"%s\".\n", symName);
-			dlFreeLibrary(dlLib);
-			usage(argv[0]);
-			return 1;
+			/* this might be a syscall attempt, check if "symbol" is numeric */
+			int n;
+			if(sscanf(symName, "%d", &n) == 0) {
+				printf("Can't find symbol \"%s\".\n", symName);
+				dlFreeLibrary(dlLib);
+				usage(argv[0]);
+				return 1;
+			}
+			sym = (void*)(size_t)n;
 		}
     
     
@@ -125,20 +131,11 @@ int main(int argc, char* argv[])
 		while(*i != '\0' && *i != DC_SIGCHAR_ENDARG) {
 			switch(*i) {
 				case DC_SIGCHAR_CC_PREFIX:
-					switch(*++i) {
-						case DC_SIGCHAR_CC_DEFAULT:          dcMode(vm, DC_CALL_C_DEFAULT           ); break;
-						case DC_SIGCHAR_CC_ELLIPSIS:         dcMode(vm, DC_CALL_C_ELLIPSIS          ); break;
-						case DC_SIGCHAR_CC_ELLIPSIS_VARARGS: dcMode(vm, DC_CALL_C_ELLIPSIS_VARARGS  ); break;
-						case DC_SIGCHAR_CC_CDECL:            dcMode(vm, DC_CALL_C_X86_CDECL         ); break;
-						case DC_SIGCHAR_CC_STDCALL:          dcMode(vm, DC_CALL_C_X86_WIN32_STD     ); break;
-						case DC_SIGCHAR_CC_FASTCALL_MS:      dcMode(vm, DC_CALL_C_X86_WIN32_FAST_MS ); break;
-						case DC_SIGCHAR_CC_FASTCALL_GNU:     dcMode(vm, DC_CALL_C_X86_WIN32_FAST_GNU); break;
-						case DC_SIGCHAR_CC_THISCALL_MS:      dcMode(vm, DC_CALL_C_X86_WIN32_THIS_MS ); break;
-						case DC_SIGCHAR_CC_THISCALL_GNU:     dcMode(vm, DC_CALL_C_X86_WIN32_THIS_GNU); break;
-						case DC_SIGCHAR_CC_ARM_ARM:          dcMode(vm, DC_CALL_C_ARM_ARM           ); break;
-						case DC_SIGCHAR_CC_ARM_THUMB:        dcMode(vm, DC_CALL_C_ARM_THUMB         ); break;
-						case DC_SIGCHAR_CC_SYSCALL:          dcMode(vm, DC_CALL_SYS_DEFAULT         ); break;
-						/* @@@ extend with other modes when they become available */
+					if(*(i+1) != '\0')
+					{
+						DCint mode = dcGetModeFromCCSigChar(*++i);
+						if(mode != DC_ERROR_UNSUPPORTED_MODE)
+							dcMode(vm, mode);
 					}
 					sig += 2;
 					break;
@@ -175,14 +172,14 @@ int main(int argc, char* argv[])
 			case DC_SIGCHAR_USHORT:    printf("%d\n",   dcCallShort   (vm,sym)); break;
 			case DC_SIGCHAR_INT:       printf("%d\n",   dcCallInt     (vm,sym)); break;
 			case DC_SIGCHAR_UINT:      printf("%d\n",   dcCallInt     (vm,sym)); break;
-			case DC_SIGCHAR_LONG:      printf("%d\n",   dcCallLong    (vm,sym)); break;
-			case DC_SIGCHAR_ULONG:     printf("%d\n",   dcCallLong    (vm,sym)); break;
+			case DC_SIGCHAR_LONG:      printf("%ld\n",  dcCallLong    (vm,sym)); break;
+			case DC_SIGCHAR_ULONG:     printf("%ld\n",  dcCallLong    (vm,sym)); break;
 			case DC_SIGCHAR_LONGLONG:  printf("%lld\n", dcCallLongLong(vm,sym)); break;
 			case DC_SIGCHAR_ULONGLONG: printf("%lld\n", dcCallLongLong(vm,sym)); break;
 			case DC_SIGCHAR_FLOAT:     printf("%g\n",   dcCallFloat   (vm,sym)); break;
 			case DC_SIGCHAR_DOUBLE:    printf("%g\n",   dcCallDouble  (vm,sym)); break;
-			case DC_SIGCHAR_POINTER:   printf("%x\n",   dcCallPointer (vm,sym)); break;
-			case DC_SIGCHAR_STRING:    printf(          dcCallPointer (vm,sym)); break;
+			case DC_SIGCHAR_POINTER:   printf("%p\n",   dcCallPointer (vm,sym)); break;
+			case DC_SIGCHAR_STRING:    printf("%s",     dcCallPointer (vm,sym)); break;
 		}
     
 		dlFreeLibrary(dlLib);
