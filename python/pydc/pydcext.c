@@ -33,6 +33,10 @@
 #  define DcPyCObject_SetVoidPtr(ppobj, ptr)   //@@@ unsure what to do, cannot/shouldn't call this with a null pointer as this wants to call the dtor, so not doing anything: PyCapsule_SetPointer((ppobj), (ptr))  // this might need to call the dtor to behave like PyCObject_SetVoidPtr?
 #endif
 
+#if(PY_VERSION_HEX >= 0x03030000)
+#  define PYUNICODE_CACHES_UTF8
+#endif
+
 #if PY_MAJOR_VERSION >= 3
 #  define EXPECT_LONG_TYPE_STR "an int"
 #  define DcPyString_GET_SIZE PyBytes_GET_SIZE
@@ -169,11 +173,16 @@ pydc_get_path(PyObject* self, PyObject* args)
 
 DCCallVM* gpCall = NULL;
 
+// helper to temporarily copy string arguments
+#define NUM_AUX_STRS 64
+static int   n_str_aux;
+static char* str_aux[NUM_AUX_STRS]; // hard limit, most likely enough and checked for below @@@ugly though
+
 
 /* call function */
 
 static PyObject*
-pydc_call(PyObject* self, PyObject* in_args)
+pydc_call_impl(PyObject* self, PyObject* in_args) /* implementation, called by wrapper func pydc_call() */
 {
 	PyObject    *pcobj_funcptr, *args;
 	const char  *signature, *ptr;
@@ -360,25 +369,32 @@ pydc_call(PyObject* self, PyObject* in_args)
 			{
 				PyObject* bo = NULL;
 				const char* p;
-				char* p_;
 				size_t s;
-				if ( PyUnicode_Check(po) ) {
+				if ( PyUnicode_Check(po) )
+				{
+					if(n_str_aux >= NUM_AUX_STRS)
+						return PyErr_Format( PyExc_RuntimeError, "too many arguments (implementation limit of %d new UTF-8 string references reached) - abort", n_str_aux );
+
+#if defined(PYUNICODE_CACHES_UTF8)
+					p = PyUnicode_AsUTF8(po);
+#else
+					// w/o PyUnicode_AsUTF8(), which caches the UTF-8 representation, itself, create new ref we'll dec below
 					if((bo = PyUnicode_AsEncodedString(po, "utf-8", "strict")))  // !new ref!
 						p = PyBytes_AS_STRING(bo); // Borrowed pointer
+#endif
 				} else if ( DcPyString_Check(po) )
-					p = DcPyString_AsString(po); //@@@ must not be modified in any way
+					p = DcPyString_AsString(po);
 				else if ( PyByteArray_Check(po) )
 					p = (DCpointer) PyByteArray_AsString(po); // adds an extra '\0', but that's ok //@@@ not sure if allowed to modify
 				else
 					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a str", pos );
 
-				// pointer points in any case to a buffer that shouldn't be modified, so pass a copy of the string to dyncall
+				// p points in any case to a buffer that shouldn't be modified, so pass a copy to dyncall (cleaned up after call)
 				s = strlen(p)+1;
-				p_ = malloc(s);
-				strncpy(p_, p, s);
+				str_aux[n_str_aux] = malloc(s);
+				strncpy(str_aux[n_str_aux], p, s);
 				Py_XDECREF(bo);
-				dcArgPointer(gpCall, (DCpointer)p_);
-				free(p_);
+				dcArgPointer(gpCall, (DCpointer)str_aux[n_str_aux++]);
 			}
 			break;
 
@@ -418,6 +434,17 @@ pydc_call(PyObject* self, PyObject* in_args)
 	}
 }
 
+
+static PyObject*
+pydc_call(PyObject* self, PyObject* in_args)
+{
+	int i;
+	n_str_aux = 0;
+	PyObject* o = pydc_call_impl(self, in_args);
+	for(i = 0; i<n_str_aux; ++i)
+		free(str_aux[i]);
+	return o;
+}
 
 
 // module deinit
