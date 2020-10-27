@@ -359,6 +359,8 @@ pydc_call_impl(PyObject* self, PyObject* in_args) /* implementation, called by w
 #endif
 				else if ( PyLong_Check(po) )
 					p = (DCpointer) PyLong_AsVoidPtr(po);
+				else if ( po == Py_None )
+					p = NULL;
 				else
 					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a promoting pointer-type (int, bytearray)", pos );
 				dcArgPointer(gpCall, p);

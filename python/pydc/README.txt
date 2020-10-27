@@ -11,6 +11,7 @@ Apr 11, 2020: support for getting loaded library path
 Apr 12, 2020: breaking change: restrict 'Z' conversions to immutable types
               and 'p' to mutable types (and handles)
 Apr 13, 2020: added signature char support to specify calling conventions
+Oct 27, 2020: allowing 'None' for 'p' params, always passing NULL
 
 
 BUILD/INSTALLATION
@@ -75,6 +76,7 @@ SIGNATURE FORMAT
   'p' | bytearray (PyByteArray)       & | bytearray (PyByteArray)       & | void*                           | int,long (Py_ssize_t)                | int (Py_ssize_t)
       | int (PyInt)                     | int (PyLong)                    | void*                           | int,long (Py_ssize_t)                | int (Py_ssize_t)
       | long (PyLong)                   | -                               | void*                           | int,long (Py_ssize_t)                | int (Py_ssize_t)
+      | None (Py_None)                  | None (Py_None)                  | void* (always NULL)             | int,long (Py_ssize_t)                | int (Py_ssize_t)
   'Z' | str (PyString)                ! | str (PyUnicode)               ! | const char* (UTF-8 for unicode) | int (PyString)                       | str (PyUnicode)
       | unicode (PyUnicode)           ! | -                               | const char* (UTF-8 for unicode) | int (PyString)                       | str (PyUnicode)
       | -                               | bytes (PyBytes)               ! | const char* (UTF-8 for unicode) | int (PyString)                       | str (PyUnicode)
