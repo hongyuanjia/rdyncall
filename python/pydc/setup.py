@@ -7,7 +7,7 @@ pydcext = Extension('pydcext',
 
 setup(
   name             = 'pydc'
-, version          = '1.1.3'
+, version          = '1.1.4'
 , author           = 'Daniel Adler, Tassilo Philipp'
 , author_email     = 'dadler@dyncall.org, tphilip@dyncall.org'
 , maintainer       = 'Daniel Adler, Tassilo Philipp'
