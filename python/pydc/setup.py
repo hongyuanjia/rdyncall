@@ -1,13 +1,13 @@
 from distutils.core import setup, Extension
 
-pydcext = Extension('pydcext',
-  sources   = ['pydcext.c']
+pydcext = Extension('pydc',
+  sources   = ['pydc.c']
 , libraries = ['dyncall_s','dynload_s']
 )
 
 setup(
   name             = 'pydc'
-, version          = '1.1.4'
+, version          = '1.1.5'
 , author           = 'Daniel Adler, Tassilo Philipp'
 , author_email     = 'dadler@dyncall.org, tphilip@dyncall.org'
 , maintainer       = 'Daniel Adler, Tassilo Philipp'
@@ -18,11 +18,12 @@ setup(
 #, packages         = ['pydc']
 #, package_dir      = ['dir']
 , ext_modules      = [pydcext]
-, py_modules       = ['pydc']
 , description      = 'dynamic call bindings for python'
 , long_description = '''
-dynamic call library allows to call arbitrary C library functions
-with a single call code (written in assembly)
+library allowing to call arbitrary C library functions dynamically,
+based on a single call kernel (so no interface generation used/required)
 '''
+, package_data     = {"pydc-stubs": ['pydc.pyi']}
+, packages         = ["pydc-stubs"]
 )
 

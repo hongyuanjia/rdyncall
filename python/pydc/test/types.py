@@ -132,7 +132,7 @@ t(l, "p)Z", "const char*",        "ccp_plus_one", "(const char*)",        '     
 t(l, "p)p", "const char*",        "ccp_plus_one", "(const char*)",        '       "xY" => p+1 (~ odd addr)', bytearray(b'xY')) # bytearray object
 t(l, "p)p", "const char*",        "ccp_plus_one", "(const char*)",        ' 0xdeadc0de => 0xdeadc0de+1=3735929055',    long_h) # handle (integer interpreted as ptr)
 t(l, "p)p", "const char*",        "ccp_plus_one", "(const char*)",        ' 0xdeadc0de => 0xdeadc0de+1=3735929055',    long_h) # handle (integer interpreted as ptr, long in Python 2)
-t(l, "p)p", "const char*",        "ccp_plus_one", "(const char*)",        '       NULL => NULL+1=1',                     None) # NULL, addin gone will result in 0x1
+t(l, "p)p", "const char*",        "ccp_plus_one", "(const char*)",        '       NULL => NULL+1=1',                     None) # NULL, adding one will result in 0x1
 
 # functions that change buffers
 theader('TESTS OF IMMUTABLE AND MUTABLE PYTHON BUFFERS:')

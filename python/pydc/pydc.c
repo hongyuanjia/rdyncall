@@ -6,11 +6,7 @@
  **       Copyright 2007-2016 Daniel Adler
  **                 2018-2020 Tassilo Philipp
  **
- **       December 04, 2007: initial
- **       March    22, 2016: update to dyncall 0.9, includes breaking sig char changes
- **       April    19, 2018: update to dyncall 1.0
- **       April     7, 2020: update to dyncall 1.1, Python 3 support, using the Capsule
- **                          API, as well as support for python unicode strings
+ **       See README.txt for details (about changes, how to use, etc.).
  **
  *****************************************************************************/
 
@@ -182,29 +178,50 @@ static char* str_aux[NUM_AUX_STRS]; // hard limit, most likely enough and checke
 /* call function */
 
 static PyObject*
-pydc_call_impl(PyObject* self, PyObject* in_args) /* implementation, called by wrapper func pydc_call() */
+pydc_call_impl(PyObject* self, PyObject* args) /* implementation, called by wrapper func pydc_call() */
 {
-	PyObject    *pcobj_funcptr, *args;
-	const char  *signature, *ptr;
+	const char  *sig_ptr;
 	char        ch;
 	int         pos, ts;
 	void*       pfunc;
 
-	if (!PyArg_ParseTuple(in_args,"OsO", &pcobj_funcptr, &signature, &args))
+	pos = 0;
+	ts  = PyTuple_Size(args);
+	if (ts < 2)
 		return PyErr_Format(PyExc_RuntimeError, "argument mismatch");
 
-	pfunc = DcPyCObject_AsVoidPtr(pcobj_funcptr);
+	// get ptr to func to call
+	pfunc = DcPyCObject_AsVoidPtr(PyTuple_GetItem(args, pos++));
 	if (!pfunc)
 		return PyErr_Format( PyExc_RuntimeError, "function pointer is NULL" );
 
-	ptr = signature;
-	pos = 0;
-	ts  = PyTuple_Size(args);
+	// get signature
+#if !defined(PYUNICODE_CACHES_UTF8)
+	PyObject* sig_obj = NULL;
+#endif
+	PyObject* so = PyTuple_GetItem(args, pos++);
+	if ( PyUnicode_Check(so) )
+	{
+#if defined(PYUNICODE_CACHES_UTF8)
+		sig_ptr = PyUnicode_AsUTF8(so);
+#else
+		// w/o PyUnicode_AsUTF8(), which caches the UTF-8 representation, itself, create new ref we'll dec below
+		if((sig_obj = PyUnicode_AsEncodedString(so, "utf-8", "strict")))  // !new ref!
+			sig_ptr = PyBytes_AS_STRING(sig_obj); // Borrowed pointer
+#endif
+	} else if ( DcPyString_Check(so) )
+		sig_ptr = DcPyString_AsString(so); // @@@ test py 2
+
+
+
+	if (!sig_ptr)
+		return PyErr_Format( PyExc_RuntimeError, "signature is NULL" );
+
 
 	dcReset(gpCall);
 	dcMode(gpCall, DC_CALL_C_DEFAULT);
 
-	for (ch = *ptr; ch != '\0' && ch != DC_SIGCHAR_ENDARG; ch = *++ptr)
+	for (ch = *sig_ptr; ch != '\0' && ch != DC_SIGCHAR_ENDARG; ch = *++sig_ptr)
 	{
 		PyObject* po;
 
@@ -219,10 +236,9 @@ pydc_call_impl(PyObject* self, PyObject* in_args) /* implementation, called by w
 		{
 			case DC_SIGCHAR_CC_PREFIX:
 			{
-				if(*(ptr+1) != '\0')
+				if(*(sig_ptr+1) != '\0')
 				{
-					// @@@ this is easily going out of sync with dyncall, abstract this sigchar->mode lookup somewhere inside dyncall
-					DCint mode = dcGetModeFromCCSigChar(*++ptr);
+					DCint mode = dcGetModeFromCCSigChar(*++sig_ptr);
 					if(mode != DC_ERROR_UNSUPPORTED_MODE)
 						dcMode(gpCall, mode);
 				}
@@ -412,7 +428,7 @@ pydc_call_impl(PyObject* self, PyObject* in_args) /* implementation, called by w
 		return PyErr_Format( PyExc_RuntimeError, "return value missing in signature");
 
 
-	ch = *++ptr;
+	ch = *++sig_ptr;
 	switch(ch)
 	{
 		// every line creates a new reference passed back to python
@@ -434,15 +450,19 @@ pydc_call_impl(PyObject* self, PyObject* in_args) /* implementation, called by w
 		case DC_SIGCHAR_POINTER:   return Py_BuildValue("n", dcCallPointer (gpCall, pfunc));                                       // !new ref!
 		default:                   return PyErr_Format(PyExc_RuntimeError, "invalid return type signature");
 	}
+
+#if !defined(PYUNICODE_CACHES_UTF8)
+	Py_XDECREF(sig_obj);
+#endif
 }
 
 
 static PyObject*
-pydc_call(PyObject* self, PyObject* in_args)
+pydc_call(PyObject* self, PyObject* args)
 {
 	int i;
 	n_str_aux = 0;
-	PyObject* o = pydc_call_impl(self, in_args);
+	PyObject* o = pydc_call_impl(self, args);
 	for(i = 0; i<n_str_aux; ++i)
 		free(str_aux[i]);
 	return o;
@@ -464,7 +484,7 @@ static void deinit_pydc(void* x)
 #define PYDC_CONCAT_(x, y)  x ## y
 #define PYDC_CONCAT(x, y)   PYDC_CONCAT_(x, y)
 
-#define PYDC_MOD_NAME       pydcext
+#define PYDC_MOD_NAME       pydc
 #define PYDC_MOD_NAME_STR   PYDC_TO_STR(PYDC_MOD_NAME)
 #define PYDC_MOD_DESC_STR  "dyncall bindings for python"
 

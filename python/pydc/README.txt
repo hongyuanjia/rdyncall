@@ -12,6 +12,9 @@ Apr 12, 2020: breaking change: restrict 'Z' conversions to immutable types
               and 'p' to mutable types (and handles)
 Apr 13, 2020: added signature char support to specify calling conventions
 Oct 27, 2020: allowing 'None' for 'p' params, always passing NULL
+Nov 13, 2020: removed pydc.py wrapper overhead (which only called pydcext.so
+              functions; implies renaming pydcext.* to pydc.*), added type stub
+              as package_data
 
 
 BUILD/INSTALLATION
@@ -30,16 +33,20 @@ Building a wheel package isn't supported, currently.
 API
 ===
 
+In a nutshell:
+
 libhandle = load(libpath)               # if path == None => handle to running process
 libpath   = get_path(libhandle)         # if handle == None => path to executable
 funcptr   = find(libhandle, symbolname)
 call(funcptr, signature, ...)
 free(libhandle)
 
-Note that there are no functions to set the calling convention mode. However,
-it can be set using the signature.
-Not specifying any calling convention in the signature string will use the
-platform's default one.
+Notes:
+- a pydc.pyi stub file with the precise interface description is available
+- there are no functions to set the calling convention mode, however, it can be
+  set using the signature
+- not specifying any calling convention in the signature string will use the
+  platform's default one
 
 
 SIGNATURE FORMAT
