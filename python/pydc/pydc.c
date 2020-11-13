@@ -210,7 +210,7 @@ pydc_call_impl(PyObject* self, PyObject* args) /* implementation, called by wrap
 			sig_ptr = PyBytes_AS_STRING(sig_obj); // Borrowed pointer
 #endif
 	} else if ( DcPyString_Check(so) )
-		sig_ptr = DcPyString_AsString(so); // @@@ test py 2
+		sig_ptr = DcPyString_AsString(so);
 
 
 
