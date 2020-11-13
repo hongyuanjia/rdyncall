@@ -16,6 +16,7 @@ else:
 
 fp_atoi = find(libc,"atoi")
 fp_atof = find(libc,"atof")
+fp_printf = find(libc,"printf")
 
 
 
@@ -24,4 +25,7 @@ def atod(s): return call(fp_atof,"Z)d",s)
 
 print(atoi("3".join(["12","45"])))
 print(atod("3".join(["12","45"])))
+
+# w/ some text - tests vararg callconv switch
+call(fp_printf,"_eZ_.id)i", "and again: %d %f\n", atoi("31245"), atod("31245"))
 
