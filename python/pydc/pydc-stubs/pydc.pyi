@@ -1,11 +1,9 @@
 import sys
 from typing import Optional, Any, TypeVar
 
-# Handle type is different, depending on python version
-if sys.version_info < (2, 7) or (sys.version_info >= (3, 0) and sys.version_info < (3, 1)):
-    H = TypeVar('H', PyCObject)
-else:
-    H = TypeVar('H', PyCapsule)
+# Handle type, depending on python version this is either internal type
+# PyCObject or PyCapsule, neither of one can be used as annotation
+H = TypeVar('H')
 
 def load(libpath: Optional[str]) -> H: ...
 def find(libhandle: H, symbol: str) -> H: ...
