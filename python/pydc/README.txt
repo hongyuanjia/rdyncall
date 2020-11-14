@@ -123,6 +123,9 @@ TODO
 ====
 
 - callback support
+- pydoc "man page"
+- stub location: the pydc-stubs folder isn't picked up by mypy, so I question why this is the suggested way
+- get into freebsd ports
 
 
 BUGS
