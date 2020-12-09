@@ -354,13 +354,13 @@ pydc_call_impl(PyObject* self, PyObject* args) /* implementation, called by wrap
 
 			case DC_SIGCHAR_FLOAT:
 				if (!PyFloat_Check(po))
-					return PyErr_Format( PyExc_RuntimeError, "arg %d - expeecting a float", pos );
+					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a float", pos );
 				dcArgFloat(gpCall, (float)PyFloat_AsDouble(po));
 				break;
 
 			case DC_SIGCHAR_DOUBLE:
 				if (!PyFloat_Check(po))
-					return PyErr_Format( PyExc_RuntimeError, "arg %d - expeecting a float", pos );
+					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a float", pos );
 				dcArgDouble(gpCall, PyFloat_AsDouble(po));
 				break;
 
