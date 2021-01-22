@@ -84,10 +84,10 @@ SIGNATURE FORMAT
       | int (PyInt)                     | int (PyLong)                    | void*                           | int,long (Py_ssize_t)                | int (Py_ssize_t)
       | long (PyLong)                   | -                               | void*                           | int,long (Py_ssize_t)                | int (Py_ssize_t)
       | None (Py_None)                  | None (Py_None)                  | void* (always NULL)             | int,long (Py_ssize_t)                | int (Py_ssize_t)
-  'Z' | str (PyString)                ! | str (PyUnicode)               ! | const char* (UTF-8 for unicode) | int (PyString)                       | str (PyUnicode)
-      | unicode (PyUnicode)           ! | -                               | const char* (UTF-8 for unicode) | int (PyString)                       | str (PyUnicode)
-      | -                               | bytes (PyBytes)               ! | const char* (UTF-8 for unicode) | int (PyString)                       | str (PyUnicode)
-      | bytearray (PyByteArray)       ! | bytearray (PyByteArray)       ! | const char* (UTF-8 for unicode) | int (PyString)                       | str (PyUnicode)
+  'Z' | str (PyString)                ! | str (PyUnicode)               ! | const char* (UTF-8 for unicode) | str (PyString)                       | str (PyUnicode)
+      | unicode (PyUnicode)           ! | -                               | const char* (UTF-8 for unicode) | str (PyString)                       | str (PyUnicode)
+      | -                               | bytes (PyBytes)               ! | const char* (UTF-8 for unicode) | str (PyString)                       | str (PyUnicode)
+      | bytearray (PyByteArray)       ! | bytearray (PyByteArray)       ! | const char* (UTF-8 for unicode) | str (PyString)                       | str (PyUnicode)
 
   Annotations:
   # converted to 1 if True and 0 otherwise
