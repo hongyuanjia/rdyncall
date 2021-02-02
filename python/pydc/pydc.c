@@ -670,7 +670,7 @@ static char handle_py_callbacks(DCCallback* pcb, DCArgs* args, DCValue* result, 
 		PyErr_SetString(PyExc_RuntimeError, "callback error: unknown error creating python arg tuple");
 
 	// as callbacks might be called repeatedly we don't want the error indicator to pollute other calls, so print
-	if(PyErr_Occurred) {
+	if(PyErr_Occurred()) {
 		PyErr_Print();
 		return 'v'; // used as return char for errors @@@ unsure if smart, but it would at least indicate that no return value was set
 	}
