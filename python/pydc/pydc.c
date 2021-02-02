@@ -13,6 +13,7 @@
 #include <Python.h>
 #include "dynload.h"
 #include <limits.h>
+#include <assert.h>
 
 
 
@@ -22,11 +23,13 @@
 #  define DcPyCObject_FromVoidPtr(ptr, dtor)   PyCObject_FromVoidPtr((ptr), (dtor))  // !new ref!
 #  define DcPyCObject_AsVoidPtr(ppobj)         PyCObject_AsVoidPtr((ppobj))
 #  define DcPyCObject_SetVoidPtr(ppobj, ptr)   PyCObject_SetVoidPtr((ppobj), (ptr))
+#  define DcPyCObject_Check(ppobj)             PyCObject_Check((ppobj))
 #else
 #  define USE_CAPSULE_API
 #  define DcPyCObject_FromVoidPtr(ptr, dtor)   PyCapsule_New((ptr), NULL, (dtor))    // !new ref!
 #  define DcPyCObject_AsVoidPtr(ppobj)         PyCapsule_GetPointer((ppobj), NULL)
 #  define DcPyCObject_SetVoidPtr(ppobj, ptr)   //@@@ unsure what to do, cannot/shouldn't call this with a null pointer as this wants to call the dtor, so not doing anything: PyCapsule_SetPointer((ppobj), (ptr))  // this might need to call the dtor to behave like PyCObject_SetVoidPtr?
+#  define DcPyCObject_Check(ppobj)             PyCapsule_CheckExact((ppobj))
 #endif
 
 #if(PY_VERSION_HEX >= 0x03030000)
@@ -54,11 +57,11 @@
 /* PyCObject destructor callback for libhandle */
 
 #if defined(USE_CAPSULE_API)
-void free_library(PyObject* capsule)
+static void free_library(PyObject* capsule)
 {
 	void* libhandle = PyCapsule_GetPointer(capsule, NULL);
 #else
-void free_library(void* libhandle)
+static void free_library(void* libhandle)
 {
 #endif
 	if (libhandle != 0)
@@ -167,6 +170,119 @@ pydc_get_path(PyObject* self, PyObject* args)
 #include "dyncall.h"
 #include "dyncall_signature.h"
 
+
+/* helpers */
+
+static inline PyObject* py2dcchar(DCchar* c, PyObject* po, int u, int pos)
+{
+	if ( PyUnicode_Check(po) )
+	{
+#if (PY_VERSION_HEX < 0x03030000)
+		Py_UNICODE cu;
+		if (PyUnicode_GET_SIZE(po) != 1)
+#else
+		Py_UCS4 cu;
+		if (PyUnicode_GET_LENGTH(po) != 1)
+#endif
+			return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a str with length of 1 (a char string)", pos );
+
+#if (PY_VERSION_HEX < 0x03030000)
+		cu = PyUnicode_AS_UNICODE(po)[0];
+#else
+		cu = PyUnicode_ReadChar(po, 0);
+#endif
+		// check against UCHAR_MAX in every case b/c Py_UCS4 is unsigned
+		if ( (cu > UCHAR_MAX))
+			return PyErr_Format( PyExc_RuntimeError, "arg %d out of range - expecting a char code", pos );
+		*c = (DCchar) cu;
+		return po;
+	}
+
+	if ( DcPyString_Check(po) )
+	{
+		size_t l;
+		char* s;
+		l = DcPyString_GET_SIZE(po);
+		if (l != 1)
+			return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a str with length of 1 (a char string)", pos );
+		s = DcPyString_AsString(po);
+		*c = (DCchar) s[0];
+		return po;
+	}
+
+	if ( DcPyInt_Check(po) )
+	{
+		long l = DcPyInt_AsLong(po);
+		if (u && (l < 0 || l > UCHAR_MAX))
+			return PyErr_Format( PyExc_RuntimeError, "arg %d out of range - expecting 0 <= arg <= %d, got %ld", pos, UCHAR_MAX, l );
+		if (!u && (l < CHAR_MIN || l > CHAR_MAX))
+			return PyErr_Format( PyExc_RuntimeError, "arg %d out of range - expecting %d <= arg <= %d, got %ld", pos, CHAR_MIN, CHAR_MAX, l );
+		*c = (DCchar) l;
+		return po;
+	}
+
+	return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a char", pos );
+}
+
+static inline PyObject* py2dcshort(DCshort* s, PyObject* po, int u, int pos)
+{
+	long l;
+	if ( !DcPyInt_Check(po) )
+		return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting an int", pos );
+	l = DcPyInt_AS_LONG(po);
+	if (u && (l < 0 || l > USHRT_MAX))
+		return PyErr_Format( PyExc_RuntimeError, "arg %d out of range - expecting 0 <= arg <= %d, got %ld", pos, USHRT_MAX, l );
+	if (!u && (l < SHRT_MIN || l > SHRT_MAX))
+		return PyErr_Format( PyExc_RuntimeError, "arg %d out of range - expecting %d <= arg <= %d, got %ld", pos, SHRT_MIN, SHRT_MAX, l );
+
+	*s = (DCshort)l;
+	return po;
+}
+
+static inline PyObject* py2dclonglong(DClonglong* ll, PyObject* po, int pos)
+{
+#if PY_MAJOR_VERSION < 3
+	if ( PyInt_Check(po) ) {
+		*ll = (DClonglong) PyInt_AS_LONG(po);
+		return po;
+	}
+#endif
+	if ( !PyLong_Check(po) )
+		return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting " EXPECT_LONG_TYPE_STR, pos );
+
+	*ll = (DClonglong) PyLong_AsLongLong(po);
+	return po;
+}
+
+static inline PyObject* py2dcpointer(DCpointer* p, PyObject* po, int pos)
+{
+	if ( PyByteArray_Check(po) ) {
+		*p = (DCpointer) PyByteArray_AsString(po); // adds an extra '\0', but that's ok
+		return po;
+	}
+#if PY_MAJOR_VERSION < 3
+	if ( PyInt_Check(po) ) {
+		*p = (DCpointer) PyInt_AS_LONG(po);
+		return po;
+	}
+#endif
+	if ( PyLong_Check(po) ) {
+		*p = (DCpointer) PyLong_AsVoidPtr(po);
+		return po;
+	}
+	if ( po == Py_None ) {
+		*p = NULL;
+		return po;
+	}
+	if ( DcPyCObject_Check(po) ) {
+		*p = DcPyCObject_AsVoidPtr(po);
+		return po;
+	}
+
+	return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a promoting pointer-type (int), mutable array (bytearray) or callback func handle (int, created with new_callback())", pos );
+}
+
+
 DCCallVM* gpCall = NULL;
 
 // helper to temporarily copy string arguments
@@ -256,73 +372,19 @@ pydc_call_impl(PyObject* self, PyObject* args) /* implementation, called by wrap
 			case DC_SIGCHAR_UCHAR:
 				{
 					DCchar c;
-					if ( PyUnicode_Check(po) )
-					{
-#if (PY_VERSION_HEX < 0x03030000)
-						Py_UNICODE cu;
-						if (PyUnicode_GET_SIZE(po) != 1)
-#else
-						Py_UCS4 cu;
-						if (PyUnicode_GET_LENGTH(po) != 1)
-#endif
-							return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a str with length of 1 (a char string)", pos );
-
-#if (PY_VERSION_HEX < 0x03030000)
-						cu = PyUnicode_AS_UNICODE(po)[0];
-#else
-						cu = PyUnicode_ReadChar(po, 0);
-#endif
-						// check against UCHAR_MAX in every case b/c Py_UCS4 is unsigned
-						if ( (cu > UCHAR_MAX))
-							return PyErr_Format( PyExc_RuntimeError, "arg %d out of range - expecting a char code", pos );
-						c = (DCchar) cu;
-					}
-					else if ( DcPyString_Check(po) )
-					{
-						size_t l;
-						char* s;
-						l = DcPyString_GET_SIZE(po);
-						if (l != 1)
-							return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a str with length of 1 (a char string)", pos );
-						s = DcPyString_AsString(po);
-						c = (DCchar) s[0];
-					}
-					else if ( DcPyInt_Check(po) )
-					{
-						long l = DcPyInt_AsLong(po);
-						if (ch == DC_SIGCHAR_CHAR && (l < CHAR_MIN || l > CHAR_MAX))
-							return PyErr_Format( PyExc_RuntimeError, "arg %d out of range - expecting %d <= arg <= %d, got %ld", pos, CHAR_MIN, CHAR_MAX, l );
-						if (ch == DC_SIGCHAR_UCHAR && (l < 0 || l > UCHAR_MAX))
-							return PyErr_Format( PyExc_RuntimeError, "arg %d out of range - expecting 0 <= arg <= %d, got %ld", pos, UCHAR_MAX, l );
-						c = (DCchar) l;
-					}
-					else
-						return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a char", pos );
+					if(!py2dcchar(&c, po, ch == DC_SIGCHAR_UCHAR, pos))
+						return NULL;
 					dcArgChar(gpCall, c);
 				}
 				break;
 
 			case DC_SIGCHAR_SHORT:
-				{
-					long l;
-					if ( !DcPyInt_Check(po) )
-						return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting an int", pos );
-					l = DcPyInt_AS_LONG(po);
-					if (l < SHRT_MIN || l > SHRT_MAX)
-						return PyErr_Format( PyExc_RuntimeError, "arg %d out of range - expecting %d <= arg <= %d, got %ld", pos, SHRT_MIN, SHRT_MAX, l );
-					dcArgShort(gpCall, (DCshort)l);
-				}
-				break;
-
 			case DC_SIGCHAR_USHORT:
 				{
-					long l;
-					if ( !DcPyInt_Check(po) )
-						return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting an int", pos );
-					l = DcPyInt_AS_LONG(po);
-					if (l < 0 || l > USHRT_MAX)
-						return PyErr_Format( PyExc_RuntimeError, "arg %d out of range - expecting 0 <= arg <= %d, got %ld", pos, USHRT_MAX, l );
-					dcArgShort(gpCall, (DCshort)l);
+					DCshort s;
+					if(!py2dcshort(&s, po, ch == DC_SIGCHAR_USHORT, pos))
+						return NULL;
+					dcArgShort(gpCall, s);
 				}
 				break;
 
@@ -342,14 +404,12 @@ pydc_call_impl(PyObject* self, PyObject* args) /* implementation, called by wrap
 
 			case DC_SIGCHAR_LONGLONG:
 			case DC_SIGCHAR_ULONGLONG:
-#if PY_MAJOR_VERSION < 3
-				if ( PyInt_Check(po) )
-					dcArgLongLong(gpCall, (DClonglong) PyInt_AS_LONG(po));
-				else
-#endif
-				if ( !PyLong_Check(po) )
-					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting " EXPECT_LONG_TYPE_STR, pos );
-				dcArgLongLong(gpCall, (DClonglong)PyLong_AsLongLong(po));
+				{
+					DClonglong ll;
+					if(!py2dclonglong(&ll, po, pos))
+						return NULL;
+					dcArgLongLong(gpCall, ll);
+				}
 				break;
 
 			case DC_SIGCHAR_FLOAT:
@@ -364,24 +424,14 @@ pydc_call_impl(PyObject* self, PyObject* args) /* implementation, called by wrap
 				dcArgDouble(gpCall, PyFloat_AsDouble(po));
 				break;
 
-			case DC_SIGCHAR_POINTER: // this will only accept integers or mutable array types (meaning only bytearray)
-			{
-				DCpointer p;
-				if ( PyByteArray_Check(po) )
-					p = (DCpointer) PyByteArray_AsString(po); // adds an extra '\0', but that's ok
-#if PY_MAJOR_VERSION < 3
-				else if ( PyInt_Check(po) )
-					p = (DCpointer) PyInt_AS_LONG(po);
-#endif
-				else if ( PyLong_Check(po) )
-					p = (DCpointer) PyLong_AsVoidPtr(po);
-				else if ( po == Py_None )
-					p = NULL;
-				else
-					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a promoting pointer-type (int, bytearray)", pos );
-				dcArgPointer(gpCall, p);
-			}
-			break;
+			case DC_SIGCHAR_POINTER: // this will only accept integers, mutable array types (meaning only bytearray) or tuples describing a callback
+				{
+					DCpointer p;
+					if(!py2dcpointer(&p, po, pos))
+						return NULL;
+					dcArgPointer(gpCall, p);
+				}
+				break;
 
 			case DC_SIGCHAR_STRING: // strings are considered to be immutable objects
 			{
@@ -390,9 +440,6 @@ pydc_call_impl(PyObject* self, PyObject* args) /* implementation, called by wrap
 				size_t s;
 				if ( PyUnicode_Check(po) )
 				{
-					if(n_str_aux >= NUM_AUX_STRS)
-						return PyErr_Format( PyExc_RuntimeError, "too many arguments (implementation limit of %d new UTF-8 string references reached) - abort", n_str_aux );
-
 #if defined(PYUNICODE_CACHES_UTF8)
 					p = PyUnicode_AsUTF8(po);
 #else
@@ -407,7 +454,10 @@ pydc_call_impl(PyObject* self, PyObject* args) /* implementation, called by wrap
 				else
 					return PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a str", pos );
 
-				// p points in any case to a buffer that shouldn't be modified, so pass a copy to dyncall (cleaned up after call)
+				if(n_str_aux >= NUM_AUX_STRS)
+					return PyErr_Format( PyExc_RuntimeError, "too many arguments (implementation limit of %d new UTF-8 string references reached) - abort", n_str_aux );
+
+				// p points in every case to a buffer that shouldn't be modified, so pass a copy to dyncall (cleaned up after call)
 				s = strlen(p)+1;
 				str_aux[n_str_aux] = malloc(s);
 				strncpy(str_aux[n_str_aux], p, s);
@@ -449,6 +499,7 @@ pydc_call_impl(PyObject* self, PyObject* args) /* implementation, called by wrap
 		case DC_SIGCHAR_STRING:    return Py_BuildValue("s", dcCallPointer (gpCall, pfunc));                                       // !new ref!
 		case DC_SIGCHAR_POINTER:   return Py_BuildValue("n", dcCallPointer (gpCall, pfunc));                                       // !new ref!
 		default:                   return PyErr_Format(PyExc_RuntimeError, "invalid return type signature");
+		// @@@ this could be handled via array lookups of a 256b array instead of switch/case, then share it with callback code if it makes sense
 	}
 
 #if !defined(PYUNICODE_CACHES_UTF8)
@@ -467,6 +518,221 @@ pydc_call(PyObject* self, PyObject* args)
 		free(str_aux[i]);
 	return o;
 }
+
+
+#include "dyncall_callback.h"
+#include "dyncall_args.h"
+
+
+/* PyCObject destructor callback for callback obj */
+
+#if defined(USE_CAPSULE_API)
+static void free_callback(PyObject* capsule)
+{
+	void* cb = PyCapsule_GetPointer(capsule, NULL);
+#else
+static void free_callback(void* cb)
+{
+#endif
+	if (cb != 0)
+		dcbFreeCallback(cb);
+}
+
+
+struct callback_userdata {
+	PyObject* f;
+	char sig[];
+};
+
+/* generic callback handler dispatching to python */
+static char handle_py_callbacks(DCCallback* pcb, DCArgs* args, DCValue* result, void* userdata)
+{
+
+	struct callback_userdata* x = (struct callback_userdata*)userdata;
+	const char* sig_ptr = x->sig;
+
+	Py_ssize_t n_args = ((PyCodeObject*)PyFunction_GetCode(x->f))->co_argcount;
+	Py_ssize_t pos = 0;
+	PyObject* py_args = PyTuple_New(n_args); // !new ref!
+	PyObject* po;
+	char ch;
+
+	if(py_args)
+	{
+		// @@@ we could do the below actually by using dyncall itself, piecing together python's sig string and then dcCallPointer(vm, Py_BuildValue, ...)
+		for (ch = *sig_ptr; ch != '\0' && ch != DC_SIGCHAR_ENDARG && pos < n_args; ch = *++sig_ptr)
+		{
+			switch(ch)
+			{
+				case DC_SIGCHAR_CC_PREFIX: assert(*(sig_ptr+1) == DC_SIGCHAR_CC_DEFAULT); /* not handling callbacks to anything but default callconf */ break;
+				case DC_SIGCHAR_BOOL:      PyTuple_SET_ITEM(py_args, pos++,    PyBool_FromLong(dcbArgBool     (args)));  break; // !new ref! (but "stolen" by SET_ITEM)
+				case DC_SIGCHAR_CHAR:      PyTuple_SET_ITEM(py_args, pos++, Py_BuildValue("b", dcbArgChar     (args)));  break; // !new ref! (but "stolen" by SET_ITEM)
+				case DC_SIGCHAR_UCHAR:     PyTuple_SET_ITEM(py_args, pos++, Py_BuildValue("B", dcbArgUChar    (args)));  break; // !new ref! (but "stolen" by SET_ITEM)
+				case DC_SIGCHAR_SHORT:     PyTuple_SET_ITEM(py_args, pos++, Py_BuildValue("h", dcbArgShort    (args)));  break; // !new ref! (but "stolen" by SET_ITEM)
+				case DC_SIGCHAR_USHORT:    PyTuple_SET_ITEM(py_args, pos++, Py_BuildValue("H", dcbArgUShort   (args)));  break; // !new ref! (but "stolen" by SET_ITEM)
+				case DC_SIGCHAR_INT:       PyTuple_SET_ITEM(py_args, pos++, Py_BuildValue("i", dcbArgInt      (args)));  break; // !new ref! (but "stolen" by SET_ITEM)
+				case DC_SIGCHAR_UINT:      PyTuple_SET_ITEM(py_args, pos++, Py_BuildValue("I", dcbArgUInt     (args)));  break; // !new ref! (but "stolen" by SET_ITEM)
+				case DC_SIGCHAR_LONG:      PyTuple_SET_ITEM(py_args, pos++, Py_BuildValue("l", dcbArgLong     (args)));  break; // !new ref! (but "stolen" by SET_ITEM)
+				case DC_SIGCHAR_ULONG:     PyTuple_SET_ITEM(py_args, pos++, Py_BuildValue("k", dcbArgULong    (args)));  break; // !new ref! (but "stolen" by SET_ITEM)
+				case DC_SIGCHAR_LONGLONG:  PyTuple_SET_ITEM(py_args, pos++, Py_BuildValue("L", dcbArgLongLong (args)));  break; // !new ref! (but "stolen" by SET_ITEM)
+				case DC_SIGCHAR_ULONGLONG: PyTuple_SET_ITEM(py_args, pos++, Py_BuildValue("K", dcbArgULongLong(args)));  break; // !new ref! (but "stolen" by SET_ITEM)
+				case DC_SIGCHAR_FLOAT:     PyTuple_SET_ITEM(py_args, pos++, Py_BuildValue("f", dcbArgFloat    (args)));  break; // !new ref! (but "stolen" by SET_ITEM)
+				case DC_SIGCHAR_DOUBLE:    PyTuple_SET_ITEM(py_args, pos++, Py_BuildValue("d", dcbArgDouble   (args)));  break; // !new ref! (but "stolen" by SET_ITEM)
+				case DC_SIGCHAR_STRING:    PyTuple_SET_ITEM(py_args, pos++, Py_BuildValue("s", dcbArgPointer  (args)));  break; // !new ref! (but "stolen" by SET_ITEM)
+				case DC_SIGCHAR_POINTER:   PyTuple_SET_ITEM(py_args, pos++, Py_BuildValue("n", dcbArgPointer  (args)));  break; // !new ref! (but "stolen" by SET_ITEM)
+				default: /* will lead to "signature not matching" error */ pos = n_args; break;
+				// @@@ this could be handled via array lookups of a 256b array instead of switch/case, then share it with call code (for returns) if it makes sense
+			}
+		}
+
+
+		// we must be at end of sigstring, here
+		if(ch == ')')
+		{
+			po = PyEval_CallObject(x->f, py_args);
+			if(po)
+			{
+				// return value type
+				ch = *++sig_ptr;
+            
+				// @@@ copypasta from above, as a bit different, NO error handling right now, NO handling of 'Z', ...
+				switch(ch)
+				{
+					case DC_SIGCHAR_BOOL:
+						if ( !PyBool_Check(po) )
+							PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a bool", -1 );
+						else
+							result->B = ((Py_True == po) ? DC_TRUE : DC_FALSE);
+						break;
+            
+					case DC_SIGCHAR_CHAR:
+					case DC_SIGCHAR_UCHAR:
+						py2dcchar(&result->c, po, ch == DC_SIGCHAR_UCHAR, -1);
+						break;
+            
+					case DC_SIGCHAR_SHORT:
+					case DC_SIGCHAR_USHORT:
+						py2dcshort(&result->s, po, ch == DC_SIGCHAR_USHORT, -1);
+						break;
+            
+					case DC_SIGCHAR_INT:
+					case DC_SIGCHAR_UINT:
+						if ( !DcPyInt_Check(po) )
+							PyErr_Format( PyExc_RuntimeError, "arg %d - expecting an int", -1 );
+						else
+							result->i = (DCint) DcPyInt_AS_LONG(po);
+						break;
+            
+					case DC_SIGCHAR_LONG:
+					case DC_SIGCHAR_ULONG:
+						if ( !DcPyInt_Check(po) )
+							PyErr_Format( PyExc_RuntimeError, "arg %d - expecting an int", -1 );
+						else
+							result->j = (DClong) PyLong_AsLong(po);
+						break;
+            
+					case DC_SIGCHAR_LONGLONG:
+					case DC_SIGCHAR_ULONGLONG:
+						py2dclonglong(&result->l, po, -1);
+						break;
+            
+					case DC_SIGCHAR_FLOAT:
+						if (!PyFloat_Check(po))
+							PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a float", -1 );
+						else
+							result->f = (float)PyFloat_AsDouble(po);
+						break;
+            
+					case DC_SIGCHAR_DOUBLE:
+						if (!PyFloat_Check(po))
+							PyErr_Format( PyExc_RuntimeError, "arg %d - expecting a float", -1 );
+						else
+							result->d = PyFloat_AsDouble(po);
+						break;
+            
+					case DC_SIGCHAR_POINTER: // this will only accept integers, mutable array types (meaning only bytearray) or tuples describing a callback
+						py2dcpointer(&result->p, po, -1);
+						break;
+				}
+            
+            
+				Py_DECREF(po);
+			}
+			else
+				PyErr_SetString(PyExc_RuntimeError, "callback error: unknown error calling back python callback function");
+		}
+		else
+			PyErr_Format(PyExc_RuntimeError, "callback error: python callback doesn't match signature argument count or signature wrong (invalid sig char or return type not specified)");
+        
+		Py_DECREF(py_args);
+	}
+	else
+		PyErr_SetString(PyExc_RuntimeError, "callback error: unknown error creating python arg tuple");
+
+	// as callbacks might be called repeatedly we don't want the error indicator to pollute other calls, so print
+	if(PyErr_Occurred) {
+		PyErr_Print();
+		return 'v'; // used as return char for errors @@@ unsure if smart, but it would at least indicate that no return value was set
+	}
+
+	return ch;
+}
+
+
+/* new callback object function */
+
+static PyObject*
+pydc_new_callback(PyObject* self, PyObject* args)
+{
+	PyObject* f;
+	const char* sig;
+	struct callback_userdata* ud;
+	DCCallback* cb;
+
+	if (!PyArg_ParseTuple(args, "sO", &sig, &f) || !PyFunction_Check(f))
+		return PyErr_Format(PyExc_RuntimeError, "argument mismatch");
+
+	// pass signature and f (as borrowed ptr) in userdata; not incrementing f's refcount,
+	// b/c we can probably expect user making sure callback exists when its needed/called
+	ud = malloc(sizeof(struct callback_userdata) + strlen(sig)+1);
+	cb = dcbNewCallback(sig, handle_py_callbacks, ud);
+	if(!cb) {
+		free(ud);
+		Py_RETURN_NONE;
+	}
+
+	ud->f = f;
+	strcpy(ud->sig, sig);
+	return DcPyCObject_FromVoidPtr(cb, &free_callback);  // !new ref!
+}
+
+/* free callback object function */
+
+static PyObject*
+pydc_free_callback(PyObject* self, PyObject* args)
+{
+	PyObject* pcobj;
+	void* cb;
+
+	if (!PyArg_ParseTuple(args, "O", &pcobj))
+		return PyErr_Format(PyExc_RuntimeError, "argument mismatch");
+
+	cb = DcPyCObject_AsVoidPtr(pcobj);
+	if (!cb)
+		return PyErr_Format(PyExc_RuntimeError, "cbhandle is NULL");
+
+	free(dcbGetUserData(cb)); // free helper struct callback_userdata
+
+	dcbFreeCallback(cb);
+	DcPyCObject_SetVoidPtr(pcobj, NULL);
+
+	//don't think I need to release it, as the pyobj is not equivalent to the held handle
+	//Py_XDECREF(pcobj); // release ref from pydc_load()
+
+	Py_RETURN_NONE;
+}
+
+
 
 
 // module deinit
@@ -499,11 +765,13 @@ PyMODINIT_FUNC
 PY_MOD_INIT_FUNC_NAME(void)
 {
 	static PyMethodDef pydcMethods[] = {
-		{"load",     pydc_load,     METH_VARARGS, "load library"    },
-		{"find",     pydc_find,     METH_VARARGS, "find symbols"    },
-		{"free",     pydc_free,     METH_VARARGS, "free library"    },
-		{"get_path", pydc_get_path, METH_VARARGS, "get library path"},
-		{"call",     pydc_call,     METH_VARARGS, "call function"   },
+		{"load",          pydc_load,          METH_VARARGS, "load library"     },
+		{"find",          pydc_find,          METH_VARARGS, "find symbols"     },
+		{"free",          pydc_free,          METH_VARARGS, "free library"     },
+		{"get_path",      pydc_get_path,      METH_VARARGS, "get library path" },
+		{"call",          pydc_call,          METH_VARARGS, "call function"    },
+		{"new_callback",  pydc_new_callback,  METH_VARARGS, "new callback obj" }, // @@@ doc: only functions, not every callable, and only with positional args
+		{"free_callback", pydc_free_callback, METH_VARARGS, "free callback obj"},
 		{NULL,NULL,0,NULL}
 	};
 
@@ -515,6 +783,9 @@ PY_MOD_INIT_FUNC_NAME(void)
 	m = Py_InitModule3(PYDC_MOD_NAME_STR, pydcMethods, PYDC_MOD_DESC_STR);
 	// NOTE: there is no way to pass a pointer to deinit_pydc - see PEP 3121 for details
 #endif
+
+	/* we convert pointers to python ints via Py_BuildValue('n', ...) which expects Py_ssize_t */
+	assert(sizeof(Py_ssize_t) >= sizeof(void*));
 
 	if(m)
 		gpCall = dcNewCallVM(4096); //@@@ one shared callvm for the entire module, this is not reentrant

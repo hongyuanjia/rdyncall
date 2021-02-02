@@ -15,6 +15,8 @@ Oct 27, 2020: allowing 'None' for 'p' params, always passing NULL
 Nov 13, 2020: removed pydc.py wrapper overhead (which only called pydcext.so
               functions; implies renaming pydcext.* to pydc.*), added type stub
               as package_data
+Feb  2, 2021: added callback support (comes with some bigger refactoring);
+              allow CPython's Py{CObject,Capsule} to be used as 'p'ointers
 
 
 BUILD/INSTALLATION
@@ -33,13 +35,18 @@ Building a wheel package isn't supported, currently.
 API
 ===
 
-In a nutshell:
+In a nutshell for all calls:
 
 libhandle = load(libpath)               # if path == None => handle to running process
 libpath   = get_path(libhandle)         # if handle == None => path to executable
-funcptr   = find(libhandle, symbolname)
-call(funcptr, signature, ...)
-free(libhandle)
+funcptr   = find(libhandle, symbolname) # lookup symbol by name
+call(funcptr, signature, ...)           # call C func w/ signature and corresponding args
+free(libhandle)                         # free library
+
+For callback objects to be passed as 'p'ointer args:
+
+cbhandle = new_callback(signature, pyfunc)  # signature reflecting C func ptr
+free_callback(cbhandle)                     # release callback object
 
 Notes:
 - a pydc.pyi stub file with the precise interface description is available
@@ -84,6 +91,7 @@ SIGNATURE FORMAT
       | int (PyInt)                     | int (PyLong)                    | void*                           | int,long (Py_ssize_t)                | int (Py_ssize_t)
       | long (PyLong)                   | -                               | void*                           | int,long (Py_ssize_t)                | int (Py_ssize_t)
       | None (Py_None)                  | None (Py_None)                  | void* (always NULL)             | int,long (Py_ssize_t)                | int (Py_ssize_t)
+      | (PyCObject,PyCapsule)           | (PyCObject,PyCapsule)           | void*                           | int,long (Py_ssize_t)                | int (Py_ssize_t)     @@@ test
   'Z' | str (PyString)                ! | str (PyUnicode)               ! | const char* (UTF-8 for unicode) | str (PyString)                       | str (PyUnicode)
       | unicode (PyUnicode)           ! | -                               | const char* (UTF-8 for unicode) | str (PyString)                       | str (PyUnicode)
       | -                               | bytes (PyBytes)               ! | const char* (UTF-8 for unicode) | str (PyString)                       | str (PyUnicode)
@@ -96,7 +104,7 @@ SIGNATURE FORMAT
   $ cast to single precision
   ^ cast to double precision
   & mutable buffer when passed to C
-  ! immutable buffer when passed to C, as strings (in any form) are considered objects, not buffers
+  ! immutable buffer when passed to C, as strings (in any form) are considered objects, not buffers; also, not allowed as return type in callback signatures
 
 
   Also supported are specifying calling convention switches using '_'-prefixed
@@ -122,7 +130,7 @@ SIGNATURE FORMAT
 TODO
 ====
 
-- callback support
+- calling convention mode handling for callbacks (not sure if ever needed?)
 - pydoc "man page"
 - stub location: the pydc-stubs folder isn't picked up by mypy, so I question why this is the suggested way
 - get into freebsd ports
