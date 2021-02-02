@@ -9,6 +9,7 @@
 from pydc import *
 import sys
 import platform
+import random
 import struct
 
 if sys.platform == "win32":
@@ -30,8 +31,9 @@ fp_memcpy = find(libc,"memcpy") # void * memcpy(void *dst, const void *src, size
 
 
 
-nums = bytearray(struct.pack("i"*8, 12, 3, 5, 99, 3, -9, -9, 0))
-es = int(len(nums)/8)  # element size
+n = 8
+nums = bytearray(struct.pack("i"*n, *[random.randrange (-10, 50) for i in range (n)]))
+es = int(len(nums)/n)  # element size
 
 
 def compar(a, b):
@@ -46,12 +48,12 @@ cb = new_callback("pp)i", compar)
 
 # --------
 
-print(*struct.unpack("i"*8, nums))
+print('%d '*n % struct.unpack("i"*n, nums))
 
 print('... qsort ...')
-call(fp_qsort,"piip)v", nums, 8, es, cb)
+call(fp_qsort,"piip)v", nums, n, es, cb)
 
-print(*struct.unpack("i"*8, nums))
+print('%d '*n % struct.unpack("i"*n, nums))
 
 
 free_callback(cb)
