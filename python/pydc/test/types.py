@@ -24,8 +24,8 @@ def t(lib, dcsig, c_rtype, c_fsym, c_paramlist, extra_msg, **kwargs):
     fp = pydc.find(lib, c_fsym)
     r = pydc.call(fp, dcsig, *args)
     rt = type(r).__name__
-    if(r != exp_ret or args != post_args):
-        if((type(exp_ret) is types.LambdaType) and exp_ret(r) == False):
+    if(r != exp_ret or args != post_args): # @@@ type test also or type(r) is not type(exp_ret)):
+        if((type(exp_ret) is not types.LambdaType) or exp_ret(r) == False):
             err_sgr = '\033[41m'
   except:
     r = '[EXCEPTION]'
@@ -66,7 +66,7 @@ try:
   t(libc, ")v", "void", "sranddev", "(void)", '')
   
   # int()
-  t(libc, ")i", "int", "rand", "(void)", '')
+  t(libc, ")i", "int", "rand", "(void)", '', r=lambda i: type(i) is int)
   
   # void(unsigned int)
   t(libc, "I)v", "void", "srand", "(int)", '', i=(123,))
@@ -144,7 +144,7 @@ t(l, "Z)Z", "const char*",        "ccp_plus_one", "(const char*)",        '"1les
 t(l, "Z)Z", "const char*",        "ccp_plus_one", "(const char*)",        '       "xY" =>    "Y"',           i=(bytearray(b'xY'),), r=        'Y') # bytearray object
 
 t(l, "p)Z", "const char*",        "ccp_plus_one", "(const char*)",        '       "xY" =>    "Y"',           i=(bytearray(b'xY'),), r='Y') # bytearray object
-t(l, "p)p", "const char*",        "ccp_plus_one", "(const char*)",        '       "xY" => p+1 (~ odd addr)', i=(bytearray(b'xY'),), r='??') # bytearray object
+t(l, "p)p", "const char*",        "ccp_plus_one", "(const char*)",        '       "xY" => p+1 (~ odd addr)', i=(bytearray(b'xY'),), r=lambda i: type(i) is int and (i%2)==1) # bytearray object
 t(l, "p)p", "const char*",        "ccp_plus_one", "(const char*)",        ' 0xdeadc0de => 0xdeadc0de+1=3735929055',    i=(long_h,), r=3735929055) # handle (integer interpreted as ptr)
 t(l, "p)p", "const char*",        "ccp_plus_one", "(const char*)",        ' 0xdeadc0de => 0xdeadc0de+1=3735929055',    i=(long_h,), r=3735929055) # handle (integer interpreted as ptr, long in Python 2)
 t(l, "p)p", "const char*",        "ccp_plus_one", "(const char*)",        '       NULL => NULL+1=1',                   i=(  None,), r=1) # NULL, adding one will result in 0x1
