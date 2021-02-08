@@ -15,6 +15,7 @@ Oct 27, 2020: allowing 'None' for 'p' params, always passing NULL
 Nov 13, 2020: removed pydc.py wrapper overhead (which only called pydcext.so
               functions; implies renaming pydcext.* to pydc.*), added type stub
               as package_data
+Jan 23, 2021: update to dyncall 1.2 (only version bump)
 Feb  2, 2021: added callback support (comes with some bigger refactoring);
               allow CPython's Py{CObject,Capsule} to be used as 'p'ointers
 
