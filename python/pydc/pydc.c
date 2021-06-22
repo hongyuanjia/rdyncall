@@ -296,7 +296,7 @@ static char* str_aux[NUM_AUX_STRS]; // hard limit, most likely enough and checke
 static PyObject*
 pydc_call_impl(PyObject* self, PyObject* args) /* implementation, called by wrapper func pydc_call() */
 {
-	const char  *sig_ptr;
+	const char  *sig_ptr = NULL;
 	char        ch;
 	int         pos, ts;
 	void*       pfunc;

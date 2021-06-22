@@ -135,6 +135,7 @@ TODO
 - pydoc "man page"
 - stub location: the pydc-stubs folder isn't picked up by mypy, so I question why this is the suggested way
 - get into freebsd ports
+- releasing GIL when calling into C code (*only* when none of the arguments is a mutable buffer, though)
 
 
 BUGS
