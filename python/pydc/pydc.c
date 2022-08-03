@@ -733,6 +733,20 @@ pydc_free_callback(PyObject* self, PyObject* args)
 }
 
 
+/* helper creating a string from a pointer handle (Py_ssize_t, must point to
+ * string data); this makes it easier to use C functions that allocate memory,
+ * retrieve the handle via 'p' in order to call free() on it later, and get the
+ * string it points to
+ */
+static PyObject*
+pydc_p2Z(PyObject* self, PyObject* args)
+{
+	size_t p;
+	if(PyArg_ParseTuple(args, "n", &p))
+		return Py_BuildValue("s", (const char*)p);
+
+	Py_RETURN_NONE;
+}
 
 
 // module deinit
@@ -772,6 +786,7 @@ PY_MOD_INIT_FUNC_NAME(void)
 		{"call",          pydc_call,          METH_VARARGS, "call function"    },
 		{"new_callback",  pydc_new_callback,  METH_VARARGS, "new callback obj" }, // @@@ doc: only functions, not every callable, and only with positional args
 		{"free_callback", pydc_free_callback, METH_VARARGS, "free callback obj"},
+		{"p2Z",           pydc_p2Z,           METH_VARARGS, "ptr to C-string"  }, // helper func
 		{NULL,NULL,0,NULL}
 	};
 

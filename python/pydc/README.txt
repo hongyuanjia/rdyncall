@@ -1,6 +1,6 @@
 dyncall python bindings
 Copyright 2007-2016 Daniel Adler
-          2018-2020 Tassilo Philipp
+          2018-2022 Tassilo Philipp
 
 Dec  4, 2007: initial
 Mar 22, 2016: update to dyncall 0.9, includes breaking sig char changes
@@ -18,6 +18,12 @@ Nov 13, 2020: removed pydc.py wrapper overhead (which only called pydcext.so
 Jan 23, 2021: update to dyncall 1.2 (only version bump)
 Feb  2, 2021: added callback support (comes with some bigger refactoring);
               allow CPython's Py{CObject,Capsule} to be used as 'p'ointers
+Aug  3, 2022: added p2Z() helper function (e.g. helpful when working with
+			  string 'p'ointers that eventually need to be free()'d, as no
+			  implicit 'Z' conversion is taking place)
+              
+              
+              
 
 
 BUILD/INSTALLATION
@@ -115,6 +121,7 @@ SIGNATURE FORMAT
   ----+-----------------------------------------------------------------------------------------------------------
   '_' | prefix indicating that next signature character specifies calling convention; char is one of the following
   ':' | platform's default calling convention
+  '*' | platform's default thiscall (C++ methods) calling convention, first argument of a call is the this pointer
   'e' | vararg function
   '.' | vararg function's variadic/ellipsis part (...), to be specified before first vararg
   'c' | only on x86: cdecl
@@ -136,6 +143,7 @@ TODO
 - stub location: the pydc-stubs folder isn't picked up by mypy, so I question why this is the suggested way
 - get into freebsd ports
 - releasing GIL when calling into C code (*only* when none of the arguments is a mutable buffer, though)
+- support for new dyncall aggregate-by-value interface
 
 
 BUGS

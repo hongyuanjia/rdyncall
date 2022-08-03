@@ -8,7 +8,7 @@ import types
 
 def theader(title):
   print("\n"+title)
-  print('%8s %20s %16s %-20s %11s %-16s -> %16s %-16s %12s %-16s  # %s' % ('DC_SIG', 'C_RET_T', 'C_FSYM', 'C_PARAMLIST', 'PY_ARG_T', 'IN_ARGS', 'RET_VAL', 'PY_RET_T', 'OUT_ARGS', 'OUT_ARGS_T', 'NOTES'))
+  print('%8s %20s %16s %-20s %11s %-16s -> %16s %-16s %12s %-16s  # %s' % ('DC_SIG', 'C_RET_T', 'C_FSYM', 'C_PARAMLIST', 'PY_ARG_T', 'IN_ARGS', 'RET_VAL', 'PY_RET_T', 'OUT_ARGS_T', 'OUT_ARGS', 'NOTES'))
 
 
 def t(lib, dcsig, c_rtype, c_fsym, c_paramlist, extra_msg, **kwargs):
@@ -148,6 +148,13 @@ t(l, "p)p", "const char*",        "ccp_plus_one", "(const char*)",        '     
 t(l, "p)p", "const char*",        "ccp_plus_one", "(const char*)",        ' 0xdeadc0de => 0xdeadc0de+1=3735929055',    i=(long_h,), r=3735929055) # handle (integer interpreted as ptr)
 t(l, "p)p", "const char*",        "ccp_plus_one", "(const char*)",        ' 0xdeadc0de => 0xdeadc0de+1=3735929055',    i=(long_h,), r=3735929055) # handle (integer interpreted as ptr, long in Python 2)
 t(l, "p)p", "const char*",        "ccp_plus_one", "(const char*)",        '       NULL => NULL+1=1',                   i=(  None,), r=1) # NULL, adding one will result in 0x1
+
+# helper func to test p2Z
+t(l, "p)p", "const char*",        "ccp_plus_one", "(const char*)",        '       "xY" => "Y"        (after p2Z())', i=(bytearray(b'xY'),), r=lambda i: type(i) is int and pydc.p2Z(i) == 'Y')
+t(l, "Z)p", "const char*",        "ccp_plus_one", "(const char*)",        '       "Y"  => ""         (after p2Z())', i=(             'Y',), r=lambda i: type(i) is int and pydc.p2Z(i) == '')
+t(l, "Z)p", "const char*",        "ccp_plus_one", "(const char*)",        '"X_unicode" => "_unicode" (after p2Z())', i=(    u'X_unicode',), r=lambda i: type(i) is int and pydc.p2Z(i) == '_unicode')
+t(l, "Z)p", "const char*",        "ccp_plus_one", "(const char*)",        '"1lessbyte" => "lessbyte" (after p2Z())', i=(    b'1lessbyte',), r=lambda i: type(i) is int and pydc.p2Z(i) == 'lessbyte')
+t(l, "j)p", "long",                 "l_plus_one", "(long)",               '      -0x1   => ""        (after p2Z())', i=(            -0x1,), r=lambda i: type(i) is int and pydc.p2Z(i) == None)
 
 # functions that change buffers
 theader('TESTS OF IMMUTABLE AND MUTABLE PYTHON BUFFERS:')
