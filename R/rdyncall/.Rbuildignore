@@ -1,0 +1,6 @@
+^\.Rproj\.user$
+\.Rproj$
+^\.gitignore$
+^README\.Rmd$
+^README-.*\.png$
+^tools$
