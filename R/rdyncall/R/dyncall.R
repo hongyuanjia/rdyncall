@@ -14,14 +14,14 @@ new.callvm <- function(
 , size = 4096 )
 {
   callmode <- match.arg(callmode)
-  x <- .Call("new_callvm", callmode, as.integer(size), PACKAGE="rdyncall")
+  x <- .Call("r_new_callvm", callmode, as.integer(size), PACKAGE="rdyncall")
   reg.finalizer(x, free.callvm)
   return(x)
 }
 
 free.callvm <- function(x)
 {
-  .Call("free_callvm", x, PACKAGE="rdyncall")
+  .Call("r_free_callvm", x, PACKAGE="rdyncall")
 }
 
 # ----------------------------------------------------------------------------

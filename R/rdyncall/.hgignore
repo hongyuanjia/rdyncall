@@ -1,0 +1,11 @@
+syntax: glob
+
+.Rproj.user
+.Rhistory
+.RData
+
+*.o
+*.so
+*.dll
+
+src/dyncall

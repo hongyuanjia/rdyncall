@@ -1,7 +1,8 @@
 -------------------------------------------------------------------------------
 License for rdyncall R Package
 
-Copyright (c) 2009-2011 Daniel Adler <dadler@uni-goettingen.de>, 
+Copyright (c) 2009-2011 Daniel Adler <dadler@uni-goettingen.de>, 2022 Hongyuan
+Jia <hongyuanjia@cqust.edu.cn>.
 
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +21,7 @@ Sub-directory: src/dyncall
 
 License for DynCall libraries (dynload,dyncall,dyncallback)
 
-Copyright (c) 2007-2011 Daniel Adler <dadler@uni-goettingen.de>, 
+Copyright (c) 2007-2021 Daniel Adler <dadler@uni-goettingen.de>, 
                         Tassilo Philipp <tphilipp@potion-studios.com>
 
 in addition, dynload has improvements from
