@@ -11,12 +11,12 @@ if ( Sys.info()[["sysname"]] == "Darwin" && .Platform$GUI != "AQUA") {
   dev.off()
 
   # An alternative solution via R package 'cocoa' from dyncall site.
-  # source: http://dyncall.org/svn/trunk/bindings/R/cocoa 
+  # source: https://dyncall.org/svn/trunk/bindings/R/cocoa 
   
   # from: http://www.mail-archive.com/r-help@r-project.org/msg91375.html
   # is.installed <- function(mypkg) is.element(mypkg, installed.packages()[,1])
   #if (!is.installed("cocoa")) {
-  #  install.packages("cocoa",,"http://dyncall.org/r")
+  #  install.packages("cocoa",,"https://dyncall.org/r")
   #}
   #library(cocoa)
 

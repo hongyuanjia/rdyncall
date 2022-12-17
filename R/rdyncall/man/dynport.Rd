@@ -87,13 +87,13 @@ is currently in development.
 }
 \references{
   Adler, D. (2012) \dQuote{Foreign Library Interface}, \emph{The R Journal}, \bold{4(1)}, 30--40, June 2012.
-  \url{http://journal.r-project.org/archive/2012-1/RJournal_2012-1_Adler.pdf}
+  \url{https://journal.r-project.org/articles/RJ-2012-004/}
   
-  Adler, D., Philipp, T. (2008) \emph{DynCall Project}. \url{http://dyncall.org} 
+  Adler, D., Philipp, T. (2008) \emph{DynCall Project}. \url{https://dyncall.org} 
 
-  Clark, J. (1998). expat - XML Parser Toolkit. \url{http://expat.sourceforge.net} 
+  Clark, J. (1998). expat - XML Parser Toolkit. \url{https://expat.sourceforge.net} 
 
-  Ikits, M. and Magallon, M. (2002).  The OpenGL Extension Wrangler Library. \url{http://glew.sourceforge.net} 
+  Ikits, M. and Magallon, M. (2002).  The OpenGL Extension Wrangler Library. \url{https://glew.sourceforge.net} 
 
   Latinga, S. (1998). The Simple DirectMedia Layer Library. \url{http://www.libsdl.org} 
 

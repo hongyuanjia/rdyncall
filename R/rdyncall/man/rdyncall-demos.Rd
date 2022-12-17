@@ -25,7 +25,7 @@ required for some rdyncall demos:
 \code{expat}     \tab XML Parser \tab \url{http://www.libexpat.org} \cr
 \code{GL}        \tab Open Graphics Library \tab \url{http://opengl.org}, \url{http://www.mesa3d.org} \cr
 \code{GLU}       \tab OpenGL Utility Library \tab see links above\cr
-\code{glew}      \tab OpenGL Extension Wrangler Library \tab \url{http://glew.sourceforge.net/} \cr
+\code{glew}      \tab OpenGL Extension Wrangler Library \tab \url{https://glew.sourceforge.net/} \cr
 \code{SDL}       \tab Multimedia Framework \tab \url{http://libsdl.org/} \cr
 \code{SDL_mixer} \tab Music Format playing \tab \url{http://www.libsdl.org/projects/SDL_mixer/} \cr
 \code{SDL_image} \tab Image Format loading \tab \url{http://www.libsdl.org/projects/SDL_image/}  \cr
@@ -48,7 +48,7 @@ Download the \code{*.zip} files, unpack them and place the \code{*.DLL} files to
 
 \tabular{ll}{
 \strong{Lib}     \tab \strong{Download Link} \cr
-\code{expat}     \tab \url{http://expat.sourceforge.net} (TODO:test installer) \cr
+\code{expat}     \tab \url{https://expat.sourceforge.net} (TODO:test installer) \cr
 \code{GL}        \tab pre-installed \cr
 \code{GLU}       \tab pre-installed \cr
 \code{glew}      \tab \url{http://sourceforge.net/projects/glew/files/glew/1.7.0/glew-1.7.0-win32.zip/download} \cr

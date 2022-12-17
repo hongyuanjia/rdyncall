@@ -60,7 +60,7 @@ Some demos require shared C libraries to be installed in the system. Please read
 }
 \section{Supported Platforms}{
 The low-level implementation is mainly based on libraries from the DynCall
-Project (\url{http://dyncall.org}). The library suite is distributed
+Project (\url{https://dyncall.org}). The library suite is distributed
 as part of the package source tree.
 
 The dyncall and dyncallback libraries implement generic low-level services
@@ -109,10 +109,10 @@ FreeBSD 8.2/x86                : build ok, no tests made for X11. \cr
 }
 \references{
   Adler, D. (2012) \dQuote{Foreign Library Interface}, \emph{The R Journal}, \bold{4(1)}, 30--40, June 2012.
-  \url{http://journal.r-project.org/archive/2012-1/RJournal_2012-1_Adler.pdf}
+  \url{https://journal.r-project.org/articles/RJ-2012-004/}
 
   Adler, D., Philipp, T. (2008) \emph{DynCall Project}.
-  \url{http://dyncall.org}
+  \url{https://dyncall.org}
 }
 \examples{
 \dontrun{

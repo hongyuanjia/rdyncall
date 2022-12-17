@@ -220,14 +220,14 @@ A 20-page vignette with the title "Foreign Library Interface" is available via
 A cross-platform audio/visual OpenGL-based demo-scene production 
 written in 100% pure R is available here:
 
-  http://dyncall.org/demos/soulsalicious/
+  https://dyncall.org/demos/soulsalicious/index.html
 
 A video of demo is also at the website.
 
 
 The website of the DynCall Project is at
 
-  http://dyncall.org/
+  https://dyncall.org/
 
 
 Help and Feedback

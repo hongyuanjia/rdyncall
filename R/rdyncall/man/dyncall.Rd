@@ -195,10 +195,10 @@ x <- .dynsym(mathlib,"sqrt")
 }
 \references{
   Adler, D. (2012) \dQuote{Foreign Library Interface}, \emph{The R Journal}, \bold{4(1)}, 30--40, June 2012.
-  \url{http://journal.r-project.org/archive/2012-1/RJournal_2012-1_Adler.pdf}
+  \url{https://journal.r-project.org/articles/RJ-2012-004/}
   
   Adler, D., Philipp, T. (2008) \emph{DynCall Project}. 
-  \url{http://dyncall.org}
+  \url{https://dyncall.org}
 }
 \seealso{
 \code{\link{.dynsym}} and \code{\link[base]{getNativeSymbolInfo}} for resolving symbols,
