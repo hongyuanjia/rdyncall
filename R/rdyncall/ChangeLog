@@ -1,6 +1,11 @@
 ChangeLog for R Package rdyncall
 -------------------------------------------------------------------------------
 
+0.9   [2022-12-18]:
+ o update: use the latest dyncall version
+ o improved dynamic library search for Windows
+ o update: package refactoring per CRAN requirements
+
 0.8   [2014-09-19]:
  o reimplemented 'simplified' version of dynfind
  o added dynports: pcap
