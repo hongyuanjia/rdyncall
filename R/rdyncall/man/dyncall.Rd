@@ -79,26 +79,26 @@ Type signatures are used by almost all other signature formats (call, library, s
 The following table gives a list of valid type signatures for all supported C types. 
 
 \tabular{clll}{
-\strong{Type Signature} \tab \strong{C type}        \tab \strong{valid R argument types}           \tab \strong{R return type}\cr
-'\code{B}'           \tab bool                   \tab raw,logical,integer,double         \tab logical\cr
-'\code{c}'           \tab char                   \tab raw,logical,integer,double         \tab integer\cr
-'\code{C}'           \tab unsigned char          \tab raw,logical,integer,double         \tab integer\cr
-'\code{s}'           \tab short                  \tab raw,logical,integer,double         \tab integer\cr
-'\code{S}'           \tab unsigned short         \tab raw,logical,integer,double         \tab integer\cr
-'\code{i}'           \tab int                    \tab raw,logical,integer,double         \tab integer\cr
-'\code{I}'           \tab unsigned int           \tab raw,logical,integer,double         \tab double\cr
-'\code{j}'           \tab long                   \tab raw,logical,integer,double         \tab double\cr
-'\code{J}'           \tab unsigned long          \tab raw,logical,integer,double         \tab double\cr
-'\code{l}'           \tab long long              \tab raw,logical,integer,double         \tab double\cr
-'\code{L}'           \tab unsigned long long     \tab raw,logical,integer,double         \tab double\cr
-'\code{f}'           \tab float                  \tab raw,logical,integer,double         \tab double\cr
-'\code{d}'           \tab double                 \tab raw,logical,integer,double         \tab double\cr
-'\code{p}'           \tab \emph{C pointer}       \tab \emph{any vector},externalptr,NULL \tab externalptr\cr
-'\code{Z}'           \tab char*                  \tab character,NULL                     \tab character or NULL\cr
-'\code{x}'           \tab SEXP                   \tab \emph{any}                         \tab \emph{any}\cr
-'\code{v}'           \tab void                   \tab \emph{invalid}                     \tab NULL\cr
-'\code{*}' \ldots    \tab \emph{C type}* (pointer) \tab \emph{any vector},externalptr,NULL \tab externalptr\cr
-"\code{*<}" \emph{typename} '\code{>}' \tab \emph{typename}* (pointer) \tab raw,externalptr \tab externalptr\cr
+\strong{Type Signature}                \tab \strong{C type}            \tab \strong{valid R argument types}          \tab \strong{R return type}\cr
+'\code{B}'                             \tab bool                       \tab raw,logical,integer,double               \tab logical\cr
+'\code{c}'                             \tab char                       \tab raw,logical,integer,double               \tab integer\cr
+'\code{C}'                             \tab unsigned char              \tab raw,logical,integer,double               \tab integer\cr
+'\code{s}'                             \tab short                      \tab raw,logical,integer,double               \tab integer\cr
+'\code{S}'                             \tab unsigned short             \tab raw,logical,integer,double               \tab integer\cr
+'\code{i}'                             \tab int                        \tab raw,logical,integer,double               \tab integer\cr
+'\code{I}'                             \tab unsigned int               \tab raw,logical,integer,double               \tab double\cr
+'\code{j}'                             \tab long                       \tab raw,logical,integer,double               \tab double\cr
+'\code{J}'                             \tab unsigned long              \tab raw,logical,integer,double               \tab double\cr
+'\code{l}'                             \tab long long                  \tab raw,logical,integer,double               \tab double\cr
+'\code{L}'                             \tab unsigned long long         \tab raw,logical,integer,double               \tab double\cr
+'\code{f}'                             \tab float                      \tab raw,logical,integer,double               \tab double\cr
+'\code{d}'                             \tab double                     \tab raw,logical,integer,double               \tab double\cr
+'\code{p}'                             \tab \emph{C pointer}           \tab \emph{any vector},externalptr,NULL       \tab externalptr\cr
+'\code{Z}'                             \tab char*                      \tab character,NULL                           \tab character or NULL\cr
+'\code{x}'                             \tab SEXP                       \tab \emph{any}                               \tab \emph{any}\cr
+'\code{v}'                             \tab void                       \tab \emph{invalid}                           \tab NULL\cr
+'\code{*}' \ldots                      \tab \emph{C type}* (pointer)   \tab \emph{any vector},externalptr,NULL       \tab externalptr\cr
+"\code{*<}" \emph{typename} '\code{>}' \tab \emph{typename}* (pointer) \tab raw,externalptr                          \tab externalptr\cr
 }
 
 The last two rows of the table the above refer to \emph{typed pointer} signatures.
@@ -132,13 +132,13 @@ If typed pointers to aggregate objects are used as a return type and the corresp
 Here are some examples of C function prototypes and corresponding call signatures:
 
 \tabular{rll}{
-                    \tab  \emph{C Function Prototype}                         \tab \emph{Call Signature} \cr
-\code{double}       \tab  \code{sqrt(double);}                                \tab \code{"d)d"}    \cr
-\code{double}       \tab  \code{dnorm(double,double,double,int);}             \tab \code{"dddi)d"} \cr
-\code{void}         \tab  \code{R_isort(int*,int);}                           \tab \code{"pi)v"}   or \code{"*ii)v"} \cr
-\code{void}         \tab  \code{revsort(double*,int*,int);}                   \tab \code{"ppi)v"}  or \code{"*d*ii)v"}\cr
-\code{int}          \tab  \code{SDL_PollEvents(SDL_Event *);}                 \tab \code{"p)i"}    or \code{"*<SDL_Event>)i"} \cr
-\code{SDL_Surface*} \tab  \code{SDL_SetVideoMode(int,int,int,int);}           \tab \code{"iiii)p"} or \code{"iiii)*<SDL_Surface>"} \cr
+                    \tab \emph{C Function Prototype}               \tab \emph{Call Signature} \cr
+\code{double}       \tab \code{sqrt(double);}                      \tab \code{"d)d"}    \cr
+\code{double}       \tab \code{dnorm(double,double,double,int);}   \tab \code{"dddi)d"} \cr
+\code{void}         \tab \code{R_isort(int*,int);}                 \tab \code{"pi)v"}   or \code{"*ii)v"} \cr
+\code{void}         \tab \code{revsort(double*,int*,int);}         \tab \code{"ppi)v"}  or \code{"*d*ii)v"}\cr
+\code{int}          \tab \code{SDL_PollEvents(SDL_Event *);}       \tab \code{"p)i"}    or \code{"*<SDL_Event>)i"} \cr
+\code{SDL_Surface*} \tab \code{SDL_SetVideoMode(int,int,int,int);} \tab \code{"iiii)p"} or \code{"iiii)*<SDL_Surface>"} \cr
 }
 
 }

@@ -3,42 +3,42 @@
 \alias{rdyncall}
 \alias{rdyncall-package}
 \title{Improved Foreign Function Interface (FFI) and Dynamic Bindings to C Libraries (e.g. OpenGL) }
-\description{The package provides a cross-platform framework for dynamic binding of 
+\description{The package provides a cross-platform framework for dynamic binding of
   C libraries using a flexible Foreign Function Interface (FFI).
-  The FFI supports almost all fundamental C types, multiple calling conventions, 
-  symbolic access to foreign C struct/union data types and wrapping of R functions 
-  as C callback function pointers. 
-  Dynamic bindings to shared C libraries are data-driven by cross-platform binding specification 
-  using a compact plain text format ; an initial repository of bindings to a couple of 
+  The FFI supports almost all fundamental C types, multiple calling conventions,
+  symbolic access to foreign C struct/union data types and wrapping of R functions
+  as C callback function pointers.
+  Dynamic bindings to shared C libraries are data-driven by cross-platform binding specification
+  using a compact plain text format ; an initial repository of bindings to a couple of
   common C libraries (OpenGL, SDL, Expat, glew, CUDA, OpenCL, ODE, R) comes with the package.
   The package includes a variety of technology demos and OS-specific notes for installation of shared libraries.
 }
 \details{
 \pkg{rdyncall} offers a stack of interoperability technologies for working
 with foreign compiled languages using cross-platform portable abstraction
-methods. 
+methods.
 
 For R application development, the package facilitates direct access from R
 to the C Application Programming Interface (API) of common libraries.
 This enables a new style of development: R applications can use
-low-level services of portable C libraries. 
+low-level services of portable C libraries.
 System-level code can be implemented in R without leaving the language.
 C APIs can be explored from within the R interpreter.
 Moving the R code from one platform to the other does not involve
 recompilation.
 Ofcourse, the run-time libraries need to be installed using a standard
-procedure of the target Operating-System Distribution. 
+procedure of the target Operating-System Distribution.
 See \link{rdyncall-demos} for details on this.
 
-For R core development and research, the package provides an improved Foreign 
-Function Interface (FFI) that can be used to call arbitrary 
-foreign precompiled C code without the need for additional 
+For R core development and research, the package provides an improved Foreign
+Function Interface (FFI) that can be used to call arbitrary
+foreign precompiled C code without the need for additional
 compilation of wrapper code. The back-end library is extendable with new
-calling conventions (such as Fortran,Pascal,COM,etc.. - which has not been 
-the focus as of this release, but might be supported officially in the near 
+calling conventions (such as Fortran,Pascal,COM,etc.. - which has not been
+the focus as of this release, but might be supported officially in the near
 futurue).
 Basic type-safety checks for argument passing and framework support for
-working with foreign C data types such as pointers, arrays, structs and 
+working with foreign C data types such as pointers, arrays, structs and
 wrapping of R functions into first-level C callback function pointers
 round up this framework.
 }
@@ -49,17 +49,17 @@ round up this framework.
 \item Cross-platform naming and loading of shared libraries. See \code{\link{dynfind}}.
 \item Binding C library functions via thin call wrappers. See \code{\link{dynbind}}.
 \item Handling of foreign C pointer, array and struct/union data types. See \code{\link{packing}} and \code{\link{struct}}.
-\item Dynamic wrapping of R functions as C function pointers to be used in C callbacks. See \code{\link{new.callback}}. 
-\item Dynamic bindings to standard and common C libraries and APIs (functions, variables, macro constants, enums, struct and union types). See \code{\link{dynport}}. 
+\item Dynamic wrapping of R functions as C function pointers to be used in C callbacks. See \code{\link{new.callback}}.
+\item Dynamic bindings to standard and common C libraries and APIs (functions, variables, macro constants, enums, struct and union types). See \code{\link{dynport}}.
 }
 }
 \section{Getting Started}{
-Several demos ranging from simple FFI calls to the C standard math library up to more complex 3D OpenGL/SDL Applications are available. 
+Several demos ranging from simple FFI calls to the C standard math library up to more complex 3D OpenGL/SDL Applications are available.
 See \code{demos(package="rdyncall")} for an overview.
 Some demos require shared C libraries to be installed in the system. Please read \link{rdyncall-demos} for details.
 }
 \section{Supported Platforms}{
-The low-level implementation is mainly based on libraries from the DynCall 
+The low-level implementation is mainly based on libraries from the DynCall
 Project (\url{http://dyncall.org}). The library suite is distributed
 as part of the package source tree.
 
@@ -110,12 +110,12 @@ FreeBSD 8.2/x86                : build ok, no tests made for X11. \cr
 \references{
   Adler, D. (2012) \dQuote{Foreign Library Interface}, \emph{The R Journal}, \bold{4(1)}, 30--40, June 2012.
   \url{http://journal.r-project.org/archive/2012-1/RJournal_2012-1_Adler.pdf}
-  
-  Adler, D., Philipp, T. (2008) \emph{DynCall Project}. 
+
+  Adler, D., Philipp, T. (2008) \emph{DynCall Project}.
   \url{http://dyncall.org}
 }
 \examples{
-\donttest{
+\dontrun{
 # multimedia example
 # load dynports for OpenGL, Simple DirectMedia library
 # globals:

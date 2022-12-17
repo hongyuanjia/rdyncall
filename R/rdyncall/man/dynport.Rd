@@ -102,7 +102,7 @@ is currently in development.
   Smith, R. (2001). Open Dynamics Engine. \url{http://www.ode.org} 
 }
 \examples{
-\donttest{
+\dontrun{
 # Using SDL and OpenGL in R 
 dynport(SDL)
 dynport(GL)
