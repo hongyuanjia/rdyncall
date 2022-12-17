@@ -94,6 +94,7 @@ R_CallMethodDef callMethods[] =
 void R_init_rdyncall(DllInfo *info)
 {
   R_registerRoutines(info, NULL, callMethods, NULL, externalMethods);
+  R_useDynamicSymbols(info, FALSE);
 }
 
 void R_unload_rdyncall(DllInfo *info)
