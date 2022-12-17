@@ -7,6 +7,15 @@
     stopifnot(is.character(libname))
 
     libh <- .Call("dynload", libname, PACKAGE = "rdyncall")
+    # append ".dll" if on Windows
+    if (is.null(libh) && .Platform$OS.type == "windows" &&
+        any(nodll <- !is.na(libname) & !grepl("\\.dll$", libname, ignore.case = TRUE))
+    ) {
+        libname[nodll] <- paste0(libname[nodll], ".dll")
+        # try again
+        libh <- .Call("dynload", libname, PACKAGE = "rdyncall")
+    }
+
     if (!is.null(libh)) {
         attr(libh, "path") <- libname
         attr(libh, "auto.unload") <- auto.unload
