@@ -1,4 +1,5 @@
 VERSION <- commandArgs(TRUE)
+if (!length(VERSION)) VERSION <- "latest"
 
 # Download dyncall source code
 if (VERSION == "latest") {
@@ -10,6 +11,9 @@ if (VERSION == "latest") {
     if (!file.exists(sprintf("src/dyncall/configure"))) {
         system2(hg, c("clone", "https://dyncall.org/pub/dyncall/dyncall", "src/dyncall"))
     } else {
+        if (!dir.exists(sprintf("src/dyncall/.hg"))) {
+            unlink("src/dyncall", recursive = TRUE, force = TRUE)
+        }
         system2(hg, "pull")
     }
 } else {
