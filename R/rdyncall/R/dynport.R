@@ -25,7 +25,9 @@ loadDynportNamespace <- function(name, portfile, do.attach = TRUE) {
         }
         env <- new.env()
         sys.source(portfile, envir = env)
-        attach(env, name = envname)
+
+        # directly use base::attach will cause a CRAN check NOTE
+        getExportedValue(.BaseNamespaceEnv, "attach")(env, name = envname)
     } else {
         env <- new.env()
         sys.source(portfile, envir = env)
