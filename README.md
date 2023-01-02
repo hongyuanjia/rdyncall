@@ -1,5 +1,4 @@
-rdyncall
-----------------------------------------------
+# rdyncall
 
 rdyncall is the R bindings to the [DynCall](https://dyncall.org) libries for
 flexible Foreign Function Interface (FFI) between R and C.
@@ -18,10 +17,9 @@ Currently, you can try rdyncall by installing it from GitHub.
 remotes::install_github("hongyuanjia/rdyncall")
 ```
 
-Below is the original introduction of rdyncall.
+**Below is the original introduction of rdyncall:**
 
-Short Introduction
-------------------
+## Short Introduction
 
 rdyncall facilities dynamic R bindings to the C interface of some common
 shared libraries and a flexible Foreign Function Interface for the
@@ -31,8 +29,7 @@ Since the initial presentation of the package at Use!R 2009, a number of
 improvements have been done to rdyncall, the low-level DynCall libraries
 and the build system for an official release on CRAN.
 
-Overview
---------
+## Overview
 
 The package comprises a toolkit to work with C interfaces to native code from
 within the dynamic R interpreter without the need for C wrapper compilation:
@@ -47,12 +44,12 @@ within the dynamic R interpreter without the need for C wrapper compilation:
 
 The intended audience for this package are developers experienced with C, that
 
- .. need complete R bindings of C libraries.
- .. want to write cross-platform portable system-level code in R.
- .. need a FFI that supports almost all C fundamental types for arguments
-    and return types and thus does not need compilation of wrapper C code
- .. want to work with C struct/union types directly in R
- .. are interested in dynamic binding techniques between static and dynamic
+  - need complete R bindings of C libraries.
+  - want to write cross-platform portable system-level code in R.
+  - need a FFI that supports almost all C fundamental types for arguments
+  - and return types and thus does not need compilation of wrapper C code
+  - want to work with C struct/union types directly in R
+  - are interested in dynamic binding techniques between static and dynamic
     languages and cross-platform binding strategies.
 
 
@@ -62,7 +59,9 @@ Brief Tour 1/2: Dynamic R Bindings to C Libraries
 The dynamic binding interface consists of a single function, similar to
 'library' or 'require':
 
-  > dynport(portname)
+```r
+dynport(portname)
+```
 
 portname refers to a 'DynPort' file name that represents an R binding to a
 common C interface and library.
@@ -76,22 +75,22 @@ C library:
 
 The package contains a repository of the following DynPort files:
 
-  Port Name   | Description of C Shared Library/API
-  ------------+-------------------------------------------------
-  expat       | Expat XML Parser Library
-  GL          | OpenGL 1.1 API
-  GLU         | OpenGL Utility Library
-  SDL         | Simple DirectMedia Layer library
-  SDL_image   | Loading of image files (png,jpeg..)
-  SDL_mixer   | Loading/Playing of ogg/mp3/mod music files.
-  SDL_ttf     | Loading/Rendering of True Type Fonts.
-  glew        | OpenGL Extension Wrangler (includes OpenGL 3.0)
-  gl3         | strict OpenGL 3 (untested)
-  R           | R shared library
-  ode         | Open Dynamics (Physics-) Engine (untested)
-  cuda        | NVIDIA Cuda (untested)
-  opencl      | OpenCL (untested)
-  stdio       | C Standard Library I/O Functions
+  | Port Name   | Description of C Shared Library/API              |
+  | ------------|------------------------------------------------- |
+  | expat       | Expat XML Parser Library                         |
+  | GL          | OpenGL 1.1 API                                   |
+  | GLU         | OpenGL Utility Library                           |
+  | SDL         | Simple DirectMedia Layer library                 |
+  | SDL_image   | Loading of image files (png,jpeg..)              |
+  | SDL_mixer   | Loading/Playing of ogg/mp3/mod music files.      |
+  | SDL_ttf     | Loading/Rendering of True Type Fonts.            |
+  | glew        | OpenGL Extension Wrangler (includes OpenGL 3.0)  |
+  | gl3         | strict OpenGL 3 (untested)                       |
+  | R           | R shared library                                 |
+  | ode         | Open Dynamics (Physics-) Engine (untested)       |
+  | cuda        | NVIDIA Cuda (untested)                           |
+  | opencl      | OpenCL (untested)                                |
+  | stdio       | C Standard Library I/O Functions                 |
 
 In order to use a DynPort on a host system, the shared C libraries
 need to be installed first.
@@ -130,8 +129,7 @@ SDL_GL_SwapBuffers()
 A more detailed version including user-interface handling is available
 in `demo(SDL)`.
 
-Brief Tour 2/2: Alternative FFI via '.dyncall'
-----------------------------------------------
+## Brief Tour 2/2: Alternative FFI via '.dyncall'
 
 The alternative foreign function interface offered by '.dyncal' has a similar
 intend such as '.C'. It allows to call shared library functions directly from R,
@@ -141,18 +139,24 @@ for type-checking and flexible conversions between R and C values.
 
 The interface is as following:
 
-  > .dyncall(address, signature, ...)
+```r
+.dyncall(address, signature, ...)
+```
 
 'signature' is a character string that encodes the arguments and return-type of
 a C function.
 Here is an example of C function from the OpenGL API:
 
-   void glClearColor(float red, float green, float blue, float alpha);
+```c
+void glClearColor(float red, float green, float blue, float alpha);
+```
 
 one would specify the function type via "ffff)v" as type signature and
 pass additional arguments for '...':
 
-  > .dyncall(addressOf_glClearColor, "ffff)v", 0.3,0.7,1,0)
+```r
+.dyncall(addressOf_glClearColor, "ffff)v", 0.3,0.7,1,0)
+```
 
 Support for pointers (low-level void and typed pointers to struct/union) and
 wrapping of R functions to first-level C function pointers is also available.
@@ -171,8 +175,7 @@ x <- .dynsym(mathlib,"sqrt")
 .dyncall(x, "d)d", 144L)
 ```
 
-Implementation Details
-----------------------
+## Implementation Details
 
 This package contains low-level services related to the generic invocation
 of machine-code functions using official calling convention specifications
@@ -190,8 +193,7 @@ very small code size and a generic machine-call solution designed for
 dynamic interpreters. (total size of shared lib object in rdyncall is ~60kb )
 
 
-Portability and Platforms
--------------------------
+## Portability and Platforms
 
 A large set of platforms and calling conventions are already supported and a
 suite of testing tools ensure a stable implementation at low-level.
@@ -214,24 +216,11 @@ Callbacks on PowerPC 32-bit for Mac OS X work fine, for other
 ELF/System V-based PowerPC systems, callbacks are not yet implemented.
 
 
-Known Bugs
-----------
-
-* PowerPC/Mac OS X 10.4: Building Universal Binaries are broken.. in particular
-  the as for i386 assembler.
-  Workaround for PowerPC users: install with "--no-multiarch" or use prebuilt
-  binaries built on OS X >= 10.5.
-
-* SPARC Assembly sources are currently implemented for GNU assembler and do
-  not assemble using the 'fbe' Assembler tool on Solaris.
-
-
-More Information
-----------------
+## More Information
 
 More demos and examples are in the package.
 A 20-page vignette with the title "Foreign Library Interface" is available via
-  > vignette("FLI")
+`vignette("FLI")`.
 
 A cross-platform audio/visual OpenGL-based demo-scene production
 written in 100% pure R is available here:
@@ -239,7 +228,6 @@ written in 100% pure R is available here:
   https://dyncall.org/demos/soulsalicious/index.html
 
 A video of demo is also at the website.
-
 
 The website of the DynCall Project is at
 
