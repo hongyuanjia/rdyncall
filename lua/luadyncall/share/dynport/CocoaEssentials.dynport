@@ -1,7 +1,0 @@
-:lib
-AppKit
-.
-:fun
-NSApplicationLoad()B;
-.
-

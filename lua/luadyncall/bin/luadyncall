@@ -1,7 +1,0 @@
-#!/bin/sh
-TOP=`dirname $0`/..
-export LUA_PATH="${TOP}/src/?.lua;${TOP}/src/?/init.lua;;"
-export LUA_CPATH="${TOP}/src/?.so;;"
-export LDP_PATH="${TOP}/share/dynport/?.dynport;"
-lua $*
-

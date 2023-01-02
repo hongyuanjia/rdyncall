@@ -1,5 +1,0 @@
-win32   demonstrates a win32 message box
-darwin  demonstrates a darwin specific example
-w32PlaySound	PlaySound on Win32 using dyn.load facility
-linux   demonstrates a linux specific example
-

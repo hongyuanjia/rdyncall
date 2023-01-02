@@ -1,9 +1,0 @@
-useDynLib(rdc)
-export(
-	rdcLoad,rdcFree,rdcFind,rdcCall,
-	rdcPath,rdcUnpath,rdcShowPath,
-	rdcUnpack1,rdcDataPtr,rdcSizeOf,
-	rdcBind,
-	rdcMode,
-	dcNewCallVM, dcCall, dcMode
-)
