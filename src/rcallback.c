@@ -17,7 +17,7 @@ typedef struct
   const char* signature; /* argument signature without call mode prefix */
 } R_Callback;
 
-char dcCallbackHandler_R( DCCallback* pcb, DCArgs* args, DCValue* result, void* userdata )
+char R_dcCallbackHandler( DCCallback* pcb, DCArgs* args, DCValue* result, void* userdata )
 {
 	R_Callback* rdata;
 	const char* ptr;
@@ -178,7 +178,7 @@ char dcCallbackHandler_R( DCCallback* pcb, DCArgs* args, DCValue* result, void* 
 
 void R_callback_finalizer(SEXP x);
 
-SEXP r_new_callback(SEXP sig_x, SEXP fun_x, SEXP rho_x)
+SEXP C_new_callback(SEXP sig_x, SEXP fun_x, SEXP rho_x)
 {
   const char* signature;
   R_Callback* rdata;
@@ -204,7 +204,7 @@ SEXP r_new_callback(SEXP sig_x, SEXP fun_x, SEXP rho_x)
     ch = *ptr++;
   }
   rdata->nargs = nargs;
-  DCCallback* cb = dcbNewCallback( signature, dcCallbackHandler_R, rdata);
+  DCCallback* cb = dcbNewCallback( signature, R_dcCallbackHandler, rdata);
   SEXP ans = R_MakeExternalPtr( cb, R_NilValue, R_NilValue );
   R_RegisterCFinalizerEx(ans, R_callback_finalizer, TRUE);
   return ans;

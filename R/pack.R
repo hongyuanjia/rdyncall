@@ -5,13 +5,13 @@
 pack <- function(x, offset, sigchar, value) {
     char1 <- substr(sigchar, 1, 1)
     if (char1 == "*") char1 <- "p"
-    .Call("pack", x, as.integer(offset), char1, value, PACKAGE = "rdyncall")
+    .Call("C_pack", x, as.integer(offset), char1, value, PACKAGE = "rdyncall")
 }
 
 unpack <- function(x, offset, sigchar) {
     sigchar <- char1 <- substr(sigchar, 1, 1)
     if (char1 == "*") sigchar <- "p"
-    x <- .Call("unpack", x, as.integer(offset), sigchar, PACKAGE = "rdyncall")
+    x <- .Call("C_unpack", x, as.integer(offset), sigchar, PACKAGE = "rdyncall")
     if (char1 == "*") {
         attr(x, "basetype") <- substr(sigchar, 2, nchar(sigchar))
     }

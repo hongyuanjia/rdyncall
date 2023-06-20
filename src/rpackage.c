@@ -12,35 +12,35 @@
  */
 
 /* rdyncall.c */
-SEXP r_new_callvm(SEXP callmode, SEXP size);
-SEXP r_free_callvm(SEXP callvm);
-SEXP r_dyncall(SEXP args); /* .External() with args = callvm, address, signature, args */
+SEXP C_new_callvm(SEXP callmode, SEXP size);
+SEXP C_free_callvm(SEXP callvm);
+SEXP C_dyncall(SEXP args); /* .External() with args = callvm, address, signature, args */
 
 /* rdynload.c */
-SEXP r_dynload(SEXP libpath);
-SEXP r_dynsym(SEXP libobj, SEXP symname, SEXP protectlib);
-SEXP r_dynunload(SEXP libobj);
+SEXP C_dynload(SEXP libpath);
+SEXP C_dynsym(SEXP libobj, SEXP symname, SEXP protectlib);
+SEXP C_dynunload(SEXP libobj);
 
 /* rpack.c */
-SEXP r_pack(SEXP ptr, SEXP offset, SEXP sig, SEXP value);
-SEXP r_unpack(SEXP ptr, SEXP offset, SEXP sig);
+SEXP C_pack(SEXP ptr, SEXP offset, SEXP sig, SEXP value);
+SEXP C_unpack(SEXP ptr, SEXP offset, SEXP sig);
 
 /* rcallback.c */
-SEXP r_new_callback(SEXP sig, SEXP fun, SEXP rho, SEXP mode);
+SEXP C_new_callback(SEXP sig, SEXP fun, SEXP rho, SEXP mode);
 
 /* rutils.c */
-SEXP r_asextptr(SEXP v);
-SEXP r_isnullptr(SEXP x);
-SEXP r_offsetPtr(SEXP x, SEXP offset);
+SEXP C_asextptr(SEXP v);
+SEXP C_isnullptr(SEXP x);
+SEXP C_offsetPtr(SEXP x, SEXP offset);
 
 /* rutils_str.c */
-SEXP r_ptr2str(SEXP ptr);
-SEXP r_strarrayptr(SEXP ptr);
-SEXP r_strptr(SEXP x);
+SEXP C_ptr2str(SEXP ptr);
+SEXP C_strarrayptr(SEXP ptr);
+SEXP C_strptr(SEXP x);
 
 /* rutils_float.c */
-SEXP r_as_floatraw(SEXP real);
-SEXP r_floatraw2numeric(SEXP floatraw);
+SEXP C_as_floatraw(SEXP real);
+SEXP C_floatraw2numeric(SEXP floatraw);
 
 /** ---------------------------------------------------------------------------
  ** R Interface .External registry
@@ -49,7 +49,7 @@ SEXP r_floatraw2numeric(SEXP floatraw);
 R_ExternalMethodDef externalMethods[] =
 {
   /* --- rdyncall.c -------------------------------------------------------- */
-  {"dyncall",     (DL_FUNC) &r_dyncall,      -1},
+  {"C_dyncall",     (DL_FUNC) &C_dyncall,      -1},
   /* --- end (sentinel) ---------------------------------------------------- */
   {NULL,NULL,0}
 };
@@ -61,28 +61,28 @@ R_ExternalMethodDef externalMethods[] =
 R_CallMethodDef callMethods[] =
 {
   /* --- rdyncall.c -------------------------------------------------------- */
-  {"new_callvm"                 , (DL_FUNC) &r_new_callvm       , 2},
-  {"free_callvm"                , (DL_FUNC) &r_free_callvm      , 1},
+  {"C_new_callvm"               , (DL_FUNC) &C_new_callvm       , 2},
+  {"C_free_callvm"              , (DL_FUNC) &C_free_callvm      , 1},
   /* --- rdynload.c -------------------------------------------------------- */
-  {"dynload"                    , (DL_FUNC) &r_dynload          , 1},
-  {"dynsym"                     , (DL_FUNC) &r_dynsym           , 3},
-  {"dynunload"                  , (DL_FUNC) &r_dynunload        , 1},
+  {"C_dynload"                  , (DL_FUNC) &C_dynload          , 1},
+  {"C_dynsym"                   , (DL_FUNC) &C_dynsym           , 3},
+  {"C_dynunload"                , (DL_FUNC) &C_dynunload        , 1},
   /* --- rcallback.c ------------------------------------------------------- */
-  {"new_callback"               , (DL_FUNC) &r_new_callback     , 3},
+  {"C_new_callback"             , (DL_FUNC) &C_new_callback     , 3},
   /* --- rpack.c ----------------------------------------------------------- */
-  {"pack"                       , (DL_FUNC) &r_pack             , 4},
-  {"unpack"                     , (DL_FUNC) &r_unpack           , 3},
+  {"C_pack"                     , (DL_FUNC) &C_pack             , 4},
+  {"C_unpack"                   , (DL_FUNC) &C_unpack           , 3},
   /* --- rutils.c ---------------------------------------------------------- */
-  {"asextptr"                   , (DL_FUNC) &r_asextptr         , 1},
-  {"isnullptr"                  , (DL_FUNC) &r_isnullptr        , 1},
-  {"offsetPtr"                  , (DL_FUNC) &r_offsetPtr        , 2},
+  {"C_asextptr"                 , (DL_FUNC) &C_asextptr         , 1},
+  {"C_isnullptr"                , (DL_FUNC) &C_isnullptr        , 1},
+  {"C_offsetPtr"                , (DL_FUNC) &C_offsetPtr        , 2},
   /* --- rutils_str.c ------------------------------------------------------ */
-  {"r_ptr2str"                  , (DL_FUNC) &r_ptr2str          , 1},
-  {"r_strarrayptr"              , (DL_FUNC) &r_strarrayptr      , 1},
-  {"r_strptr"                   , (DL_FUNC) &r_strptr           , 1},
+  {"C_ptr2str"                  , (DL_FUNC) &C_ptr2str          , 1},
+  {"C_strarrayptr"              , (DL_FUNC) &C_strarrayptr      , 1},
+  {"C_strptr"                   , (DL_FUNC) &C_strptr           , 1},
   /* --- rutils_float.c ---------------------------------------------------- */
-  {"r_as_floatraw"              , (DL_FUNC) &r_as_floatraw      , 1},
-  {"r_floatraw2numeric"         , (DL_FUNC) &r_floatraw2numeric , 1},
+  {"C_as_floatraw"              , (DL_FUNC) &C_as_floatraw      , 1},
+  {"C_floatraw2numeric"         , (DL_FUNC) &C_floatraw2numeric , 1},
   /* --- end (sentinel) ---------------------------------------------------- */
   {NULL,NULL, 0}
 };

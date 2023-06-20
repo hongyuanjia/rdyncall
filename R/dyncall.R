@@ -11,13 +11,13 @@ new.callvm <- function(
     size = 4096)
 {
     callmode <- match.arg(callmode)
-    x <- .Call("new_callvm", callmode, as.integer(size), PACKAGE = "rdyncall")
+    x <- .Call("C_new_callvm", callmode, as.integer(size), PACKAGE = "rdyncall")
     reg.finalizer(x, free.callvm)
     return(x)
 }
 
 free.callvm <- function(x) {
-    .Call("free_callvm", x, PACKAGE = "rdyncall")
+    .Call("C_free_callvm", x, PACKAGE = "rdyncall")
 }
 
 # ----------------------------------------------------------------------------
@@ -48,7 +48,7 @@ dyncall <- function(address, signature, ..., callmode = "default") {
         fastcall.gcc  = callvm.fastcall.gcc,
         fastcall.msvc = callvm.fastcall.msvc
     )
-    .External("dyncall", callvm, address, signature, ..., PACKAGE = "rdyncall")
+    .External("C_dyncall", callvm, address, signature, ..., PACKAGE = "rdyncall")
 }
 
 dyncall.cdecl         <- function(address, signature, ...) .External("C_dyncall", callvm.cdecl,         address, signature, ..., PACKAGE = "rdyncall")
