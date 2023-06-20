@@ -40,6 +40,6 @@ List object tagged as S3 class 'TypeInfo' with the following named entries
 }
 }
 \seealso{
-\code{\link{parseStructInfos}} for details on the framework for handling foreign C data types.
+\code{\link{cstruct}} for details on the framework for handling foreign C data types.
 }
 

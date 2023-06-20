@@ -103,7 +103,7 @@ The following table gives a list of valid type signatures for all supported C ty
 
 The last two rows of the table the above refer to \emph{typed pointer} signatures.
 If they appear as a return type signature, the external pointer returned is 
-a S3 \code{struct} object. See \code{\link{new.struct}} for details.  
+a S3 \code{struct} object. See \code{\link{cdata}} for details.  
 
 }
 \section{Call Signatures}{
@@ -125,7 +125,7 @@ which is more type-safe. For example, this can prevent users from passing a \cod
 
 Dervied pointer types to aggregate \code{union} or \code{struct} types are
 supported in combination with the framework for handling foreign data types. 
-See \code{\link{new.struct}} for details. Once a C type is registered,
+See \code{\link{cdata}} for details. Once a C type is registered,
 the signature \code{*<}\emph{typename}\code{>} can be used to refer to a pointer to an aggregate C object \emph{type}\code{*}.
 If typed pointers to aggregate objects are used as a return type and the corresponding type information exists, the returned value can be printed and accessed symbolically.
 

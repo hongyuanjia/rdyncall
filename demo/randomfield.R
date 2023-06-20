@@ -1,4 +1,4 @@
-# Package: rdyncall 
+# Package: rdyncall
 # File: demo/randomfield.R
 # Description: Scientific Computations using OpenGL: Rendering 512x512 random field by blending 5000 point sprites (dynport demo)
 
@@ -59,7 +59,7 @@ drawTexCirclesVertexArray <- function(x,y,r)
   glTexCoordPointer(2,GL_DOUBLE,0,texCoordArray)
 
   glDrawArrays(GL_QUADS, 0, n*4)
-  
+
   glDisableClientState(GL_VERTEX_ARRAY)
   glDisableClientState(GL_TEXTURE_COORD_ARRAY)
 }
@@ -135,19 +135,19 @@ main <- function()
   N         <- 5000
   colorunit <- 0.02
   glColor3d( colorunit,colorunit,colorunit )
-  tbase <- SDL_GetTicks()  
+  tbase <- SDL_GetTicks()
   frames <- 0
-  
+
   x <- runif(N,-1.1,1.1)
   y <- runif(N,-1.1,1.1)
   r <- runif(N,0.1,0.2)
-  event <- new.struct("SDL_Event")
-  
-  # disable interactive plot device.      
+  event <- cdata("SDL_Event")
+
+  # disable interactive plot device.
   oldpars <- par(ask=FALSE,mfrow=c(1,1))
-  
+
   quit <- FALSE
-  while(!quit) 
+  while(!quit)
   {
     glClear(GL_COLOR_BUFFER_BIT)
     drawTexCirclesVertexArray(x,y,r)
@@ -156,7 +156,7 @@ main <- function()
     r <- runif(N,0.1,0.2)
     glFinish()
     SDL_GL_SwapBuffers()
-    tnow <- SDL_GetTicks()  
+    tnow <- SDL_GetTicks()
     if ((tnow - tbase) > 1000)
     {
       tbase <- tnow
@@ -171,14 +171,14 @@ main <- function()
         pixels <<- readpixels()
         cat("done.\nPlot image results with R plotting device. This may take a while - please be patient..")
         image(pixels)
-        cat("done.\nContinue..\n") 
-      } else if (type == SDL_QUIT) { 
+        cat("done.\nContinue..\n")
+      } else if (type == SDL_QUIT) {
         cat("Read pixels via OpenGL into an R integer matrix 'pixels'..")
         pixels <<- readpixels()
         cat("done.\nRe-run by 'run()'\n")
-        quit <- TRUE 
+        quit <- TRUE
       }
-    }    
+    }
     frames <- frames + 1
   }
   par(oldpars)

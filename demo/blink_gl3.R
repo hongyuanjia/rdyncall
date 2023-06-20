@@ -43,7 +43,7 @@ checkGL <- function()
 
 mainloop <- function()
 {
-  sdlevent <- new.struct("SDL_Event")
+  sdlevent <- cdata("SDL_Event")
   quit <- FALSE
   while(!quit)
   {

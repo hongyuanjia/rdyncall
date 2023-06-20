@@ -28,18 +28,18 @@
 \author{by Daniel Adler}
 \maketitle
 \abstract{
-We present an improved Foreign Function Interface (FFI) for R to 
-call arbitary native functions without the need for C wrapper code. 
-Further we discuss a dynamic linkage 
+We present an improved Foreign Function Interface (FFI) for R to
+call arbitary native functions without the need for C wrapper code.
+Further we discuss a dynamic linkage
 framework for binding standard C libraries to R across platforms using a
 universal type information format.
-The package \pkg{rdyncall} comprises the framework 
+The package \pkg{rdyncall} comprises the framework
 and an initial repository of cross-platform bindings for standard libraries such as
 (legacy and modern) \emph{OpenGL}, the family of \emph{SDL} libraries and \emph{Expat}.
 The package enables system-level programming using the R language;
 sample applications are given in the article.
 We outline the underlying automation tool-chain that extracts
-cross-platform bindings from C headers, making the 
+cross-platform bindings from C headers, making the
 repository extendable and open for library developers.
 }
 \section{Introduction}
@@ -78,39 +78,39 @@ For each library supported, abstract interface specifications are declared
 in a compact platform-neutral text-based format stored in so-called
 \emph{DynPort} files on a local repository.
 
-%between high-level interpreted programming environments 
-%and native pre-compiled C libraries that uses a compact text-based 
+%between high-level interpreted programming environments
+%and native pre-compiled C libraries that uses a compact text-based
 %interface and type information format that makes this method work across platforms.
 
-R \citep{R:Ihaka+Gentleman:1996} was choosen as the first language 
-to implement a proof-of-concept implementation for this approach. 
+R \citep{R:Ihaka+Gentleman:1996} was choosen as the first language
+to implement a proof-of-concept implementation for this approach.
 This article describes the \pkg{rdyncall} package which
 implements a complete toolkit of low-level facilities that can be used as an
 alternative FFI to interface with the C programming language.
-And further, it enables direct and quick access to 
+And further, it enables direct and quick access to
 the common C libraries from R without compilation.
 
-The project was motivated by the fact that 
+The project was motivated by the fact that
 high-quality software solutions implemented in portable C
 are often not available in interpreter-based languages such as R.
 The pool of freely available C libraries is quite large and
 represents an invaluable resource for software development.
-For example, OpenGL \citep{Board05} is the most portable and standard interface to 
+For example, OpenGL \citep{Board05} is the most portable and standard interface to
 accelerated graphics hardware for developing real-time graphics software.
-The combination of OpenGL with the \emph{Simple DirectMedia Layer} (SDL) \citep{SDL}  
+The combination of OpenGL with the \emph{Simple DirectMedia Layer} (SDL) \citep{SDL}
 core and extension libraries offers a foundation framework for
-developing interactive multimedia applications that can run on a 
+developing interactive multimedia applications that can run on a
 multitude of platforms.
 Other libraries such as the Expat XML Parser \citep{www:expat} provide a parser framework
 for processing very large XML documents.
 And even the C library of R contains high-quality statistical
 functions that are useful in context of other languages as well.
 
-To make use of these libraries within high-level languages, \emph{language bindings} 
-to the library must be written as an extension to the language, a task that 
-requires deep familiarity of the internals of both the library and the interpreter. 
+To make use of these libraries within high-level languages, \emph{language bindings}
+to the library must be written as an extension to the language, a task that
+requires deep familiarity of the internals of both the library and the interpreter.
 Depending on the complexity of the library, the amount of work needed to wrap
-the interface can be very large (Table \ref{tab:libs} gives the counts of 
+the interface can be very large (Table \ref{tab:libs} gives the counts of
 functions, constants and types that need to be wrapped).
 Rather than having to write a separate binding for each \emph{library and language}
 combination, we research a dynamic binding approach that
@@ -119,41 +119,41 @@ compilation of wrapper layers.
 Once the binding specification for a library has been specified, that
 library becomes automatically accessible to all interpreters that
 implement such a framework outlined here.
-Extension techniques offered by the language interpreter, such as a 
+Extension techniques offered by the language interpreter, such as a
 \emph{Foreign Function Interface} (FFI), are the fundamental technology
 for bridging the dynamic interpreter with statically pre-compiled code.
 
 In the case of R the built-in FFI function \code{.C} provides a fairly
-basic call gate to C code with strong limitations; additional wrapper code has 
-to be written in addition to interface with standard C libraries. 
-\pkg{rdyncall} contributes an improved FFI for R that offers a \emph{flexible} 
+basic call gate to C code with strong limitations; additional wrapper code has
+to be written in addition to interface with standard C libraries.
+\pkg{rdyncall} contributes an improved FFI for R that offers a \emph{flexible}
 and \emph{type-safe} interface with support for almost all C types without
 requiring additional C wrappers.
 
-Based on this FFI, the package contains a proof-of-concept implementation of a \emph{Foreign Library Interface} that enables 
-\emph{direct} and \emph{dynamic} interoperability with foreign C Libraries 
+Based on this FFI, the package contains a proof-of-concept implementation of a \emph{Foreign Library Interface} that enables
+\emph{direct} and \emph{dynamic} interoperability with foreign C Libraries
 (including shared library code and the Application Programming Interface
 specified in C headers) from within the R interpreter.
 For each C library supported, abstract interface specification are declared in a
-compact platform-neutral text-based format stored in a so-called \emph{DynPort} file 
-located in a local repository within the package. 
+compact platform-neutral text-based format stored in a so-called \emph{DynPort} file
+located in a local repository within the package.
 Table \ref{tab:libs} gives a sample list of available bindings that come with the package.
 
 Users gain access to C libraries from R using the front-end function \code{dynport(}\emph{portname}\code{)},
 which processes a \emph{DynPort} file to load the C library\footnote{Pre-compiled libraries need to be installed, OS-specific installation notes are given in the documentation of the package.},
-and wrap the C interface as a newly attached R environment 
-\footnote{Note \pkg{rdyncall} version 0.7.4 and below uses R name space objects \citep{RNameSpace} as dynport containers. This has changed starting with version 0.7.5 due to restrictions for packages hosted on CRAN not to use internal functions. Since there is no public interface for the creation of name space objects currently in R, \pkg{rdyncall} uses ordinary environment objects for now. 
-This disables the use of the double colon operator (\code{::}) to refer to dynport objects; unloading is done using \code{detach(dynport:<PORTNAME>)}.} 
+and wrap the C interface as a newly attached R environment
+\footnote{Note \pkg{rdyncall} version 0.7.4 and below uses R name space objects \citep{RNameSpace} as dynport containers. This has changed starting with version 0.7.5 due to restrictions for packages hosted on CRAN not to use internal functions. Since there is no public interface for the creation of name space objects currently in R, \pkg{rdyncall} uses ordinary environment objects for now.
+This disables the use of the double colon operator (\code{::}) to refer to dynport objects; unloading is done using \code{detach(dynport:<PORTNAME>)}.}
 that uses the same symbolic names of the C API.
 R code that uses C interfaces via \emph{DynPort}s might look very familiar to C user code.
- 
+
 This article motivates the topic with a comparison of the built-in and
-contributed FFI by means of a simple use case. This leads to a detailed description of the improved FFI. 
-Then follows an overview of the package and a brief tour through the framework 
+contributed FFI by means of a simple use case. This leads to a detailed description of the improved FFI.
+Then follows an overview of the package and a brief tour through the framework
 with details on the handling of foreign C data types and wrapping R functions as callbacks.
 Two sample applications are given using OpenGL, SDL and Expat.
 The article ends with a brief description of the implementation based on C libraries from the \emph{DynCall} project \citep{dyncall}
-and the tool-chain that was used to create the repository of \emph{DynPort} files. 
+and the tool-chain that was used to create the repository of \emph{DynPort} files.
 
 \section{Foreign Function Interfaces}
 
@@ -173,14 +173,14 @@ C Standard Math library. The function is declared as follows in C:
 double sqrt(double x);
 \end{verbatim}
 
-R offers a number of functions to call pre-compiled code from 
+R offers a number of functions to call pre-compiled code from
 within the R interpreter. While \code{.Call} and \code{.External}
-are designed for interoperability with \emph{extension} code, \code{.C} 
-and \code{.Fortran} seem to offer the most low-level interoperability with 
+are designed for interoperability with \emph{extension} code, \code{.C}
+and \code{.Fortran} seem to offer the most low-level interoperability with
 \emph{foreign} code.
-But \code{.C} has also very strict conversion rules and strong limitations 
+But \code{.C} has also very strict conversion rules and strong limitations
 regarding argument and return-types:
-\code{.C} passes R arguments as C pointers and 
+\code{.C} passes R arguments as C pointers and
 C return types are not supported, so only C \code{void} functions,
 which are procedures, can be called.
 Given these limitations, we are not able to invoke the foreign
@@ -198,11 +198,11 @@ void R_C_sqrt(double * ptr_to_x)
 \end{smallverbatim}
 
 
-We assume that the wrapper code is deployed as a shared library 
+We assume that the wrapper code is deployed as a shared library
 in a package named \emph{testsqrt} which links to the C math library.
 \footnote{We omit here the details such as registering C functions which is
 described in detail in the R Manual '\emph{Writing R Extensions}' \citep{RExt}.}.
-Then we load the \emph{testsqrt} package and call the C wrapper function directly 
+Then we load the \emph{testsqrt} package and call the C wrapper function directly
 via \code{.C}.
 
 \begin{example}
@@ -214,20 +214,20 @@ via \code{.C}.
 
 To make \code{sqrt} available as a public function, an additional
 R wrapper layer is added, that does type-safety checks before
-issuing the \code{.C} call. 
+issuing the \code{.C} call.
 
 \begin{smallverbatim}
 sqrtViaC <- function(x)
 {
   x <- as.numeric(x) # type(x) should be C double.
-  # make sure length > 0: 
-  length(x) <- max(1, length(x)) 
+  # make sure length > 0:
+  length(x) <- max(1, length(x))
   .C("R_C_sqrt", x, PACKAGE="example")
 }
 \end{smallverbatim}
 
-As an alternative, R also provides high-level C extension interfaces 
-such as \code{.Call} and \code{.External}, that give access to R internals 
+As an alternative, R also provides high-level C extension interfaces
+such as \code{.Call} and \code{.External}, that give access to R internals
 at C level and enable to make type-safety checks within C:
 
 \begin{smallverbatim}
@@ -243,7 +243,7 @@ SEXP R_Call_sqrt(SEXP x)
     result = sqrt(y);
     ans = ScalarReal(result);
   }
-  UNPROTECT(1);  
+  UNPROTECT(1);
   return ans;
 }
 \end{smallverbatim}
@@ -251,7 +251,7 @@ SEXP R_Call_sqrt(SEXP x)
 Now the corresponding R wrapper shrinks into a simple delegate:
 
 \begin{example}
-> sqrtViaCall <- function(x) 
+> sqrtViaCall <- function(x)
 + .Call("R_Call_sqrt", x, PACKAGE="example")
 \end{example}
 
@@ -263,9 +263,9 @@ We can conclude that - in realistic settings - the built-in FFI of R
 almost always needs support by a wrapper layer written in C.
 The "foreign" in FFI is in fact relegated to the C wrapper layer.
 
-Moreover the R FFI can be viewed as an \emph{extension} interface for 
-calling pre-compiled code written in a \emph{foreign} language within 
-the context of the R implementation, rather than a direct invocation 
+Moreover the R FFI can be viewed as an \emph{extension} interface for
+calling pre-compiled code written in a \emph{foreign} language within
+the context of the R implementation, rather than a direct invocation
 interface for code from a \emph{foreign} context such as an
 ordinary C library.
 
@@ -292,19 +292,19 @@ Type& Sign. & Type & Sign. \\
 \caption{\label{tab:signature} C/C++ Types and Signatures}
 \end{table*}
 
-\pkg{rdyncall} provides an improved FFI for R 
+\pkg{rdyncall} provides an improved FFI for R
 that is accessible via the function \code{dyncall}.
-In contrast to the built-in R FFI which uses a C wrapper layer, 
-the \code{sqrt} function is invoked dynamically and directly 
+In contrast to the built-in R FFI which uses a C wrapper layer,
+the \code{sqrt} function is invoked dynamically and directly
 by the interpreter at run-time.
 Whereas the C math library was loaded implicitly via the
 example package, it now has to be loaded explicitly.
- 
+
 R offers functions to deal with shared libraries at run-time,
 but the location has to be specified as an absolute pathname which
 is platform-specific.
-For now, let us assume that the example is done on 
-Mac OS X where the C math library is located 
+For now, let us assume that the example is done on
+Mac OS X where the C math library is located
 at \file{/usr/lib/libm.dylib}. A platform-portable solution
 is discussed in the next section on \emph{Portable loading of shared library}.
 
@@ -319,7 +319,7 @@ We first need to load the R package \pkg{rdyncall}:
 > library(rdyncall)
 \end{example}
 
-Finally, we invoke the foreign C function \code{sqrt} \emph{directly} via 
+Finally, we invoke the foreign C function \code{sqrt} \emph{directly} via
 \code{dyncall}:
 
 \begin{example}
@@ -329,14 +329,14 @@ Finally, we invoke the foreign C function \code{sqrt} \emph{directly} via
 
 Let us review the last call, as it pinpoints the core solution for a direct
 invocation of foreign code within R:
-The first argument specifies the address of the foreign code, given as an 
-external pointer. 
+The first argument specifies the address of the foreign code, given as an
+external pointer.
 The second argument is a \emph{call signature}
 that specifies the argument- and return types of the target C function.
-This string \verb@"d)d"@ specifies that the foreign function 
+This string \verb@"d)d"@ specifies that the foreign function
 expects a \code{double} scalar argument and returns a \code{double} scalar value
 in correspondence to the C declaration of \code{sqrt}.
-Arguments following the call signature are passed to the 
+Arguments following the call signature are passed to the
 foreign function using the call signature for type-safe conversion to C types.
 In this case we pass \code{144} as a C \code{double} argument type as first
 argument and receive a C \code{double} value converted to an R \code{numeric}.
@@ -358,9 +358,9 @@ terminated by the \verb@')'@ symbol followed by a single return type signature.
 Almost all fundamental C types are supported and there is no real
 restriction regarding the number of arguments supported to issue
 a call.
-Table \ref{tab:signature} gives an overview of supported C types and 
-the corresponding text encoding; Table \ref{tab:signature_examples} 
-provides some examples of C functions and call signatures. 
+Table \ref{tab:signature} gives an overview of supported C types and
+the corresponding text encoding; Table \ref{tab:signature_examples}
+provides some examples of C functions and call signatures.
 
 \begin{table*}
 \center
@@ -376,21 +376,21 @@ Some examples of C functions and corresponding signatures}
 \end{table*}
 
 Now, let us define a public and type-safe R wrapper function that
-hides the details of the foreign function call by passing the formal 
+hides the details of the foreign function call by passing the formal
 argument place holder "\code{...}" as third argument to \code{dyncall}:
 
 \begin{example}
-> sqrtViaDynCall <- function(...) 
+> sqrtViaDynCall <- function(...)
 + dyncall(sqrtAddress, "d)d", ...)
 \end{example}
 
-Although there is no further guard code, this interface is type-safe and 
+Although there is no further guard code, this interface is type-safe and
 the user can do no harm by inadvertently using a wrong set and/or type
 of arguments due to the built-in type-checks.
-Compared to the R wrapper code using \code{.C}, no explicit cast of the 
+Compared to the R wrapper code using \code{.C}, no explicit cast of the
 arguments via \code{as.numeric} is required, because
 automatic coercion rules for fundamental types are implemented as dictated
-by the call signature. For example, \code{integer} R values are 
+by the call signature. For example, \code{integer} R values are
 implicitly casted to \code{double} automatically:
 
 \begin{smallverbatim}
@@ -400,47 +400,47 @@ implicitly casted to \code{double} automatically:
 
 A certain level of type-safety is achieved here as well:
 All arguments to be passed to C are first checked against the call signature.
-If any incompatibility is detected, such as a wrong number of arguments, 
+If any incompatibility is detected, such as a wrong number of arguments,
 empty atomic vectors or incompatible type mappings, the invocation is aborted
 and an error is reported before risking an application crash:
 
 \begin{smallverbatim}
 > sqrtViaDyncall(1,2)
-Error in dyncall(sqrtAddress, "d)d", ...) : 
+Error in dyncall(sqrtAddress, "d)d", ...) :
   Too many arguments for signature 'd)d'.
 > sqrtViaDyncall()
-Error in dyncall(sqrtAddress, "d)d", ...) : 
-  Not enough arguments 
+Error in dyncall(sqrtAddress, "d)d", ...) :
+  Not enough arguments
     for function-call signature 'd)d'.
 > sqrtViaDyncall(NULL)
-Error in dyncall(sqrtAddress, "d)d", ...) : 
-  Argument type mismatch at position 1: 
+Error in dyncall(sqrtAddress, "d)d", ...) :
+  Argument type mismatch at position 1:
     expected double convertible value
 > sqrtViaDyncall("144")
-Error in dyncall(sqrtAddress, "d)d", ...) : 
-  Argument type mismatch at position 1: 
+Error in dyncall(sqrtAddress, "d)d", ...) :
+  Argument type mismatch at position 1:
     expected double convertible value
 \end{smallverbatim}
 
-In contrast to the R FFI, where the argument conversion is 
-dictated solely by the R argument type at call-time in a one-way fashion, 
-the introduction of an additional specification with a call signature gives 
+In contrast to the R FFI, where the argument conversion is
+dictated solely by the R argument type at call-time in a one-way fashion,
+the introduction of an additional specification with a call signature gives
 several advantages.
 
 \begin{itemize}
 \item Almost all possible C functions can be invoked by a single interface;
 no additional C wrapper is required.
-\item The built-in type-safety checks of passed arguments enhance stability 
+\item The built-in type-safety checks of passed arguments enhance stability
 and reduce assertion code in R wrappers significantly.
 \item A single call signature can work across platforms,
 given that the C function type remains constant across platforms.
-\item Given that our FFI is implemented in multiple languages, 
+\item Given that our FFI is implemented in multiple languages,
 call signatures represent a portable type description for C libraries.
 \end{itemize}
 
 \section{Package Overview}
 
-Besides dynamic calling of foreign code, the package provides essential 
+Besides dynamic calling of foreign code, the package provides essential
 facilities for interoperability between the R and C programming languages.
 A high-level overview of components that make up the
 package is given in Figure \ref{fig:pkg_overview}.
@@ -453,30 +453,30 @@ Package Overview}
 \end{figure}
 
 We already described the \code{dyncall} FFI. It follows a
-brief description of portable loading of 
-shared libraries using \code{dynfind}, installation of wrappers via \code{dynbind}, 
-handling of foreign data types via \code{new.struct} and wrapping of R functions as C callbacks via \code{new.callback}.
+brief description of portable loading of
+shared libraries using \code{dynfind}, installation of wrappers via \code{dynbind},
+handling of foreign data types via \code{cdata} and wrapping of R functions as C callbacks via \code{new.callback}.
 Finally the high-level \code{dynport} interface for accessing \emph{whole} C libraries is briefly discussed.
 The technical details at low-level of some components are described briefly in the
-section \emph{Architecture}. 
+section \emph{Architecture}.
 
 \subsection{Portable loading of shared libraries}
 
 The \emph{portable} loading of shared libraries across platforms is not
 trivial because the file path is different in Operating-Systems (OS).
-Referring back to the previous example, to load a particular library 
-in a portable fashion, one would have to check the platform to 
-locate the C library.\footnote{Possible C math library names are \file{libm.so}, \file{libm.so.6} and \file{MSVCRT.DLL} 
+Referring back to the previous example, to load a particular library
+in a portable fashion, one would have to check the platform to
+locate the C library.\footnote{Possible C math library names are \file{libm.so}, \file{libm.so.6} and \file{MSVCRT.DLL}
 in locations such as \file{/lib}, \file{/usr/lib}, \file{/lib64}, \file{/lib/sparcv9}, \file{/usr/lib64}, \file{C:\textbackslash WINDOWS\textbackslash SYSTEM32} etc..}
 
-Although there is variation among the OSs, library file paths and 
+Although there is variation among the OSs, library file paths and
 search patterns have common structures.
 For example, among
 all the different locations, prefixes and suffixes, there is a part within
-a full library filename that can be taken as a \emph{short library name} or 
+a full library filename that can be taken as a \emph{short library name} or
 label.
 
-The function \code{dynfind} takes a list of short library names to 
+The function \code{dynfind} takes a list of short library names to
 locate a library using common search heuristics.
 For example, to load the Standard C Math library, one would either use
 the Microsoft Visual C Run-Time library labeled \file{msvcrt} on Windows
@@ -486,66 +486,66 @@ or the C Math library labeled \file{m} or \file{m.so.6} otherwise.
 > mLib <- dynfind(c("msvcrt","m","m.so.6"))
 \end{example}
 
-\code{dynfind} also supports more exotic schemes, such as the Mac OS X Framework folders. 
+\code{dynfind} also supports more exotic schemes, such as the Mac OS X Framework folders.
 Depending on the library,
 it is sometimes enough to have a single short filename - e.g. \code{"expat"} for
-the \emph{Expat} library. 
+the \emph{Expat} library.
 
-Internally, the dynamic linker interface of the OS is used via 
+Internally, the dynamic linker interface of the OS is used via
 \code{dynload} and symbols get resolved via \code{dynsym}:
 
 \begin{example}
 > sqrtAddr <- dynsym(mLib, "sqrt")
 \end{example}
 
-Although R already contains support for loading shared libraries 
+Although R already contains support for loading shared libraries
 and resolving of symbols, several issues have led to a reimplementation
 of this part:
 
 \begin{itemize}
-\item System paths are not considered when loading libraries via 
-\code{dyn.load} of the package \pkg{base} but this is one part of the 
+\item System paths are not considered when loading libraries via
+\code{dyn.load} of the package \pkg{base} but this is one part of the
 search heuristics.
-\item Automatic life-cycle management for loading and unloading of libraries 
+\item Automatic life-cycle management for loading and unloading of libraries
 is a desired goal.  Unloading of libraries should be done automatically
-via finalizer code when no symbols are used anymore. External pointers 
-resolved via \code{dynsym} hold a reference to the loaded library. 
+via finalizer code when no symbols are used anymore. External pointers
+resolved via \code{dynsym} hold a reference to the loaded library.
 When all external pointers are garbage collected, the library handle is
 not referenced anymore and the finalizer can unload the library.
 \end{itemize}
 
 \subsection{Wrapping C libraries}
 
-Functional R interfaces to foreign code can be defined with small 
+Functional R interfaces to foreign code can be defined with small
 R wrapper functions, which effectively delegates to \code{dyncall}.
-Each function interface is parameterized by a target address and 
+Each function interface is parameterized by a target address and
 a matching call signature.
 
-Since APIs often consist of hundreds of functions (see Table \ref{tab:libs}), 
-\code{dynbind} can create and install a batch of function wrappers for a library 
-with a single call by using a \emph{library signature} that 
+Since APIs often consist of hundreds of functions (see Table \ref{tab:libs}),
+\code{dynbind} can create and install a batch of function wrappers for a library
+with a single call by using a \emph{library signature} that
 consists of concatenated function names and signatures separated by semicolons.
 
-For example, to install wrappers to the C functions 
+For example, to install wrappers to the C functions
 \code{sqrt}, \code{sin} and \code{cos} from the math library, one
 could use:
 
 \begin{example}
-> dynbind( c("msvcrt","m","m.so.6"),  
+> dynbind( c("msvcrt","m","m.so.6"),
 + "sqrt(d)d;sin(d)d);cos(d)d;" )
 \end{example}
 
-The function call has the side-effect that three R wrapper functions are 
-created and stored in an environment which defaults to the global environment. 
+The function call has the side-effect that three R wrapper functions are
+created and stored in an environment which defaults to the global environment.
 Let us review the \code{sin} wrapper (on the 64-bit Version of R running
 on Mac OS X 10.6):
 \begin{example}
 > sin
-function (...) 
+function (...)
 .dyncall.default(<pointer: 0x7fff81fd13f0>,
  "d)d)", ...)
 \end{example}
- 
+
 The wrapper directly uses the address of the resolved \code{sin} symbol.
 In addition, the wrappers uses \code{.dyncall.default}, which is a
 concrete selector of a particular calling convention, as outlined below.
@@ -556,15 +556,15 @@ Calling conventions specify how arguments and return values are passed
 across sub-routines and functions at machine level. This information
 is vital for interfacing with the binary interface of C libraries.
 The package has support for multiple calling conventions.
-Calling conventions are controlled by \code{dyncall} via the named argument 
+Calling conventions are controlled by \code{dyncall} via the named argument
 \code{callmode} to specify a non-default calling convention.
 Most current OSs and platforms only have support for a single \code{"default"} calling convention
 at run-time.
 
-An important exception is the Microsoft Windows platform 
-on the 32-bit \emph{i386} processor architecture: 
+An important exception is the Microsoft Windows platform
+on the 32-bit \emph{i386} processor architecture:
 While the default C calling convention on \emph{i386} is \code{"cdecl"} (which is the \code{"default"} on \emph{i386}),
-system shared libraries from Microsoft such as \file{KERNEL32.DLL}, 
+system shared libraries from Microsoft such as \file{KERNEL32.DLL},
 \file{USER32.DLL} and the OpenGL library \file{OPENGL32.DLL}
 use the \code{"stdcall"} calling convention.
 Only on this platform, the \code{callmode} argument has an effect and
@@ -575,11 +575,11 @@ All other platforms currently ignore this argument.
 
 C APIs often make use of high-level C \verb@struct@
 and \verb@union@ types for exchanging information.
-Thus, to make interoperability work at that level the handling of C 
+Thus, to make interoperability work at that level the handling of C
 type information is addressed by the package.
 
 Let us consider the following hypothetical example:
-A user-interface library has a function to set the 2D coordinates 
+A user-interface library has a function to set the 2D coordinates
 and dimension of a graphical output window. The coordinates are specified using a C
 \code{struct Rect} data type and the C function receives a
 pointer on that object:
@@ -597,22 +597,22 @@ struct Rect {
 };
 \end{smallverbatim}
 
-Before we can issue a call, we have to allocate an object of that size and 
-initialize the fields with values encoded in C types, which are not 
-part of R data types. 
-The framework provides helper functions and objects to deal with C data types 
+Before we can issue a call, we have to allocate an object of that size and
+initialize the fields with values encoded in C types, which are not
+part of R data types.
+The framework provides helper functions and objects to deal with C data types
 in R. Type information objects can be created with a description of the
 C aggregate structure.
-First, we create a type information object in R for the \code{struct Rect} 
-C data type via \code{parseStructInfos} using a \emph{structure type signature}.
+First, we create a type information object in R for the \code{struct Rect}
+C data type via \code{cstruct} using a \emph{structure type signature}.
 
 \begin{smallverbatim}
-> parserStructInfos("Rect{ssSS}x y w h;")
+> cstruct("Rect{ssSS}x y w h;")
 \end{smallverbatim}
 
 After registration, an R object named \code{Rect} is installed, which
 contains C type information that corresponds to \code{struct Rect}.
-The format of a \emph{structure type signature} has the following 
+The format of a \emph{structure type signature} has the following
 pattern:
 
 \begin{center}
@@ -621,36 +621,36 @@ pattern:
 
 \emph{Field-types} use the same type signature encoding as that of
 \emph{call signatures} for argument and return types (Table \ref{tab:signature}).
-\emph{Field-names} consist of a list of white-space separated names, 
+\emph{Field-names} consist of a list of white-space separated names,
 labeling each field component.
 
-An instance of a C type can be allocated via \code{new.struct}:
+An instance of a C type can be allocated via \code{cdata}:
 
 \begin{smallverbatim}
-> r <- new.struct(Rect)
+> r <- cdata(Rect)
 \end{smallverbatim}
 
-Finally, the extraction (\verb@'$'@, \verb@'['@) and 
-replacement(\verb@'$<-'@, \verb@'[<-'@) operators can be used to access 
-structure fields symbolically. During value transfer between R and C, 
-automatic conversion of values with respect to the underlying C field 
+Finally, the extraction (\verb@'$'@, \verb@'['@) and
+replacement(\verb@'$<-'@, \verb@'[<-'@) operators can be used to access
+structure fields symbolically. During value transfer between R and C,
+automatic conversion of values with respect to the underlying C field
 type takes place.
 
 \begin{smallverbatim}
 > r$x <- -10 ; r$y <- -20 ; r$w <- 40 ; r$h <- 30
 \end{smallverbatim}
 
-In this example, R \code{numeric} values are converted on the fly to \code{signed}- and 
+In this example, R \code{numeric} values are converted on the fly to \code{signed}- and
 \code{unsigned short} integers (usually 16-bit values). When the object gets printed on the prompt,
 a detailed picture of the data object is given:
 
 \begin{smallverbatim}
 > r
 struct Rect {
- x: -10 
- y: -20 
- w:  40 
- h:  30 
+ x: -10
+ y: -20
+ w:  40
+ h:  30
 }
 \end{smallverbatim}
 
@@ -664,65 +664,65 @@ attr(,"struct")
 \end{smallverbatim}
 
 To follow the example, we issue a foreign function call to \code{setRect}
-via \code{dyncall} and pass in the \code{r} object, 
+via \code{dyncall} and pass in the \code{r} object,
 assuming the library is loaded and the symbol is resolved and
 stored in an external pointer object named \code{setWindowRectAddr}:
 
 \begin{smallverbatim}
 > dyncall( setWindowRectAddr, "*<Rect>)v", r)
-\end{smallverbatim} 
+\end{smallverbatim}
 
-We make use of a typed pointer expression \code{'*<Rect>'} 
+We make use of a typed pointer expression \code{'*<Rect>'}
 instead of the untyped pointer signature \code{'p'}, which would
 also work but does not prevent users from passing other objects
 that do not reference a \code{struct Rect} data object.
-Typed pointer expressions increase type-safety and use the 
+Typed pointer expressions increase type-safety and use the
 pattern \verb@'*<@\emph{Type-Name}\verb@>'@.
 The invocation will be rejected if the argument passed in is not
 of C type \code{Rect}. As \code{r} is tagged with an attribute
 \code{struct} that refers to \code{Rect}, the call will be issued.
 
-Typed pointers can also occur as return types that - once the 
+Typed pointers can also occur as return types that - once the
 type information is available - permit the manipulation of returned objects
 in the same symbolic manner as above.
 
-C \verb@union@ types are supported as well but use the \code{parseUnionInfos}
+C \verb@union@ types are supported as well but use the \code{cunion}
 function instead for registration and a slightly different signature format:
 
 \begin{center}
-\emph{Union-name} \verb@'|'@ \emph{Field-types} \verb@'}'@ \emph{Field-names} \verb@';'@ 
+\emph{Union-name} \verb@'|'@ \emph{Field-types} \verb@'}'@ \emph{Field-names} \verb@';'@
 \end{center}
 
 The underlying low-level C type read- and write operations and conversions
-from R data types are performed by the functions \code{pack} and 
-\code{.unpack}. These can be used for various low-level operations as well, 
+from R data types are performed by the functions \code{pack} and
+\code{.unpack}. These can be used for various low-level operations as well,
 such as dereferencing of pointers on pointers.
 
 R objects such as external pointers and atomic raw, integer and numeric
-vectors can be used as aggregate C types via the attribute \code{struct}.
-To \emph{cast} a type in the style of C, one can use \code{as.struct}.
+vectors can be used as aggregate C types via the attribute \code{CType}.
+To \emph{cast} a type in the style of C, one can use \code{as.ctype}.
 
 \subsection{Wrapping R functions as C callbacks}
 
 Some C libraries, such as user-interface toolkits and I/O processing
 frameworks, use \emph{callbacks} as part of their interface to enable
 registration and activation of user-supplied event handlers.
-A callback is a user-defined function that has a library-defined 
+A callback is a user-defined function that has a library-defined
 function type. Call-backs are usually registered via a registration function
-offered by the library interface and are activated later from within 
+offered by the library interface and are activated later from within
 a library run-time context.
 
 \pkg{rdyncall} has support for wrapping ordinary R
-functions as C callbacks via the function 
+functions as C callbacks via the function
 \code{new.callback}. Callback wrappers are defined by a \emph{callback
 signature} and the user-supplied R function to be wrapped. \emph{Callback signatures} look very
-similar to \emph{call signatures} and should match the 
+similar to \emph{call signatures} and should match the
 functional type of the underlying C callback.
 \code{new.callback} returns an external pointer that can
 be used as a low-level function pointer for the registration as a C callback.
 See Section \emph{Parsing XML using Expat} below for
 applications of callback.
- 
+
 \subsection{Foreign Library Interface}
 
 At the highest level, \pkg{rdyncall} provides the front-end function
@@ -734,7 +734,7 @@ objects that represent abstractions to C counter-parts such as
 functions, pointer-to-functions, type-information objects for C struct and union
 types and symbolic constant equivalents of C enums and macro defines.
 The mechanism aims to work across platforms, given that the corresponding
-shared libraries of a \emph{DynPort} have been installed in a 
+shared libraries of a \emph{DynPort} have been installed in a
 system standard location on the host.
 
 An initial repository of \emph{DynPorts} is available in the package
@@ -743,9 +743,9 @@ for examples of available bindings.
 
 \section{Sample Applications}
 
-We give two examples with different application contexts that demonstrate 
-the direct usage of C APIs from within R through the \pkg{rdyncall} package. 
-The R interface to C libraries looks very 
+We give two examples with different application contexts that demonstrate
+the direct usage of C APIs from within R through the \pkg{rdyncall} package.
+The R interface to C libraries looks very
 similar to the actual C API. For details on the usage of a particular
 C library, the programming manuals and documentation of the libraries
 should be consulted.
@@ -754,16 +754,16 @@ Before loading R bindings via \code{dynport}, the shared library should
 have been installed onto the system. Currently this is
 to be done manually and the installation method depends on the target OS (See the manual
 page about the 'rdyncall-demos' for details on this).
-While \emph{OpenGL} is most often pre-installed on typical desktop-systems, 
-\emph{SDL} and \emph{Expat} sometimes have to be installed explicitly. 
+While \emph{OpenGL} is most often pre-installed on typical desktop-systems,
+\emph{SDL} and \emph{Expat} sometimes have to be installed explicitly.
 
 \subsection{OpenGL Programming in R}
 
 
-In the first example, we make use of the Simple DirectMedia Layer library (SDL) 
-\citep{SDL} \citep{Pendleton:2003:GPS} \citep{www:sdl-alternative} and 
-the Open Graphics Library (OpenGL) \citep{Board05} to implement 
-a portable multimedia application skeleton in R. 
+In the first example, we make use of the Simple DirectMedia Layer library (SDL)
+\citep{SDL} \citep{Pendleton:2003:GPS} \citep{www:sdl-alternative} and
+the Open Graphics Library (OpenGL) \citep{Board05} to implement
+a portable multimedia application skeleton in R.
 
 We first need to load bindings to SDL and OpenGL via dynports:
 
@@ -772,7 +772,7 @@ We first need to load bindings to SDL and OpenGL via dynports:
 > dynport(GL)
 \end{example}
 
-Now we initialize the SDL library - in particular the video subsystem, and 
+Now we initialize the SDL library - in particular the video subsystem, and
 open a window surface with a dimension of $640 x 480$ in 32-bit color
 depths that has support for OpenGL rendering:
 
@@ -788,7 +788,7 @@ issued by the user via the window close button.
 \begin{smallverbatim}
 > mainloop <- function()
 {
-  ev <- new.struct(SDL_Event)
+  ev <- cdata(SDL_Event)
   quit <- FALSE
   while(!quit) {
     draw()
@@ -801,12 +801,12 @@ issued by the user via the window close button.
 }
 \end{smallverbatim}
 
-SDL event processing is implemented by collecting events that occur in a 
-queue. 
-Once per update frame, typical SDL applications poll the queue by 
+SDL event processing is implemented by collecting events that occur in a
+queue.
+Once per update frame, typical SDL applications poll the queue by
 calling \code{SDL\_PollEvent} with a pointer to a user-allocated buffer
 of C type \code{union SDL\_Event}.
-Event records have a common type identifier which is set to \code{SDL\_QUIT} 
+Event records have a common type identifier which is set to \code{SDL\_QUIT}
 when a quit event has occurred e.g. when users press a close button on a window.
 
 Next, we implement our \code{draw} function making use of
@@ -841,10 +841,10 @@ displays a rotating 3D cube depict in Figure \ref{fig:demo_SDL}.
 \code{demo(SDL)}}
 \end{figure}
 
-\code{demo(randomfield)} gives a slightly more scientific application of OpenGL and R: 
+\code{demo(randomfield)} gives a slightly more scientific application of OpenGL and R:
 Random fields of 512x512 size are generated via blending of 5000 texture mapped 2D gaussian kernels.
 The \emph{frames per second} counter in the window title gives the number of matrices generated per second (see Figure \ref{fig:demo_randomfield}).
-When clicking on the animation window, the current frame and matrix is passed to R and plotted. 
+When clicking on the animation window, the current frame and matrix is passed to R and plotted.
 While several dozens of matrices are computed per second using OpenGL,
 it takes several seconds to plot a single matrix in R using \code{image()}.
 
@@ -857,20 +857,20 @@ it takes several seconds to plot a single matrix in R using \code{image()}.
 
 \subsection{Parsing XML using Expat}
 
-In the second example, we use the Expat XML Parser library \citep{www:expat} 
-\citep{Kim:2001:TSJ} to implement a stream-oriented XML parser suitable 
+In the second example, we use the Expat XML Parser library \citep{www:expat}
+\citep{Kim:2001:TSJ} to implement a stream-oriented XML parser suitable
 for very large documents.
 
 The library, being very popular, is very likely to be
-already installed on many OS distributions - otherwise it is 
-available from package repositories or can be built as a shared library 
+already installed on many OS distributions - otherwise it is
+available from package repositories or can be built as a shared library
 from source.
 
-In Expat, custom XML parsers are implemented by defining 
-functions that are registered as callbacks to be invoked on 
+In Expat, custom XML parsers are implemented by defining
+functions that are registered as callbacks to be invoked on
 events that occur during parsing, such as the start and end of XML tags.
-In our second example, we create a simple parser skeleton that 
-prints the start and end tag names. 
+In our second example, we create a simple parser skeleton that
+prints the start and end tag names.
 
 First we load R bindings for Expat via \code{dynport}.
 
@@ -879,10 +879,10 @@ First we load R bindings for Expat via \code{dynport}.
 \end{smallverbatim}
 
 Next we create an abstract parser object via the C function
-\code{XML\_ParserCreate} that receives one argument of type C string 
+\code{XML\_ParserCreate} that receives one argument of type C string
 to specify a desired character encoding that overrides the document
 encoding declaration. We want to pass a null pointer (\code{NULL}) here.
-In the \code{dyncall} FFI C null pointer values for pointer types are 
+In the \code{dyncall} FFI C null pointer values for pointer types are
 expressed via the R \code{NULL} value:
 
 \begin{smallverbatim}
@@ -895,33 +895,33 @@ callbacks is given below:
 \begin{smallverbatim}
 /* Language C, from file expat.h: */
 typedef void (*XML_StartElementHandler)
-  (void *userData, const XML_Char *name, 
+  (void *userData, const XML_Char *name,
    const XML_Char **atts);
 typedef void (*XML_EndElementHandler)
   (void *userData, const XML_Char *name);
-void XML_SetElementHandler(XML_Parser parser, 
-  XML_StartElementHandler start, 
+void XML_SetElementHandler(XML_Parser parser,
+  XML_StartElementHandler start,
   XML_EndElementHandler end);
 \end{smallverbatim}
 
-We implement the callbacks as R functions which print the event and 
+We implement the callbacks as R functions which print the event and
 tag name. They are wrapped as C callback pointers via \code{new.callback}
-using a matching \emph{callback signature}. 
+using a matching \emph{callback signature}.
 The second argument \code{name} of type C string in both callbacks, \code{XML\_StartElementHandler} and \code{XML\_EndElementHandler},
 is of primnary interest ; this argument passes over the XML tag name.
 C strings are handled in a special way by the \code{dyncall} FFI, because they
-have to be copied as R \code{character} objects. 
-The special type signature \code{'Z'} is used to denote a 
-C string type. 
+have to be copied as R \code{character} objects.
+The special type signature \code{'Z'} is used to denote a
+C string type.
 The other arguments are simply denoted as untyped pointers using \code{'p'}:
 
 \begin{smallverbatim}
-> start <- new.callback("pZp)v", 
-  function(ignored1,tag,ignored2) 
+> start <- new.callback("pZp)v",
+  function(ignored1,tag,ignored2)
     cat("Start tag:", tag, "\n")
 )
-> end <- new.callback("pZ)v", 
-  function(ignored,tag) 
+> end <- new.callback("pZ)v",
+  function(ignored,tag)
     cat("Stop tag:", tag, "\n")
 )
 > XML_SetElementHandler(p, start, end)
@@ -945,43 +945,43 @@ End tag: hello
 \end{smallverbatim}
 
 Expat supports processing of very large XML documents in a chunk-based manner by
-calling \code{XML\_Parse} several times, where the last argument is used 
-as indicator for the final chunk of the document. 
+calling \code{XML\_Parse} several times, where the last argument is used
+as indicator for the final chunk of the document.
 
 \section{Architecture}
 
 The core implementation of the FFI, callbacks and loading of
-code are mainly based on the suite of libraries of the \emph{DynCall} 
+code are mainly based on the suite of libraries of the \emph{DynCall}
 project \citep{dyncall}.
 
 \subsection{Dynamic calls}
 
 The FFI offered by \pkg{rdyncall} is based on the \pkg{dyncall}
-library, which provides an abstraction for making arbitrary 
-machine-level calls with support for multiple calling conventions 
+library, which provides an abstraction for making arbitrary
+machine-level calls with support for multiple calling conventions
 and most C argument- and return-types. \footnote{\emph{Inline} structure types are currently not fully supported.}
 
 For each processor architecture, the supported calling conventions
-are abstracted in a \emph{Call Virtual Machine} (CallVM) 
-object. The \pkg{dyncall} library offers a universal C interface that can 
+are abstracted in a \emph{Call Virtual Machine} (CallVM)
+object. The \pkg{dyncall} library offers a universal C interface that can
 be used from within scripting language interpreter contexts to build
 up a machine-level call in a structured manner.
 
 A CallVM comprises a state machine and a call kernel. The state machine
-is implemented in C and keeps track of internal buffers for pre-loading argument 
-values that get arranged for specific storage locations, such as stack or 
-special register sets according to the processor architecture and the chosen 
+is implemented in C and keeps track of internal buffers for pre-loading argument
+values that get arranged for specific storage locations, such as stack or
+special register sets according to the processor architecture and the chosen
 calling conventions.
 The actual invocation of a foreign function call is conducted by
-the Call Kernel - a small piece of code that is implemented in 
+the Call Kernel - a small piece of code that is implemented in
 Assembly and that provides a generic call facility for a particular
 calling convention.
-It prepares machine-level calls by copying data to registers and to the 
-call stack according to the relevant calling convention, and finally 
+It prepares machine-level calls by copying data to registers and to the
+call stack according to the relevant calling convention, and finally
 executes the machine call to a target address.
 
-From a scripting language interpreter perspective, the invocation of a 
-foreign function call through the CallVM is conducted in three consecutive 
+From a scripting language interpreter perspective, the invocation of a
+foreign function call through the CallVM is conducted in three consecutive
 phases using the \pkg{dyncall} C API:
 
 \begin{enumerate}
@@ -991,25 +991,25 @@ However, more specialized and platform-specific calling conventions are
 available as well, in particular for the 32-Bit Windows OS.
 \item \emph{Argument Loading Phase:} Arguments are passed in a
 \emph{left-to-right} order according to the declaration of the C/C++
-function/method type declaration. Argument values are stored in buffers 
+function/method type declaration. Argument values are stored in buffers
 according to the processor architecture and selected calling convention.
-\item \emph{Call and Return-Value Receive Phase:} 
+\item \emph{Call and Return-Value Receive Phase:}
 A return-type specific call function is chosen and the target address
 of the foreign code is passed, which gets called via the Call Kernel.
 \end{enumerate}
 
-The architecture makes it straight-forward to implement a FFI 
-for a dynamic language interpreter using a text parser for call signatures 
+The architecture makes it straight-forward to implement a FFI
+for a dynamic language interpreter using a text parser for call signatures
 to drive the conversion of arguments and results.
 Similar FFIs with a text-based interface have been implemented for other language
 interpreters such as Ruby, Python and Lua. See the DynCall source repository \citep{dyncall}.
 
 Both the C interface of dyncall and the signature format use the abstract
 C/C++ type system and give no indication about the effective size of
-a particular type. In experiments with several C APIs bound via \pkg{rdyncall} 
+a particular type. In experiments with several C APIs bound via \pkg{rdyncall}
 it turns out that the signatures do work cross-platform,
 if the fundamental type definitions of the C API do not change across platforms.
-In our tests and the presented examples, a wide range of 
+In our tests and the presented examples, a wide range of
 C APIs have this property and type signatures are valid across
 platforms even when switching between 32- and 64-bit platforms.
 
@@ -1020,19 +1020,19 @@ dynamic callbacks for language interpreters to wrap scripting functions
 as C function pointers.
 The framework offers a universal C interface for callback handler that
 is implemented once for a particular interpreter.
-The handler receives callback calls from C and forwards the call, 
+The handler receives callback calls from C and forwards the call,
 including conversion of arguments, to a scripting function.
 
 Handlers need to access machine-level arguments whose location
-can be on the stack, or in registers,  
+can be on the stack, or in registers,
 depending on the processor architecture and calling convention.
 For that reason, the handler interface receives an abstract argument
-iterator that gives structured access to the arguments for 
+iterator that gives structured access to the arguments for
 passing over to the high-level language.
-Call-backs are created via an interface that pools a handler, 
-language context, scripting function reference, 
-callback type-information and other user data into a 
-\emph{single} native C function pointer, such that even very 
+Call-backs are created via an interface that pools a handler,
+language context, scripting function reference,
+callback type-information and other user data into a
+\emph{single} native C function pointer, such that even very
 low-level C callbacks without user-supplied user-data can be
 addressed with the underlying technique. \footnote{This includes
 callbacks for sort routines of the Standard C library which lack user-data.}
@@ -1041,10 +1041,10 @@ callbacks for sort routines of the Standard C library which lack user-data.}
 
 The requirements for porting the \emph{DynCall} libraries to
 a new processor and/or platform are high: The calling conventions of a target processor platform have to be studied in detail,
-state machines have to be implemented in C and a small amount of code has to be written in 
+state machines have to be implemented in C and a small amount of code has to be written in
 Assembly which can be even non-portable across build tools on the same platform.
-Nevertheless \pkg{dyncall} (as of version 0.7) has support for many processor architectures such as 
-Intel i386 (x86), AMD 64 (x64), PowerPC 32-bit,ARM (including Thumb extension), MIPS 32/64-bit and SPARC 32/64-bit 
+Nevertheless \pkg{dyncall} (as of version 0.7) has support for many processor architectures such as
+Intel i386 (x86), AMD 64 (x64), PowerPC 32-bit,ARM (including Thumb extension), MIPS 32/64-bit and SPARC 32/64-bit
 including support for several platform-, processor- and compiler-specific calling conventions.
 \pkg{dyncallback} also supports major processor architectures such as Intel i386 (x86), AMD 64 (x64) and ARM and offers
 partial support for PowerPC 32-bit (support for Mac OS X/Darwin).
@@ -1052,41 +1052,41 @@ Besides the processor architecture, the libraries are also explicitly ported and
 various OS such as Linux, Mac OS X, Windows, the BSD family, Solaris, Haiku, Minix and Plan9.
 Support for embedded platforms such as Playstation Portable, Nintendo DS and iPhone OS is available as well.
 
-\emph{DynCall} contains a suite of testing tools for quality assurance. Included are test-case generators written in 
+\emph{DynCall} contains a suite of testing tools for quality assurance. Included are test-case generators written in
 Lua and Python. Extreme call and callback scenarios are tested here to ensure correct passing of arguments and results.
-Before a release, the libraries and tests are built for a large set of architectures on 
-\pkg{DynOS} \citep{dynos} - a batch-build system using full system emulators such as 
+Before a release, the libraries and tests are built for a large set of architectures on
+\pkg{DynOS} \citep{dynos} - a batch-build system using full system emulators such as
 \pkg{QEmu}\citep{qemu} and \pkg{GXEmul}\citep{gxemul} and various operating-system images
 to test release candidates and create pre-built binary releases of the library.
 
 \subsection{Text-based Signature Interfaces}
 
-A common property of the service interface presented here is the use of 
+A common property of the service interface presented here is the use of
 signature text formats. Signatures are used
-as descriptors for types, such as foreign function calls, callbacks and 
+as descriptors for types, such as foreign function calls, callbacks and
 aggregate data types.
 The reasons that lead to the use of signatures as a high-level user-interface
 to interact with such services are given next:
 
 \begin{enumerate}
-\item Cross-language interface: Text format interfaces are available across 
-high-level languages. Examples for cross-language text-based 
-interfaces include regular expressions or \code{printf}-style formatted output 
+\item Cross-language interface: Text format interfaces are available across
+high-level languages. Examples for cross-language text-based
+interfaces include regular expressions or \code{printf}-style formatted output
 descriptions.
 
-\item Developer-friendly: 
+\item Developer-friendly:
 The simplicity and compactness of the text-format enables developers
 to bridge with foreign code in interactive and rapid development
 sessions.
 C type signatures can be derived by hand with minimum effort:
-Fundamental types are encoded with a single character and the 
-upper-case encodes an \code{unsigned} type. 
+Fundamental types are encoded with a single character and the
+upper-case encodes an \code{unsigned} type.
 
 \item Machine-neutral:
-In contrast to binary encoded type libraries, the data format is not affected 
+In contrast to binary encoded type libraries, the data format is not affected
 by the endian model of the underlying platform.
 
-\item Parser-friendly: 
+\item Parser-friendly:
 The signature format can be used as driver code to perform foreign function
 calls. Implementations of parsers match the sequential
 design of \pkg{dyncall}'s CallVM and \pkg{dyncallback}'s argument iterator interface.
@@ -1097,10 +1097,10 @@ design of \pkg{dyncall}'s CallVM and \pkg{dyncallback}'s argument iterator inter
 In this section we describe the tool-chain that creates the
 universal bindings called \emph{DynPort}. The process described
 here is applied once on a build machine, the generated output
-is used later at run-time across platforms to drive the 
+is used later at run-time across platforms to drive the
 dynamic linkage and binding procedure.
-\emph{DynPort} files can be created automatically from 
-C header files using a tool-chain as depicted in 
+\emph{DynPort} files can be created automatically from
+C header files using a tool-chain as depicted in
 Figure \ref{fig:gen_dynport}.
 
 \begin{figure}
@@ -1125,16 +1125,16 @@ reference library and/or system header files to process.
 The header files should have been previously installed on
 the build machine.
 In a preprocessing phase, the GNU C Macro Processor is used to process
-all \code{\#include} statements using standard system search paths 
-to create a concatenated \emph{All-In-One} source file free of any 
+all \code{\#include} statements using standard system search paths
+to create a concatenated \emph{All-In-One} source file free of any
 \code{\#include} statements.
 GCC-XML transforms C header declarations to XML.
 A XSL style-sheet implements the transformation of XML  to
 type signature formats using a XSLT processor.
-C Macro \code{\#define} statements are handled separately by a custom 
+C Macro \code{\#define} statements are handled separately by a custom
 C Preprocessor implemented in C++ using the boost wave library \citep{boostwave}.
 An optional filter stage is used to include only elements with
-a certain pattern such as a common prefix usually found in many 
+a certain pattern such as a common prefix usually found in many
 libraries e.g. '\code{SDL\_}'.
 In a last step, the various fragments are assembled into a single
 text-file which represents the \emph{DynPort} file.
@@ -1149,14 +1149,14 @@ This paper introduces the \pkg{rdyncall} package (Version 0.7.3 on CRAN as of th
 The FFI facilitates \emph{direct} invocation of foreign functions \emph{without} the need to compile additional wrapper in C.
 Based on the FFI, a dynamic cross-platform linkage framework to wrap and access \emph{whole} C interfaces of native libraries from R
 is discussed.
-Instead of \emph{compiling} bindings for every library-and-language combination, 
+Instead of \emph{compiling} bindings for every library-and-language combination,
 R bindings of a library are created dynamically at run-time in a data-driven manner via
 \emph{DynPort} files - a cross-platform universal type information format.
 C libraries are made accessible in R as though they were extension packages and
 the R interface looks very similar to that of C.
 This enables system-level programming in R and brings a new wave of possibilities for R developers
 such as using OpenGL directly in R across platforms as described in the example.
-An initial repository of \emph{DynPort}s for standard cross-platform portable 
+An initial repository of \emph{DynPort}s for standard cross-platform portable
 C libraries comes with the package.
 
 The implementation is based on libraries from the \emph{DynCall} project that implement non-trivial
@@ -1168,18 +1168,18 @@ The handling of foreign aggregate data types, which is currently implemented in 
 is planned to be reimplemented in portable C as part of \emph{DynCall}, in cooperation with the developers of \emph{BridJ}\citep{bridj}.
 Currently, \emph{DynPort} files are written as R scripts with
 inline text chunks created from the \emph{DynPort} tool chain.
-For the Lua Programming Language \citep{SPE::IerusalimschyFF1996}, a similar framework named \pkg{luadyncall} is in 
+For the Lua Programming Language \citep{SPE::IerusalimschyFF1996}, a similar framework named \pkg{luadyncall} is in
 development using a language-neutral format for \emph{DynPort} files.
 The need to install additional shared libraries still represents a hurdle for ordinary R users.
-We plan to find a common abstraction layer for installation systems, package managers and software distribution services 
+We plan to find a common abstraction layer for installation systems, package managers and software distribution services
 across OS-distributions, and to integrate meta installation information into the \emph{DynPort} file format.
 
-The \emph{DynPort} facility in \pkg{rdyncall} consitutes an initial step in building up an infrastructure between 
-scripting languages and C libraries. 
+The \emph{DynPort} facility in \pkg{rdyncall} consitutes an initial step in building up an infrastructure between
+scripting languages and C libraries.
 Analogous to the way in which R users enjoy quick access to the large pool of R software
 managed by CRAN, we envision an archive network in which C library developers can distribute
 their work across languages, and users get quick access to the pool of C libraries from within
-scripting languages via automatic installation of precompiled components and using 
+scripting languages via automatic installation of precompiled components and using
 universal type information for cross-platform and cross-language dynamic bindings.
 
 \bibliography{FLI}

@@ -3,11 +3,9 @@ TODO:
   - document new dynports
   - check signature format markup (dyncall)
 
-- updates from dyncall (compare svn 1284 -> 1381)
-- name mangling R <-> C ... exchange the first '_' in C -> '.' in R.
 - feature: support for function pointers arguments,
-    if R closure is passed, auto wrap function a callback object 
-    the callback object is appended in a global list 
+    if R closure is passed, auto wrap function a callback object
+    the callback object is appended in a global list
 - bugfix for using callconv prefixes via dyncall and not dyncall.*.
   using a different callvm for dyncall that may be setup via prefixes and
   resets to default always.
@@ -18,14 +16,9 @@ TODO:
 - handling of Csingle attribute on double vectors
 - character encoding support, R supports UTF-8.
 - Fortran calling conventions
-- attr("struct") -> attr("CType")
-- parseStructInfos -> cstruct
-- parseUnionInfos -> cunion
 - dyncall typed pointer
-- as.struct -> as.ctype
-- new.struct -> cdata
 - new.callback -> cfunction
-- planed dynports:glut, curl, openal    
+- planed dynports:glut, curl, openal
 
 BUGS:
 - OpenBSD 4.8/amd64: SDL failed due to pthread.

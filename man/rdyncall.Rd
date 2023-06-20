@@ -140,7 +140,7 @@ updateSurface <- function(t)
 mainloop <- function()
 {
   quit <- FALSE
-  evt <- new.struct(SDL_Event)
+  evt <- cdata(SDL_Event)
   base <- SDL_GetTicks() / 1000
   t <- 0
   while(!quit) {

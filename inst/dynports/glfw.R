@@ -66,7 +66,7 @@ glfwWaitCond(*v*vd)v;
 glfwWaitEvents()v;
 glfwWaitThread(ii)i;
 ")
-parseStructInfos("
+cstruct("
 GLFWimage{iiii*C}Width Height Format BytesPerPixel Data ;
 GLFWvidmode{iiiii}Width Height RedBits BlueBits GreenBits ;
 ")

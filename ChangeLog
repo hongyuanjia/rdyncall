@@ -29,9 +29,9 @@ ChangeLog for R Package rdyncall
 
 0.7.4: [2011-12-13] Minor bugfix and improvements
  o update: dyncall support for SPARC 32/64 and SunPro with fixes for SPARC 64-bit
- o added: dynport SDL_net 
+ o added: dynport SDL_net
  o added: public helper function offsetPtr
- o bugfix for R 2.14: Namespace handling, missing 'lazyData' field in Env. 
+ o bugfix for R 2.14: Namespace handling, missing 'lazyData' field in Env.
 
 0.7.3: [2011-07-18] Added vignette, new ports, new tool-chain an fixes for bugs
  o bugfix for Fedora/x64: added search path 'lib64' folder for 'dynfind'.
@@ -40,15 +40,14 @@ ChangeLog for R Package rdyncall
  o added support for amd64 using solaris tool-chain.
  o added vignette "foreign library interface".
  o bugfix for solaris/x64: added search path 'amd64' folder for 'dynfind'.
- o bugfix in examples for libm using 'm.so.6' besides 'm' on unix 
+ o bugfix in examples for libm using 'm.so.6' besides 'm' on unix
    (needed by debian 6 sid unstable)
 
-0.7.2: [2011-04-27] Minor fixes 
+0.7.2: [2011-04-27] Minor fixes
  o added win64/mingw64 support.
 
-0.7.1: [2011-04-26] Minor fixes      
+0.7.1: [2011-04-26] Minor fixes
  o minor Makevars fix for parallel builds.
 
-0.7.0: [2011-04-20] Initial Release 
+0.7.0: [2011-04-20] Initial Release
  o first upload to CRAN.
-

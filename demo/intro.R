@@ -106,7 +106,7 @@ mainloop <- function()
   quit <- FALSE
   blink <- 0
   tbase <- SDL_GetTicks()
-  evt <- new.struct(SDL_Event)
+  evt <- cdata(SDL_Event)
   while(!quit)
   {
     tnow <- SDL_GetTicks()

@@ -148,7 +148,7 @@ render <- function(o) {
   SDL_GL_SwapBuffers()
 }
   
-event <- new.struct("SDL_Event")
+event <- cdata("SDL_Event")
 quit  <- FALSE
 pollEvents <- function() {  
   while( SDL_PollEvent(event) != 0 )

@@ -94,7 +94,7 @@ cuTexRefSetFormat(*<CUtexref_st>ii)i;
 ")
 
 # CUdevprop_st{i[2]i[2]iiiiiiii}maxThreadsPerBlock maxThreadsDim maxGridSize sharedMemPerBlock totalConstantMemory SIMDWidth memPitch regsPerBlock clockRate textureAlign ;
-parseStructInfos("
+cstruct("
 CUDA_MEMCPY2D_st{IIi*vI*<CUarray_st>IIIi*vI*<CUarray_st>III}srcXInBytes srcY srcMemoryType srcHost srcDevice srcArray srcPitch dstXInBytes dstY dstMemoryType dstHost dstDevice dstArray dstPitch WidthInBytes Height ;
 CUDA_MEMCPY3D_st{IIIIi*vI*<CUarray_st>*vIIIIIIi*vI*<CUarray_st>*vIIIII}srcXInBytes srcY srcZ srcLOD srcMemoryType srcHost srcDevice srcArray reserved0 srcPitch srcHeight dstXInBytes dstY dstZ dstLOD dstMemoryType dstHost dstDevice dstArray reserved1 dstPitch dstHeight WidthInBytes Height Depth ;
 CUarray_st{};
