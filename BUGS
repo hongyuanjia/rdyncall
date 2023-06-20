@@ -1,6 +1,6 @@
-* PowerPC/Mac OS X 10.4: Building Universal Binaries are broken.. in particular 
-  the as for i386 assembler. 
-  Workaround for PowerPC users: install with "--no-multiarch" or use prebuilt 
+* PowerPC/Mac OS X 10.4: Building Universal Binaries are broken.. in particular
+  the as for i386 assembler.
+  Workaround for PowerPC users: install with "--no-multiarch" or use prebuilt
   binaries built on OS X >= 10.5.
 
 

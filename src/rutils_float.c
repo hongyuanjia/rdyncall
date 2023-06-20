@@ -11,7 +11,7 @@
 
 /* Float utils */
 
-SEXP r_as_floatraw(SEXP x)
+SEXP C_as_floatraw(SEXP x)
 {
   SEXP ans;
   int i, n;
@@ -37,7 +37,7 @@ SEXP r_as_floatraw(SEXP x)
   return ans;
 }
 
-SEXP r_floatraw2numeric(SEXP x)
+SEXP C_floatraw2numeric(SEXP x)
 {
   SEXP ans;
   int i, n;
@@ -58,4 +58,3 @@ SEXP r_floatraw2numeric(SEXP x)
   return ans;
 
 }
-

@@ -9,12 +9,12 @@
 #include <Rinternals.h>
 #include <stddef.h>
 
-SEXP r_isnullptr(SEXP x)
+SEXP C_isnullptr(SEXP x)
 {
   return ScalarLogical( ( R_ExternalPtrAddr(x) == NULL ) ? TRUE : FALSE );
 }
 
-SEXP r_asextptr(SEXP x)
+SEXP C_asextptr(SEXP x)
 {
   if (isVector(x)) {
     return R_MakeExternalPtr( DATAPTR(x), R_NilValue, x );
@@ -23,7 +23,7 @@ SEXP r_asextptr(SEXP x)
   return R_NilValue; /* dummy */
 }
 
-SEXP r_offsetPtr(SEXP x, SEXP offset)
+SEXP C_offsetPtr(SEXP x, SEXP offset)
 {
   if ( LENGTH(offset) == 0 ) error("offset is missing");
   ptrdiff_t offsetval = INTEGER(offset)[0];

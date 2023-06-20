@@ -81,7 +81,7 @@ clSetMemObjectDestructorAPPLE(*<_cl_mem>*p*v)i;
 clUnloadCompiler()i;
 clWaitForEvents(I**<_cl_event>)i;
 ")
-parseStructInfos("
+cstruct("
 _cl_image_format{II}image_channel_order image_channel_data_type ;
 _cl_sampler{};
 _cl_event{};

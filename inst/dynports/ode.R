@@ -553,7 +553,7 @@ dWorldSetQuickStepW(*<dxWorld>f)v;
 dWorldStep(*<dxWorld>f)v;
 dWorldStepFast1(*<dxWorld>fi)v;
 ")
-parseStructInfos("
+cstruct("
 dGeomClass{i*p*p*p*p}bytes collider aabb aabb_test dtor ;
 dxHeightfieldData{};
 dxTriMeshData{};

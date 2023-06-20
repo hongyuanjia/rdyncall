@@ -1,25 +1,25 @@
 useDynLib(rdyncall)
 export(
 # --- dyncall.R --------------------------------------------------------------
-  .dyncall,
-  .dyncall.default,
-  .dyncall.cdecl,
-  .dyncall.stdcall,
-  .dyncall.thiscall, .dyncall.thiscall.gcc, .dyncall.thiscall.msvc,
-  .dyncall.fastcall, .dyncall.fastcall.gcc, .dyncall.fastcall.msvc,
+  dyncall,
+  dyncall.default,
+  dyncall.cdecl,
+  dyncall.stdcall,
+  dyncall.thiscall, dyncall.thiscall.gcc, dyncall.thiscall.msvc,
+  dyncall.fastcall, dyncall.fastcall.gcc, dyncall.fastcall.msvc,
 # --- dynload.R --------------------------------------------------------------
-  .dynload, .dynunload, .dynsym,
+  dynload, dynunload, dynsym,
 # --- dynfind.R --------------------------------------------------------------
   dynfind,
 # --- dynbind.R --------------------------------------------------------------
   dynbind,
 # --- dynstruct.R ------------------------------------------------------------
-  new.struct, as.struct,
-  parseStructInfos, parseUnionInfos,
+  cdata, as.ctype,
+  cstruct, cunion,
 # --- pack.R -----------------------------------------------------------------
-  .pack, .unpack,
+  pack, unpack,
 # --- callback.R -------------------------------------------------------------
-  new.callback,
+  ccallback,
 # --- utils.R ----------------------------------------------------------------
   is.nullptr, as.extptr, is.externalptr, offsetPtr,
 # --- utils_str.R ------------------------------------------------------------

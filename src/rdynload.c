@@ -8,13 +8,13 @@
 #include "dynload.h"
 
 /** ---------------------------------------------------------------------------
- ** C-Function: r_dynload
+ ** C-Function: dynload
  ** Description: load shared library and return lib handle
  ** R-Calling Convention: .Call
  **
  **/
 
-SEXP r_dynload(SEXP libpath_x)
+SEXP C_dynload(SEXP libpath_x)
 {
   const char* libpath_S;
   void* libHandle;
@@ -29,13 +29,13 @@ SEXP r_dynload(SEXP libpath_x)
 }
 
 /** ---------------------------------------------------------------------------
- ** C-Function: r_dynunload
+ ** C-Function: dynunload
  ** Description: unload shared library
  ** R-Calling Convention: .Call
  **
  **/
 
-SEXP r_dynunload(SEXP libobj_x)
+SEXP C_dynunload(SEXP libobj_x)
 {
   void* libHandle;
 
@@ -51,13 +51,13 @@ SEXP r_dynunload(SEXP libobj_x)
 }
 
 /** ---------------------------------------------------------------------------
- ** C-Function: r_dynsym
+ ** C-Function: dynsym
  ** Description: resolve symbol
  ** R-Calling Convention: .Call
  **
  **/
 
-SEXP r_dynsym(SEXP libh, SEXP symname_x, SEXP protectlib)
+SEXP C_dynsym(SEXP libh, SEXP symname_x, SEXP protectlib)
 {
   void* libHandle;
   const char* symbol;

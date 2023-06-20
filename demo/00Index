@@ -5,8 +5,8 @@ SDL             3D Rotating Cube Demo using SDL,OpenGL and GLU. (dynport demo)
 randomfield     Scientific Computations using OpenGL: Rendering 512x512 random field by blending 5000 point sprites (dynport demo)
 randomfield2    Scientific Computations using OpenGL: Rendering 512x512 random field by blending 5000 point sprites (dynport demo)
 expat           Parsing XML using expat and callbacks (callback demo)
-callbacks       Creating a callback and call it via .dyncall (dyncall and callback demo)
-factorial       Factorial computation via recursive .dyncall calls to callback objects.
+callbacks       Creating a callback and call it via dyncall (dyncall and callback demo)
+factorial       Factorial computation via recursive dyncall calls to callback objects.
 stdio           Direct I/O of R raw vectors using C stdio functions
 sqrt            C math library demo (dynbind demo)
 Win32PlaySound  Win32 Demo, playing a wav file (dynbind demo)
