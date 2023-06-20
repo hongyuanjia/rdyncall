@@ -1,11 +1,11 @@
 \name{packing}
-\alias{.pack}
+\alias{pack}
 \alias{packing}
 \alias{.unpack}
 \title{Handling of foreign C fundamental data types}
 \description{Functions to unpack/pack (read/write) foreign C data types from/to R atomic vectors and C data objects such as arrays and pointers to structures.}
 \usage{
-.pack(x, offset, sigchar, value)
+pack(x, offset, sigchar, value)
 .unpack(x, offset, sigchar)
 }
 \arguments{
@@ -15,7 +15,7 @@
 \item{value}{R object value to be coerced and packed to a foreign C data type.} 
 }
 \details{
-The function \code{.pack} converts an R \code{value} into a C data type specified by the \link{signature} \code{sigchar} 
+The function \code{pack} converts an R \code{value} into a C data type specified by the \link{signature} \code{sigchar} 
 and it writes the raw C foreign data value at byte position \code{offset} into the object \code{x}.
 The function \code{.unpack} extracts a C data type according to the \link{signature} \code{sigchar} 
 at byte position \code{offset} from the object \code{x} and converts the C value to an R value and returns it.
@@ -29,7 +29,7 @@ Otherwise, if \code{x} is an external pointer, there is only a C NULL pointer ch
 \code{.unpack} returns a read C data type coerced to an R value.
 }
 \seealso{
-\code{\link{.dyncall}} for details on type signatures.
+\code{\link{dyncall}} for details on type signatures.
 }
 \examples{
 # transfer double to array of floats and back, compare precision:
@@ -37,7 +37,7 @@ n <- 6
 input <- rnorm(n)
 buf <- raw(n*4)
 for (i in 1:n) {
-  .pack(buf, 4*(i-1), "f", input[i])
+  pack(buf, 4*(i-1), "f", input[i])
 }
 output <- numeric(n)
 for (i in 1:n) {

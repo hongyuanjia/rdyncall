@@ -1162,6 +1162,6 @@ GL_WAIT_FAILED=0x911D
 GL_WRITE_ONLY=0x88B9
 GL_XOR=0x1506
 GL_ZERO=0
-parseStructInfos("
+cstruct("
 __GLsync{};
 ")

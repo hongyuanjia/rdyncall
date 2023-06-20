@@ -29,7 +29,7 @@ init <- function() {
     error("SDLNet_Init failed")
   }
 
-  ip <- new.struct("IPaddress")
+  ip <- cdata("IPaddress")
 
   if ( SDLNet_ResolveHost(ip,NULL,PORT) == -1 ) {
     error("SDLNet_ResolveHost failed")
@@ -37,7 +37,7 @@ init <- function() {
 
   tcp <<- SDLNet_TCP_Open(ip)
 
-  socket <<- as.struct(offsetPtr(tcp,0),"SDLNet_GenericSocket_")
+  socket <<- as.ctype(offsetPtr(tcp,0),"SDLNet_GenericSocket_")
 
   sockets <<- SDLNet_AllocSocketSet(1+MAX_CLIENT_SOCKETS)
   SDLNet_AddSocket(sockets, socket )
@@ -66,7 +66,7 @@ drawMap3d <- function(m) {
     glDrawArrays(GL_LINE_STRIP, begin - 1, (end-1) - (begin-1) + 1)
     begin   <- markers[i] + 1
     i       <- i + 1
-  }  
+  }
   end     <- length(x)
   glDrawArrays(GL_LINE_STRIP, begin - 1, (end-1) - (begin-1) + 1)
   glDisableClientState(GL_VERTEX_ARRAY)
@@ -77,7 +77,7 @@ loop <- function() {
   drawMap3d(world)
   do_loop <- TRUE
   cnt <- 0
-  evt <- new.struct("SDL_Event")
+  evt <- cdata("SDL_Event")
   while(do_loop) {
     glClearColor(0.2,0.3,0.1,0)
     glClear(GL_COLOR_BUFFER_BIT)
@@ -88,8 +88,8 @@ loop <- function() {
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
 
-    cx <- r[[1]] + ( r[[2]] - r[[1]] ) * 0.5 
-    cy <- r[[3]] + ( r[[4]] - r[[3]] ) * 0.5 
+    cx <- r[[1]] + ( r[[2]] - r[[1]] ) * 0.5
+    cy <- r[[3]] + ( r[[4]] - r[[3]] ) * 0.5
 
     glTranslatef( cx, cy , 0 )
     glRotatef(cnt,0,1,0) ; cnt <- cnt + 1
@@ -103,7 +103,7 @@ loop <- function() {
     for(i in 1:10) {
       glLoadIdentity()
       glTranslatef( cx, cy , 0 )
-      glRotatef(cnt+delta,0,1,0) ; 
+      glRotatef(cnt+delta,0,1,0) ;
       glTranslatef( -cx, -cy , 0 )
       glCallList(glList)
       delta <- delta + 1.0
@@ -122,20 +122,20 @@ loop <- function() {
       cat("ready\n")
       if (socket$ready) {
         cat("listener\n\n")
-        # tcp <- as.struct(tcp,"_TCPsocket")
+        # tcp <- as.ctype(tcp,"_TCPsocket")
         ctcp <- SDLNet_TCP_Accept(tcp)
         if (is.null(ctcp)) {
           cat("warning: client is NULL\n")
         } else {
-          csock  <- as.struct(offsetPtr(ctcp,0),"SDLNet_GenericSocket_")
+          csock  <- as.ctype(offsetPtr(ctcp,0),"SDLNet_GenericSocket_")
           ctcps  <- c(ctcps, ctcp)
-          csocks <- c(csocks, csock) 
+          csocks <- c(csocks, csock)
           if ( SDLNet_AddSocket(sockets, csock) == -1 ) {
             cat("warning: add socket failed\n")
           }
         }
         numready <- numready - 1
-      } 
+      }
       while(numready) {
         i <- 1
         for(i in 1:length(csocks)) {
@@ -151,7 +151,7 @@ loop <- function() {
               buf[result] <- as.raw(0)
               txt <- ptr2str(offsetPtr(buf,0))
               cat("DATA:'",txt,"'\n")
-              
+
               tryCatch({
                 m <- map(db,txt,plot=FALSE)
                 world <<- m

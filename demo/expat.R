@@ -17,8 +17,8 @@ onXMLEndTag <- function(user,tag)
   cat("End tag:",tag, "\n")  
 }
 
-cb.onstart <- new.callback("pZp)v", onXMLStartTag )
-cb.onstop  <- new.callback("pZ)v",  onXMLEndTag )
+cb.onstart <- ccallback("pZp)v", onXMLStartTag )
+cb.onstop  <- ccallback("pZ)v",  onXMLEndTag )
 
 XML_SetElementHandler( parser, cb.onstart, cb.onstop ) 
 

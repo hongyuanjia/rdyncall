@@ -234,7 +234,7 @@ SDL_strupr(*c)*c;
 SDL_ulltoa(L*ci)*c;
 SDL_ultoa(J*ci)*c;
 ")
-parseStructInfos("
+cstruct("
 SDL_Rect{ssSS}x y w h ;
 SDL_version{CCC}major minor patch ;
 SDL_SysWMEvent{C*<SDL_SysWMmsg>}type msg ;
@@ -287,7 +287,7 @@ sigaction{<__sigaction_u>Ii}__sigaction_u sa_mask sa_flags ;
 sigevent{ii<sigval>*p*<_opaque_pthread_attr_t>}sigev_notify sigev_signo sigev_value sigev_notify_function sigev_notify_attributes ;
 fd_set{}fds_bits ;
 "
-parseUnionInfos("
+cunion("
 SDL_Event|C<SDL_ActiveEvent><SDL_KeyboardEvent><SDL_MouseMotionEvent><SDL_MouseButtonEvent><SDL_JoyAxisEvent><SDL_JoyBallEvent><SDL_JoyHatEvent><SDL_JoyButtonEvent><SDL_ResizeEvent><SDL_ExposeEvent><SDL_QuitEvent><SDL_UserEvent><SDL_SysWMEvent>}type active key motion button jaxis jball jhat jbutton resize expose quit user syswm ;
 ")
 AUDIO_S16=0x8010

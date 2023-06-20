@@ -167,7 +167,7 @@ csoundWaitBarrier(*v)i;
 csoundWaitThreadLock(*vJ)i;
 csoundWaitThreadLockNoTimeout(*v)v;
 ")
-parseStructInfos("
+cstruct("
 CSOUND_{};
 RTCLOCK_S{ll}starttime_real starttime_CPU ;
 csCfgVariableBoolean_s{*<csCfgVariable_u>*C*iii*C*C}nxt name p type flags shortDesc longDesc ;
@@ -181,7 +181,7 @@ csRtAudioParams{*ciiiiif}devName devNum bufSamp_SW bufSamp_HW nChannels sampleFo
 opcodeListEntry{*c*c*c}opname outypes intypes ;
 pvsdat_ext{iiiiiiiI*f}N sliding NB overlap winsize wintype format framecount frame ;
 ")
-parseUnionInfos("
+cunion("
 csCfgVariable_u|<csCfgVariableHead_s><csCfgVariableInt_s><csCfgVariableBoolean_s><csCfgVariableFloat_s><csCfgVariableDouble_s><csCfgVariableMYFLT_s><csCfgVariableString_s>}h i b f d m s ;
 ")
 CSFTYPE_AIFC=13;

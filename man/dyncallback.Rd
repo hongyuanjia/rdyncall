@@ -1,5 +1,5 @@
 \name{callback}
-\alias{new.callback}
+\alias{ccallback}
 \alias{callback}
 \alias{dyncallback}
 \title{Dynamic wrapping of R functions as C callbacks}
@@ -7,7 +7,7 @@
 Function to wrap R functions as C function pointers. 
 }
 \usage{
-new.callback( signature, fun, envir = new.env() )
+ccallback( signature, fun, envir = new.env() )
 }
 \arguments{
   \item{signature}{character string specifying the \link[=signature]{call signature} of the C function callback type.}
@@ -18,19 +18,19 @@ new.callback( signature, fun, envir = new.env() )
 Callbacks are user-defined functions that are registered in a foreign library and that are executed at a later time from within that library.
 Examples include user-interface event handlers that are registered in GUI toolkits, and, comparison functions for custom data types to be passed to generic sort algorithm.
 
-The function \code{new.callback} wraps an R function \code{fun} as a C function pointer and returns an external pointer. The foreign C function type of the wrapped 
+The function \code{ccallback} wraps an R function \code{fun} as a C function pointer and returns an external pointer. The foreign C function type of the wrapped 
 R function is specified by a \link{call signature} given by \code{signature}.
 
 When the C function pointer is called, a global callback handler (implemented in C) is executed first, that dynamically creates an R call expression to \code{fun}
 using the arguments, passed from C and converted to R, according to the \emph{argument types signature} within the \link{call signature} specified. See
-\code{\link{.dyncall}} for details on the format.
+\code{\link{dyncall}} for details on the format.
 Finally, the handler evaluates the R call expression within the environment given by \code{envir}.
 On return, the R return value of \code{fun} is coerced to the C value, according to the return type signature specified in \code{signature}.
 If an error occurs during the evaluation, the callback will be disabled for further invocations. (This behaviour might change in the future.)
 
 }
 \value{
-\code{new.callback} returns an external pointer to a synthetically generated C function.
+\code{ccallback} returns an external pointer to a synthetically generated C function.
 }
 
 \section{Portability}{
@@ -65,14 +65,14 @@ See \code{\link{signature}} for details on call signatures,
 }
 \examples{
 \donttest{
-# Create a function, wrap it to a callback and call it via .dyncall:
+# Create a function, wrap it to a callback and call it via dyncall:
 f <- function(x,y) x+y
-cb <- new.callback("ii)i", f)
-r <- .dyncall(cb, "ii)i", 20, 3)
+cb <- ccallback("ii)i", f)
+r <- dyncall(cb, "ii)i", 20, 3)
 
 # Sort vectors directly via 'qsort' C library function using an R callback:
 dynbind(c("msvcrt","c","c.so.6"), "qsort(piip)v;")
-cb <- new.callback("pp)i",function(px,py){  
+cb <- ccallback("pp)i",function(px,py){  
   x <- .unpack(px, 0, "d")
   y <- .unpack(py, 0, "d")
   if (x >  y) return(1) else if (x == y) return(0) else return(-1)

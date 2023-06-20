@@ -11,7 +11,7 @@
 
 /* String utils */
 
-SEXP r_ptr2str(SEXP extptr)
+SEXP C_ptr2str(SEXP extptr)
 {
   void* addr = R_ExternalPtrAddr(extptr);
   if (addr == NULL) {
@@ -20,7 +20,7 @@ SEXP r_ptr2str(SEXP extptr)
   return mkString(addr);
 }
 
-SEXP r_strptr(SEXP x)
+SEXP C_strptr(SEXP x)
 {
   return R_MakeExternalPtr( (void*) CHAR(STRING_ELT(x, 0)), R_NilValue, x );
 }
@@ -31,7 +31,7 @@ void do_free(SEXP x)
   R_Free(addr);
 }
 
-SEXP r_strarrayptr(SEXP s)
+SEXP C_strarrayptr(SEXP s)
 {
   int i;
   int n;

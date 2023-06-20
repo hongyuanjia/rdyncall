@@ -65,7 +65,7 @@ that perform up to three tasks:
 \itemize{
 \item Functions (and pointer-to-function variables) are mapped via \code{\link{dynbind}} and a description of the C library using a \emph{library signatures}.
 \item Symbolic names are assigned to its values for object-like macro defines and C enum types.
-\item Run-time type-information objects for aggregate C data types (struct and union) are registered via \code{\link{parseStructInfos}} and \code{\link{parseUnionInfos}}.
+\item Run-time type-information objects for aggregate C data types (struct and union) are registered via \code{\link{cstruct}} and \code{\link{cunion}}.
 }
 
 The file path to the \emph{DynPort} file is derived from

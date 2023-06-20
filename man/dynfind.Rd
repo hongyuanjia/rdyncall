@@ -7,13 +7,13 @@ dynfind(libnames, auto.unload=TRUE)
 }
 \arguments{
   \item{libnames}{vector of character strings specifying several short library names.}
-  \item{auto.unload}{logical: if \code{TRUE} then a finalizer is registered that closes the library on garbage collection. See \code{\link{.dynload}} for details.}
+  \item{auto.unload}{logical: if \code{TRUE} then a finalizer is registered that closes the library on garbage collection. See \code{\link{dynload}} for details.}
 }
 \details{
 \code{dynfind} offers a platform-portable naming interface for loading a specific shared library.
 
 The naming scheme and standard locations of shared libraries are OS-specific.
-When loading a shared library dynamically at run-time across platforms via standard interfaces such as \code{\link{.dynload}} or \code{\link{dyn.load}}, 
+When loading a shared library dynamically at run-time across platforms via standard interfaces such as \code{\link{dynload}} or \code{\link{dyn.load}}, 
 a platform-test is usually needed to specify the OS-dependant library file path.
 
 This \emph{library name problem} is encountered via breaking up the library file path into several abstract components:
@@ -64,7 +64,7 @@ in a separate search phase:
 
 The \sQuote{frameworksLocation} is a vector of locations such as \code{/System/Library/} and \code{/Library/}.
 
-\code{dynfind} loads a library via \code{\link{.dynload}} passing over the parameter \code{auto.unload}.
+\code{dynfind} loads a library via \code{\link{dynload}} passing over the parameter \code{auto.unload}.
 
 }
 \value{
@@ -72,7 +72,7 @@ The \sQuote{frameworksLocation} is a vector of locations such as \code{/System/L
 Otherwise, if no library is located, a \code{NULL} is returned.
 }
 \seealso{
-See \code{\link{.dynload}} for details on the loader interface to the OS-specific dynamic linker.
+See \code{\link{dynload}} for details on the loader interface to the OS-specific dynamic linker.
 }
 \keyword{programming}
 \keyword{interface}

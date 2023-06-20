@@ -74,7 +74,7 @@ pcap_tstamp_type_name_to_val(*c)i;
 pcap_tstamp_type_val_to_description(i)*c;
 pcap_tstamp_type_val_to_name(i)*c;
 ")
-parseStructInfos("
+cstruct("
 bpf_insn{SCCI}code jt jf k ;
 bpf_program{I*<bpf_insn>}bf_len bf_insns ;
 pcap_addr{*<pcap_addr>*<sockaddr>*<sockaddr>*<sockaddr>*<sockaddr>}next addr netmask broadaddr dstaddr ;

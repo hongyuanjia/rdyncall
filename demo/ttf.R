@@ -9,14 +9,14 @@ textSurf <- NULL
 
 numTexts <- 10
 
-init <- function() 
+init <- function()
 {
   status <- TTF_Init()
 
   if (status != 0) {
     stop(paste("TTF_Init failed: ", TTF_GetError(), sep=""))
-  } 
-  
+  }
+
   # tryPaths <- c("/Library/Fonts","/usr/X11R7","/usr/X11R6")
   # tryFonts <- c("Sathu.ttf", "Vera.ttf")
 
@@ -25,21 +25,21 @@ init <- function()
   if (is.nullptr(font)) {
     stop(paste("TTF_OpenFont failed: ", TTF_GetError(), sep=""))
   }
-  
-  color <- new.struct(SDL_Color)
+
+  color <- cdata(SDL_Color)
   color$r <- color$g <- color$b <- 255
   textSurf <<- TTF_RenderText_Solid(font, "Hello World.")
 
   SDL_Init(SDL_INIT_VIDEO)
   fbSurf <<- SDL_SetVideoMode(256,256,32,SDL_DOUBLEBUF)
-  
+
   displace <<- rnorm(numTexts*2)
 }
 
 main <- function()
 {
 
-  rect <- new.struct(SDL_Rect)
+  rect <- cdata(SDL_Rect)
 
   rect$x <- 0
   rect$y <- 0
@@ -48,7 +48,7 @@ main <- function()
 
   rect2 <- rect
 
-  evt <- new.struct(SDL_Event)
+  evt <- cdata(SDL_Event)
 
   quit <- FALSE
 
@@ -56,17 +56,17 @@ main <- function()
 
   while(!quit) {
 
-    SDL_FillRect(fbSurf, as.struct( as.extptr(NULL), "SDL_Rect" ), 0xFFFFFFL)
+    SDL_FillRect(fbSurf, as.ctype( as.extptr(NULL), "SDL_Rect" ), 0xFFFFFFL)
     rect
     i <- 1
     while(i < numTexts*2) {
       rect2$x <- rect$x + distance * displace[i]
       rect2$y <- rect$y + distance * displace[i+1]
       i <- i + 2
-      SDL_BlitSurface(textSurf, as.struct(as.extptr(NULL),"SDL_Rect"),fbSurf,rect2)
-    } 
+      SDL_BlitSurface(textSurf, as.ctype(as.extptr(NULL),"SDL_Rect"),fbSurf,rect2)
+    }
     SDL_Flip(fbSurf)
-    
+
     distance <- distance + 1
 
     while ( SDL_PollEvent(evt) ) {

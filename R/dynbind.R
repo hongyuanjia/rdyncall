@@ -25,7 +25,7 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
     # -- install functions
 
     # make function call symbol
-    dyncallfunc <- as.symbol(paste(".dyncall.", callmode, sep = ""))
+    dyncallfunc <- as.symbol(paste("dyncall.", callmode, sep = ""))
     # report info
     syms.failed <- character(0)
 
@@ -35,7 +35,7 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
         rname <- if (!is.null(pat)) sub(pat, replace, symname) else symname
         signature <- sigtab[[i]][[2]]
         # lookup symbol
-        address <- .dynsym(libh, symname)
+        address <- dynsym(libh, symname)
 
         if (!is.null(address)) {
             # make call function f

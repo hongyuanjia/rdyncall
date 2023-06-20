@@ -142,7 +142,7 @@ makeStructInfo <- function(name, signature, fieldNames, envir = parent.frame()) 
     TypeInfo(name = name, type = "struct", size = size, align = maxAlign, fields = fields)
 }
 
-parseStructInfos <- function(sigs, envir = parent.frame()) {
+cstruct <- function(sigs, envir = parent.frame()) {
     # split functions at ';'
     sigs <- unlist(strsplit(sigs, ";"))
     # split name/struct signature at '('
@@ -206,7 +206,7 @@ makeUnionInfo <- function(name, signature, fieldNames, envir = parent.frame()) {
     TypeInfo(name = name, type = "union", fields = fields, size = maxSize, align = maxAlign)
 }
 
-parseUnionInfos <- function(sigs, envir = parent.frame()) {
+cunion <- function(sigs, envir = parent.frame()) {
     # split functions at ';'
     sigs <- unlist(strsplit(sigs, ";"))
     # split name/union signature at '|'
@@ -235,14 +235,14 @@ parseUnionInfos <- function(sigs, envir = parent.frame()) {
 # ----------------------------------------------------------------------------
 # raw backed struct's (S3 Class)
 
-as.struct <- function(x, type) {
+as.ctype <- function(x, type) {
     if (is.TypeInfo(x)) structName <- type$name
-    attr(x, "struct") <- type
-    class(x) <- "struct"
+    attr(x, "ctype") <- type
+    class(x) <- "ctype"
     return(x)
 }
 
-new.struct <- function(type) {
+cdata <- function(type) {
     if (is.character(type)) {
         name <- type
         type <- getTypeInfo(type)
@@ -267,13 +267,13 @@ new.struct <- function(type) {
     fieldTypeName <- as.character(fieldInfos[[index, "type"]])
     fieldTypeInfo <- getTypeInfo(fieldTypeName)
     if (fieldTypeInfo$type %in% c("base", "pointer")) {
-        .unpack(x, offset, fieldTypeInfo$signature)
+        unpack(x, offset, fieldTypeInfo$signature)
     } else if (!is.null(fieldTypeInfo$fields)) {
         if (is.raw(x)) {
             size <- fieldTypeInfo$size
-            as.struct(x[(offset + 1):(offset + 1 + size - 1)], fieldTypeName)
+            as.ctype(x[(offset + 1):(offset + 1 + size - 1)], fieldTypeName)
         } else if (is.externalptr(x)) {
-            as.struct(offsetPtr(x, offset), fieldTypeName)
+            as.ctype(offsetPtr(x, offset), fieldTypeName)
         }
     } else {
         stop("invalid field type '", fieldTypeName, "' at field '", index)
@@ -289,7 +289,7 @@ new.struct <- function(type) {
     fieldTypeName <- as.character(fieldInfos[index, "type"])
     fieldTypeInfo <- getTypeInfo(fieldTypeName)
     if (fieldTypeInfo$type %in% c("base", "pointer")) {
-        .pack(x, offset, fieldTypeInfo$signature, value)
+        pack(x, offset, fieldTypeInfo$signature, value)
     } else if (!is.null(fieldTypeInfo$fields)) {
         # substructure
         size <- fieldTypeInfo$size

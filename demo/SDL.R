@@ -77,7 +77,7 @@ makeCubeDisplaylist <- function()
 mainloop <- function()
 {
   displaylistId <- makeCubeDisplaylist()
-  evt <- new.struct(SDL_Event)
+  evt <- cdata(SDL_Event)
   blink <- 0
   tbase <- SDL_GetTicks()
   quit <- FALSE

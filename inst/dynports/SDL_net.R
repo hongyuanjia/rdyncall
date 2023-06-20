@@ -36,7 +36,7 @@ SDLNet_UDP_Unbind(*<_UDPsocket>i)v;
 SDLNet_Write16(S*v)v;
 SDLNet_Write32(I*v)v;
 ")
-parseStructInfos("
+cstruct("
 IPaddress{IS}host port ;
 SDLNet_GenericSocket_{i}ready ;
 UDPpacket{i*Ciii<IPaddress>}channel data len maxlen status address ;

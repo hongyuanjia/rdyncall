@@ -1,31 +1,31 @@
 dynfind1 <- if (.Platform$OS.type == "windows") {
     function(name, ...) {
-        handle <- .dynload(paste("lib", name, sep = ""), ...)
+        handle <- dynload(paste("lib", name, sep = ""), ...)
         if (!is.null(handle)) {
             return(handle)
         }
-        .dynload(name, ...)
+        dynload(name, ...)
     }
 } else {
     if (Sys.info()[["sysname"]] == "Darwin") {
         function(name, ...) {
-            handle <- .dynload(paste(name, ".framework/", name, sep = ""), ...)
+            handle <- dynload(paste(name, ".framework/", name, sep = ""), ...)
             if (!is.null(handle)) {
                 return(handle)
             }
-            .dynload(paste("lib", name, ".dylib", sep = ""), ...)
+            dynload(paste("lib", name, ".dylib", sep = ""), ...)
         }
     } else {
         function(name, ...) {
-            handle <- .dynload(paste("lib", name, ".so", sep = ""), ...)
+            handle <- dynload(paste("lib", name, ".so", sep = ""), ...)
             if (!is.null(handle)) {
                 return(handle)
             }
-            handle <- .dynload(paste("lib", name, sep = ""), ...)
+            handle <- dynload(paste("lib", name, sep = ""), ...)
             if (!is.null(handle)) {
                 return(handle)
             }
-            .dynload(paste(name, sep = ""), ...) # needed by Solaris to lookup 'R'.
+            dynload(paste(name, sep = ""), ...) # needed by Solaris to lookup 'R'.
         }
     }
 }
