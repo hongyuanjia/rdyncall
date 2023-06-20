@@ -11,11 +11,11 @@
 #include <ctype.h>
 
 /** ---------------------------------------------------------------------------
- ** C-Function: C_new_callvm
+ ** C-Function: C_callvm_new
  ** R-Interface: .Call
  **/
 
-SEXP C_new_callvm(SEXP mode_x, SEXP size_x)
+SEXP C_callvm_new(SEXP mode_x, SEXP size_x)
 {
   /* default call mode is "cdecl" */
   int size_i = INTEGER(size_x)[0];
@@ -43,11 +43,11 @@ SEXP C_new_callvm(SEXP mode_x, SEXP size_x)
 }
 
 /** ---------------------------------------------------------------------------
- ** C-Function: C_free_callvm
+ ** C-Function: C_callvm_free
  ** R-Interface: .Call
  **/
 
-SEXP C_free_callvm(SEXP callvm_x)
+SEXP C_callvm_free(SEXP callvm_x)
 {
   DCCallVM* callvm_p = (DCCallVM*) R_ExternalPtrAddr( callvm_x );
   dcFree( callvm_p );

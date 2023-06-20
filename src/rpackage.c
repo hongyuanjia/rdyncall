@@ -12,8 +12,8 @@
  */
 
 /* rdyncall.c */
-SEXP C_new_callvm(SEXP callmode, SEXP size);
-SEXP C_free_callvm(SEXP callvm);
+SEXP C_callvm_new(SEXP callmode, SEXP size);
+SEXP C_callvm_free(SEXP callvm);
 SEXP C_dyncall(SEXP args); /* .External() with args = callvm, address, signature, args */
 
 /* rdynload.c */
@@ -61,8 +61,8 @@ R_ExternalMethodDef externalMethods[] =
 R_CallMethodDef callMethods[] =
 {
   /* --- rdyncall.c -------------------------------------------------------- */
-  {"C_new_callvm"               , (DL_FUNC) &C_new_callvm       , 2},
-  {"C_free_callvm"              , (DL_FUNC) &C_free_callvm      , 1},
+  {"C_callvm_new"               , (DL_FUNC) &C_callvm_new       , 2},
+  {"C_callvm_free"              , (DL_FUNC) &C_callvm_free      , 1},
   /* --- rdynload.c -------------------------------------------------------- */
   {"C_dynload"                  , (DL_FUNC) &C_dynload          , 1},
   {"C_dynsym"                   , (DL_FUNC) &C_dynsym           , 3},
