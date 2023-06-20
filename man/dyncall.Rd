@@ -107,7 +107,7 @@ a S3 \code{struct} object. See \code{\link{cdata}} for details.
 
 }
 \section{Call Signatures}{
-Call Signatures are used by \code{\link{dyncall}} and \code{\link{new_callback}} to describe foreign C function types.
+Call Signatures are used by \code{\link{dyncall}} and \code{\link{ccallback}} to describe foreign C function types.
 The general form of a call signature is as following:
 
 \tabular{lll}{

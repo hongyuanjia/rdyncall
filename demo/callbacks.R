@@ -6,7 +6,7 @@
 f <- function(x,y) x+y
 
 # Create the callback:
-cb <- new.callback("ii)i", f)
+cb <- ccallback("ii)i", f)
 
 # Call the callback
 r <- dyncall(cb, "ii)i", 20, 3)
@@ -20,7 +20,7 @@ f <- function(x,y,f,i)
   x+y
 }
 
-cb <- new.callback("iipi)i", f)
+cb <- ccallback("iipi)i", f)
 
 r <- dyncall(cb, "iipi)i", 1,1,cb,100 )
 r == 2

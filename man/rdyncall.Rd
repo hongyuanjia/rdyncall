@@ -49,7 +49,7 @@ round up this framework.
 \item Cross-platform naming and loading of shared libraries. See \code{\link{dynfind}}.
 \item Binding C library functions via thin call wrappers. See \code{\link{dynbind}}.
 \item Handling of foreign C pointer, array and struct/union data types. See \code{\link{packing}} and \code{\link{struct}}.
-\item Dynamic wrapping of R functions as C function pointers to be used in C callbacks. See \code{\link{new.callback}}.
+\item Dynamic wrapping of R functions as C function pointers to be used in C callbacks. See \code{\link{ccallback}}.
 \item Dynamic bindings to standard and common C libraries and APIs (functions, variables, macro constants, enums, struct and union types). See \code{\link{dynport}}.
 }
 }

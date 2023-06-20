@@ -455,7 +455,7 @@ Package Overview}
 We already described the \code{dyncall} FFI. It follows a
 brief description of portable loading of
 shared libraries using \code{dynfind}, installation of wrappers via \code{dynbind},
-handling of foreign data types via \code{cdata} and wrapping of R functions as C callbacks via \code{new.callback}.
+handling of foreign data types via \code{cdata} and wrapping of R functions as C callbacks via \code{ccallback}.
 Finally the high-level \code{dynport} interface for accessing \emph{whole} C libraries is briefly discussed.
 The technical details at low-level of some components are described briefly in the
 section \emph{Architecture}.
@@ -714,11 +714,11 @@ a library run-time context.
 
 \pkg{rdyncall} has support for wrapping ordinary R
 functions as C callbacks via the function
-\code{new.callback}. Callback wrappers are defined by a \emph{callback
+\code{ccallback}. Callback wrappers are defined by a \emph{callback
 signature} and the user-supplied R function to be wrapped. \emph{Callback signatures} look very
 similar to \emph{call signatures} and should match the
 functional type of the underlying C callback.
-\code{new.callback} returns an external pointer that can
+\code{ccallback} returns an external pointer that can
 be used as a low-level function pointer for the registration as a C callback.
 See Section \emph{Parsing XML using Expat} below for
 applications of callback.
@@ -905,7 +905,7 @@ void XML_SetElementHandler(XML_Parser parser,
 \end{smallverbatim}
 
 We implement the callbacks as R functions which print the event and
-tag name. They are wrapped as C callback pointers via \code{new.callback}
+tag name. They are wrapped as C callback pointers via \code{ccallback}
 using a matching \emph{callback signature}.
 The second argument \code{name} of type C string in both callbacks, \code{XML\_StartElementHandler} and \code{XML\_EndElementHandler},
 is of primnary interest ; this argument passes over the XML tag name.
@@ -916,11 +916,11 @@ C string type.
 The other arguments are simply denoted as untyped pointers using \code{'p'}:
 
 \begin{smallverbatim}
-> start <- new.callback("pZp)v",
+> start <- ccallback("pZp)v",
   function(ignored1,tag,ignored2)
     cat("Start tag:", tag, "\n")
 )
-> end <- new.callback("pZ)v",
+> end <- ccallback("pZ)v",
   function(ignored,tag)
     cat("Stop tag:", tag, "\n")
 )

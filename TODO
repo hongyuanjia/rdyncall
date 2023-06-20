@@ -17,7 +17,6 @@ TODO:
 - character encoding support, R supports UTF-8.
 - Fortran calling conventions
 - dyncall typed pointer
-- new.callback -> cfunction
 - planed dynports:glut, curl, openal
 
 BUGS:
