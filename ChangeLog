@@ -16,7 +16,7 @@ ChangeLog for R Package rdyncall
  o added: support for new ARM ABI 'armhf' (ARM hardfloat).
    Tested on Raspberry Pi (armv6), Efika MX Smartbook (armv7)
  o added: NULL is accepted for typed pointer arguments.
- o added: support for '*v' (void*) return type signature in .dyncall
+ o added: support for '*v' (void*) return type signature in dyncall
  o added: support for '**c' and externalptr (to support strptrarray()).
  o update: changed 'dynport' containers from R name spaces to environment objects
    to get rid of .Internal calls; this removes usage of '::' operators on

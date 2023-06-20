@@ -1,14 +1,14 @@
 \name{dyncall}
-\alias{.dyncall}
 \alias{dyncall}
-\alias{.dyncall.default}
-\alias{.dyncall.cdecl}
-\alias{.dyncall.stdcall}
-\alias{.dyncall.thiscall}
-\alias{.dyncall.thiscall.msvc}
-\alias{.dyncall.thiscall.gcc}
-\alias{.dyncall.fastcall.msvc}
-\alias{.dyncall.fastcall.gcc}
+\alias{dyncall}
+\alias{dyncall.default}
+\alias{dyncall.cdecl}
+\alias{dyncall.stdcall}
+\alias{dyncall.thiscall}
+\alias{dyncall.thiscall.msvc}
+\alias{dyncall.thiscall.gcc}
+\alias{dyncall.fastcall.msvc}
+\alias{dyncall.fastcall.gcc}
 \alias{signature}
 \alias{call signature}
 \alias{type signature}
@@ -17,15 +17,15 @@
 Functions to call pre-compiled code with support for most C argument and return types. 
 }
 \usage{
-.dyncall( address, signature, ... , callmode = "default" )
-.dyncall.default      ( address, signature, ... )
-.dyncall.cdecl        ( address, signature, ... )
-.dyncall.stdcall      ( address, signature, ... )
-.dyncall.thiscall     ( address, signature, ... )
-.dyncall.thiscall.msvc( address, signature, ... )
-.dyncall.thiscall.gcc ( address, signature, ... )
-.dyncall.fastcall.msvc( address, signature, ... )
-.dyncall.fastcall.gcc ( address, signature, ... )
+dyncall( address, signature, ... , callmode = "default" )
+dyncall.default      ( address, signature, ... )
+dyncall.cdecl        ( address, signature, ... )
+dyncall.stdcall      ( address, signature, ... )
+dyncall.thiscall     ( address, signature, ... )
+dyncall.thiscall.msvc( address, signature, ... )
+dyncall.thiscall.gcc ( address, signature, ... )
+dyncall.fastcall.msvc( address, signature, ... )
+dyncall.fastcall.gcc ( address, signature, ... )
 }
 \arguments{
   \item{address}{external pointer to foreign function.}
@@ -34,7 +34,7 @@ Functions to call pre-compiled code with support for most C argument and return 
   \item{...}{arguments to be passed to the foreign function. Arguments are converted from R to C values according to the \emph{call signature}. See details.}
 }
 \details{
-\code{.dyncall} offers a flexible Foreign Function Interface (FFI) for
+\code{dyncall} offers a flexible Foreign Function Interface (FFI) for
 the C language with support for calls to arbitrary pre-compiled 
 C function types at run-time. Almost all C fundamental 
 argument- and return types are supported including  extended support for
@@ -52,13 +52,13 @@ Arity and argument type checks help make this interface type-safe
 to a certain degree and encourage end-users to use interface from
 the interpreter prompt for rapid application development.
 
-The foreign function to be called is specified by \code{address}, which is an external pointer that is obtained from \code{\link{.dynsym}} or \code{\link{getNativeSymbolInfo}}. 
+The foreign function to be called is specified by \code{address}, which is an external pointer that is obtained from \code{\link{dynsym}} or \code{\link{getNativeSymbolInfo}}. 
 
 \code{signature} is a character string that specifies the formal argument-and-return types of the 
 foreign function using a \emph{call signature} string. It should match the function type of the foreign function given by \code{address},
 otherwise this can lead to a \strong{fatal R process crash}.
 
-The calling convention is specified \emph{explicitly} via function \code{.dyncall}
+The calling convention is specified \emph{explicitly} via function \code{dyncall}
 using the \code{callmode} argument or \emph{implicitly} by using \code{.dyncall.*} 
 functions. See details below.
 
@@ -107,7 +107,7 @@ a S3 \code{struct} object. See \code{\link{new.struct}} for details.
 
 }
 \section{Call Signatures}{
-Call Signatures are used by \code{\link{.dyncall}} and \code{\link{new.callback}} to describe foreign C function types.
+Call Signatures are used by \code{\link{dyncall}} and \code{\link{new_callback}} to describe foreign C function types.
 The general form of a call signature is as following:
 
 \tabular{lll}{
@@ -167,7 +167,7 @@ It follows a description of supported Win32 Calling Conventions:
 }
 
 As of the current version of this package and for practical reasons, the \code{callmode} argument does not have an effect on almost
-all platforms, except that if R is running on Microsoft Windows 32-Bit Intel/x86 platform, \code{.dyncall} uses the specified calling convention.
+all platforms, except that if R is running on Microsoft Windows 32-Bit Intel/x86 platform, \code{dyncall} uses the specified calling convention.
 For example, when loading OpenGL across platforms, \code{"stdcall"} should be used instead of \code{"default"}, 
 because on Windows, OpenGL is a System DLL. This is very exceptional, as in most other cases, \code{"default"} (or \code{"cdecl"}, the alias) need to be used
 for normal C shared libraries on Windows.
@@ -189,8 +189,8 @@ The target address, calling convention and call signature \strong{MUST} match fo
 \examples{
 \donttest{
 mathlib <- dynfind(c("msvcrt","m","m.so.6"))
-x <- .dynsym(mathlib,"sqrt")
-.dyncall(x, "d)d", 144L)
+x <- dynsym(mathlib,"sqrt")
+dyncall(x, "d)d", 144L)
 }
 }
 \references{
@@ -201,7 +201,7 @@ x <- .dynsym(mathlib,"sqrt")
   \url{https://dyncall.org}
 }
 \seealso{
-\code{\link{.dynsym}} and \code{\link[base]{getNativeSymbolInfo}} for resolving symbols,
+\code{\link{dynsym}} and \code{\link[base]{getNativeSymbolInfo}} for resolving symbols,
 \code{\link{dynbind}} for binding several foreign functions via thin call wrappers,
 \code{\link[base]{.C}} for the traditional FFI to C.
 }

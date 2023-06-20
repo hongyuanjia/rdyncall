@@ -129,9 +129,9 @@ SDL_GL_SwapBuffers()
 A more detailed version including user-interface handling is available
 in `demo(SDL)`.
 
-## Brief Tour 2/2: Alternative FFI via '.dyncall'
+## Brief Tour 2/2: Alternative FFI via 'dyncall'
 
-The alternative foreign function interface offered by '.dyncal' has a similar
+The alternative foreign function interface offered by 'dyncall' has a similar
 intend such as '.C'. It allows to call shared library functions directly from R,
 but without additional wrapper C code needed, because it supports almost all
 fundamental C data types and uses a function type signature text specification
@@ -140,7 +140,7 @@ for type-checking and flexible conversions between R and C values.
 The interface is as following:
 
 ```r
-.dyncall(address, signature, ...)
+dyncall(address, signature, ...)
 ```
 
 'signature' is a character string that encodes the arguments and return-type of
@@ -155,7 +155,7 @@ one would specify the function type via "ffff)v" as type signature and
 pass additional arguments for '...':
 
 ```r
-.dyncall(addressOf_glClearColor, "ffff)v", 0.3,0.7,1,0)
+dyncall(addressOf_glClearColor, "ffff)v", 0.3,0.7,1,0)
 ```
 
 Support for pointers (low-level void and typed pointers to struct/union) and
@@ -166,13 +166,13 @@ wrapping of R functions to first-level C function pointers is also available.
 mathlib <- dynfind(c("msvcrt","m","m.so.6"))
 
 # resolve symbol 'sqrt'
-x <- .dynsym(mathlib,"sqrt")
+x <- dynsym(mathlib,"sqrt")
 
 # C function call 'double sqrt(double x)' with x=144
-.dyncall(x, "d)d", 144)
+dyncall(x, "d)d", 144)
 
-# .dyncall uses complex mapping of types, same works with 'integer' argument:
-.dyncall(x, "d)d", 144L)
+# dyncall uses complex mapping of types, same works with 'integer' argument:
+dyncall(x, "d)d", 144L)
 ```
 
 ## Implementation Details

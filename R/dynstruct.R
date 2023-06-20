@@ -267,7 +267,7 @@ new.struct <- function(type) {
     fieldTypeName <- as.character(fieldInfos[[index, "type"]])
     fieldTypeInfo <- getTypeInfo(fieldTypeName)
     if (fieldTypeInfo$type %in% c("base", "pointer")) {
-        .unpack(x, offset, fieldTypeInfo$signature)
+        unpack(x, offset, fieldTypeInfo$signature)
     } else if (!is.null(fieldTypeInfo$fields)) {
         if (is.raw(x)) {
             size <- fieldTypeInfo$size
@@ -289,7 +289,7 @@ new.struct <- function(type) {
     fieldTypeName <- as.character(fieldInfos[index, "type"])
     fieldTypeInfo <- getTypeInfo(fieldTypeName)
     if (fieldTypeInfo$type %in% c("base", "pointer")) {
-        .pack(x, offset, fieldTypeInfo$signature, value)
+        pack(x, offset, fieldTypeInfo$signature, value)
     } else if (!is.null(fieldTypeInfo$fields)) {
         # substructure
         size <- fieldTypeInfo$size

@@ -37,7 +37,7 @@ For each function, a thin call wrapper function is created using the following t
 
 \preformatted{ function(...) .dyncall.<MODE> ( <TARGET>, <SIGNATURE>, ... ) }
 
-\code{<MODE>} is replaced by \code{callmode} argument, see \code{\link{.dyncall}} for details on calling conventions.
+\code{<MODE>} is replaced by \code{callmode} argument, see \code{\link{dyncall}} for details on calling conventions.
 \code{<TARGET>} is replaced by the external pointer, resolved by the \sQuote{function-name}.
 \code{<SIGNATURE>} is replaced by the call signature string contained in \code{signature}.
 
@@ -51,7 +51,7 @@ is replaced with the expression \code{.unpack(<TARGET>,"p",0)} in order to deref
 
 \value{
 The function returns a list with two fields:
-\item{libhandle}{External pointer returned by \code{\link{.dynload}}.}
+\item{libhandle}{External pointer returned by \code{\link{dynload}}.}
 \item{unresolved.symbols}{vector of character strings, the names of unresolved symbols.}
 
 As a side effect, for each wrapper, \code{dynbind} assigns the \sQuote{function-name} to  the corresponding call wrapper function in the environment given by \code{envir}.
@@ -69,7 +69,7 @@ R_ShowMessage("hello")
 }
 }
 \seealso{
-\code{\link{.dyncall}} for details on call signatures and calling conventions,
+\code{\link{dyncall}} for details on call signatures and calling conventions,
 \code{\link{dynfind}} for details on short library names, 
 \code{\link{.unpack}} for details on reading low-level memory (e.g. dereferencing of (function) pointer variables). 
 }

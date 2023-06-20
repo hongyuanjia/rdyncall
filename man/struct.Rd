@@ -34,7 +34,7 @@ References to foreign C data objects are represented by objects of class 'struct
 Two reference types are supported:
 
 \itemize{
-  \item \emph{External pointers} returned by \code{\link{.dyncall}} using a call signature with a \emph{typed pointer} return type signature 
+  \item \emph{External pointers} returned by \code{\link{dyncall}} using a call signature with a \emph{typed pointer} return type signature 
   and pointers extracted as a result of \code{\link{.unpack}} and S3 \code{struct} \code{$}-operators.
   \item \emph{Internal objects}, memory-managed by R, are allocated by \code{new.struct}:
 An atomic \code{raw} storage object is returned, initialized with length equal to the byte size of the
@@ -98,7 +98,7 @@ The corresponding union type signature is:
 When using an external pointer reference, this can lead quickly to a \strong{fatal R process crash} - like in C.
 }
 \seealso{
-\code{\link{.dyncall}} for type signatures and \code{\link{TypeInfo}} for details on run-time type information S3 objects.
+\code{\link{dyncall}} for type signatures and \code{\link{TypeInfo}} for details on run-time type information S3 objects.
 }
 \examples{
 # Specify the following foreign type:

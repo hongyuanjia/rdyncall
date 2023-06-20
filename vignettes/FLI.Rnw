@@ -293,7 +293,7 @@ Type& Sign. & Type & Sign. \\
 \end{table*}
 
 \pkg{rdyncall} provides an improved FFI for R 
-that is accessible via the function \code{.dyncall}.
+that is accessible via the function \code{dyncall}.
 In contrast to the built-in R FFI which uses a C wrapper layer, 
 the \code{sqrt} function is invoked dynamically and directly 
 by the interpreter at run-time.
@@ -320,10 +320,10 @@ We first need to load the R package \pkg{rdyncall}:
 \end{example}
 
 Finally, we invoke the foreign C function \code{sqrt} \emph{directly} via 
-\code{.dyncall}:
+\code{dyncall}:
 
 \begin{example}
-> .dyncall(sqrtAddr, "d)d", 144)
+> dyncall(sqrtAddr, "d)d", 144)
 [1] 12
 \end{example}
 
@@ -377,11 +377,11 @@ Some examples of C functions and corresponding signatures}
 
 Now, let us define a public and type-safe R wrapper function that
 hides the details of the foreign function call by passing the formal 
-argument place holder "\code{...}" as third argument to \code{.dyncall}:
+argument place holder "\code{...}" as third argument to \code{dyncall}:
 
 \begin{example}
 > sqrtViaDynCall <- function(...) 
-+ .dyncall(sqrtAddress, "d)d", ...)
++ dyncall(sqrtAddress, "d)d", ...)
 \end{example}
 
 Although there is no further guard code, this interface is type-safe and 
@@ -406,18 +406,18 @@ and an error is reported before risking an application crash:
 
 \begin{smallverbatim}
 > sqrtViaDyncall(1,2)
-Error in .dyncall(sqrtAddress, "d)d", ...) : 
+Error in dyncall(sqrtAddress, "d)d", ...) : 
   Too many arguments for signature 'd)d'.
 > sqrtViaDyncall()
-Error in .dyncall(sqrtAddress, "d)d", ...) : 
+Error in dyncall(sqrtAddress, "d)d", ...) : 
   Not enough arguments 
     for function-call signature 'd)d'.
 > sqrtViaDyncall(NULL)
-Error in .dyncall(sqrtAddress, "d)d", ...) : 
+Error in dyncall(sqrtAddress, "d)d", ...) : 
   Argument type mismatch at position 1: 
     expected double convertible value
 > sqrtViaDyncall("144")
-Error in .dyncall(sqrtAddress, "d)d", ...) : 
+Error in dyncall(sqrtAddress, "d)d", ...) : 
   Argument type mismatch at position 1: 
     expected double convertible value
 \end{smallverbatim}
@@ -452,7 +452,7 @@ package is given in Figure \ref{fig:pkg_overview}.
 Package Overview}
 \end{figure}
 
-We already described the \code{.dyncall} FFI. It follows a
+We already described the \code{dyncall} FFI. It follows a
 brief description of portable loading of 
 shared libraries using \code{dynfind}, installation of wrappers via \code{dynbind}, 
 handling of foreign data types via \code{new.struct} and wrapping of R functions as C callbacks via \code{new.callback}.
@@ -492,10 +492,10 @@ it is sometimes enough to have a single short filename - e.g. \code{"expat"} for
 the \emph{Expat} library. 
 
 Internally, the dynamic linker interface of the OS is used via 
-\code{.dynload} and symbols get resolved via \code{.dynsym}:
+\code{dynload} and symbols get resolved via \code{dynsym}:
 
 \begin{example}
-> sqrtAddr <- .dynsym(mLib, "sqrt")
+> sqrtAddr <- dynsym(mLib, "sqrt")
 \end{example}
 
 Although R already contains support for loading shared libraries 
@@ -509,7 +509,7 @@ search heuristics.
 \item Automatic life-cycle management for loading and unloading of libraries 
 is a desired goal.  Unloading of libraries should be done automatically
 via finalizer code when no symbols are used anymore. External pointers 
-resolved via \code{.dynsym} hold a reference to the loaded library. 
+resolved via \code{dynsym} hold a reference to the loaded library. 
 When all external pointers are garbage collected, the library handle is
 not referenced anymore and the finalizer can unload the library.
 \end{itemize}
@@ -517,7 +517,7 @@ not referenced anymore and the finalizer can unload the library.
 \subsection{Wrapping C libraries}
 
 Functional R interfaces to foreign code can be defined with small 
-R wrapper functions, which effectively delegates to \code{.dyncall}.
+R wrapper functions, which effectively delegates to \code{dyncall}.
 Each function interface is parameterized by a target address and 
 a matching call signature.
 
@@ -556,7 +556,7 @@ Calling conventions specify how arguments and return values are passed
 across sub-routines and functions at machine level. This information
 is vital for interfacing with the binary interface of C libraries.
 The package has support for multiple calling conventions.
-Calling conventions are controlled by \code{.dyncall} via the named argument 
+Calling conventions are controlled by \code{dyncall} via the named argument 
 \code{callmode} to specify a non-default calling convention.
 Most current OSs and platforms only have support for a single \code{"default"} calling convention
 at run-time.
@@ -664,12 +664,12 @@ attr(,"struct")
 \end{smallverbatim}
 
 To follow the example, we issue a foreign function call to \code{setRect}
-via \code{.dyncall} and pass in the \code{r} object, 
+via \code{dyncall} and pass in the \code{r} object, 
 assuming the library is loaded and the symbol is resolved and
 stored in an external pointer object named \code{setWindowRectAddr}:
 
 \begin{smallverbatim}
-> .dyncall( setWindowRectAddr, "*<Rect>)v", r)
+> dyncall( setWindowRectAddr, "*<Rect>)v", r)
 \end{smallverbatim} 
 
 We make use of a typed pointer expression \code{'*<Rect>'} 
@@ -694,7 +694,7 @@ function instead for registration and a slightly different signature format:
 \end{center}
 
 The underlying low-level C type read- and write operations and conversions
-from R data types are performed by the functions \code{.pack} and 
+from R data types are performed by the functions \code{pack} and 
 \code{.unpack}. These can be used for various low-level operations as well, 
 such as dereferencing of pointers on pointers.
 
@@ -882,7 +882,7 @@ Next we create an abstract parser object via the C function
 \code{XML\_ParserCreate} that receives one argument of type C string 
 to specify a desired character encoding that overrides the document
 encoding declaration. We want to pass a null pointer (\code{NULL}) here.
-In the \code{.dyncall} FFI C null pointer values for pointer types are 
+In the \code{dyncall} FFI C null pointer values for pointer types are 
 expressed via the R \code{NULL} value:
 
 \begin{smallverbatim}
@@ -909,7 +909,7 @@ tag name. They are wrapped as C callback pointers via \code{new.callback}
 using a matching \emph{callback signature}. 
 The second argument \code{name} of type C string in both callbacks, \code{XML\_StartElementHandler} and \code{XML\_EndElementHandler},
 is of primnary interest ; this argument passes over the XML tag name.
-C strings are handled in a special way by the \code{.dyncall} FFI, because they
+C strings are handled in a special way by the \code{dyncall} FFI, because they
 have to be copied as R \code{character} objects. 
 The special type signature \code{'Z'} is used to denote a 
 C string type. 

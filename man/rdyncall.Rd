@@ -44,8 +44,8 @@ round up this framework.
 }
 \section{Overview}{
 \itemize{
-\item Flexible FFI with support for almost all C types, type-safety checks and multiple calling conventions. See \code{\link{.dyncall}}.
-\item Loading of shared libraries with \emph{automatic unload management} and using direct access to OS linker. See \code{\link{.dynload}}.
+\item Flexible FFI with support for almost all C types, type-safety checks and multiple calling conventions. See \code{\link{dyncall}}.
+\item Loading of shared libraries with \emph{automatic unload management} and using direct access to OS linker. See \code{\link{dynload}}.
 \item Cross-platform naming and loading of shared libraries. See \code{\link{dynfind}}.
 \item Binding C library functions via thin call wrappers. See \code{\link{dynbind}}.
 \item Handling of foreign C pointer, array and struct/union data types. See \code{\link{packing}} and \code{\link{struct}}.

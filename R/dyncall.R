@@ -23,7 +23,8 @@ free.callvm <- function(x) {
 # ----------------------------------------------------------------------------
 # CallVM's for calling conventions - will be initialized .onLoad
 
-callvm.default       <- callvm.cdecl         <- NULL
+callvm.default       <- NULL
+callvm.cdecl         <- NULL
 callvm.stdcall       <- NULL
 callvm.thiscall      <- NULL
 callvm.thiscall.gcc  <- NULL
@@ -35,7 +36,7 @@ callvm.fastcall.msvc <- NULL
 # ----------------------------------------------------------------------------
 # public interface
 
-.dyncall <- function(address, signature, ..., callmode = "default") {
+dyncall <- function(address, signature, ..., callmode = "default") {
     callvm <- switch(callmode,
         default       = callvm.default,
         cdecl         = callvm.cdecl,
@@ -50,15 +51,15 @@ callvm.fastcall.msvc <- NULL
     .External("dyncall", callvm, address, signature, ..., PACKAGE = "rdyncall")
 }
 
-.dyncall.cdecl         <- function(address, signature, ...) .External("dyncall", callvm.cdecl,         address, signature, ..., PACKAGE = "rdyncall")
-.dyncall.default       <- function(address, signature, ...) .External("dyncall", callvm.default,       address, signature, ..., PACKAGE = "rdyncall")
-.dyncall.stdcall       <- function(address, signature, ...) .External("dyncall", callvm.stdcall,       address, signature, ..., PACKAGE = "rdyncall")
-.dyncall.thiscall.gcc  <- function(address, signature, ...) .External("dyncall", callvm.thiscall.gcc,  address, signature, ..., PACKAGE = "rdyncall")
-.dyncall.thiscall.msvc <- function(address, signature, ...) .External("dyncall", callvm.thiscall.msvc, address, signature, ..., PACKAGE = "rdyncall")
-.dyncall.fastcall.gcc  <- function(address, signature, ...) .External("dyncall", callvm.fastcall.gcc,  address, signature, ..., PACKAGE = "rdyncall")
-.dyncall.fastcall.msvc <- function(address, signature, ...) .External("dyncall", callvm.fastcall.msvc, address, signature, ..., PACKAGE = "rdyncall")
-.dyncall.thiscall      <- .dyncall.thiscall.gcc
-.dyncall.fastcall      <- .dyncall.fastcall.gcc
+dyncall.cdecl         <- function(address, signature, ...) .External("C_dyncall", callvm.cdecl,         address, signature, ..., PACKAGE = "rdyncall")
+dyncall.default       <- function(address, signature, ...) .External("C_dyncall", callvm.default,       address, signature, ..., PACKAGE = "rdyncall")
+dyncall.stdcall       <- function(address, signature, ...) .External("C_dyncall", callvm.stdcall,       address, signature, ..., PACKAGE = "rdyncall")
+dyncall.thiscall.gcc  <- function(address, signature, ...) .External("C_dyncall", callvm.thiscall.gcc,  address, signature, ..., PACKAGE = "rdyncall")
+dyncall.thiscall.msvc <- function(address, signature, ...) .External("C_dyncall", callvm.thiscall.msvc, address, signature, ..., PACKAGE = "rdyncall")
+dyncall.fastcall.gcc  <- function(address, signature, ...) .External("C_dyncall", callvm.fastcall.gcc,  address, signature, ..., PACKAGE = "rdyncall")
+dyncall.fastcall.msvc <- function(address, signature, ...) .External("C_dyncall", callvm.fastcall.msvc, address, signature, ..., PACKAGE = "rdyncall")
+dyncall.thiscall      <- dyncall.thiscall.gcc
+dyncall.fastcall      <- dyncall.fastcall.gcc
 
 # ----------------------------------------------------------------------------
 # initialize callvm's on load

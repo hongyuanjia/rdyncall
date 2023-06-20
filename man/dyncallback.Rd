@@ -23,7 +23,7 @@ R function is specified by a \link{call signature} given by \code{signature}.
 
 When the C function pointer is called, a global callback handler (implemented in C) is executed first, that dynamically creates an R call expression to \code{fun}
 using the arguments, passed from C and converted to R, according to the \emph{argument types signature} within the \link{call signature} specified. See
-\code{\link{.dyncall}} for details on the format.
+\code{\link{dyncall}} for details on the format.
 Finally, the handler evaluates the R call expression within the environment given by \code{envir}.
 On return, the R return value of \code{fun} is coerced to the C value, according to the return type signature specified in \code{signature}.
 If an error occurs during the evaluation, the callback will be disabled for further invocations. (This behaviour might change in the future.)
@@ -65,10 +65,10 @@ See \code{\link{signature}} for details on call signatures,
 }
 \examples{
 \donttest{
-# Create a function, wrap it to a callback and call it via .dyncall:
+# Create a function, wrap it to a callback and call it via dyncall:
 f <- function(x,y) x+y
 cb <- new.callback("ii)i", f)
-r <- .dyncall(cb, "ii)i", 20, 3)
+r <- dyncall(cb, "ii)i", 20, 3)
 
 # Sort vectors directly via 'qsort' C library function using an R callback:
 dynbind(c("msvcrt","c","c.so.6"), "qsort(piip)v;")

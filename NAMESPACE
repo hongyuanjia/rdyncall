@@ -1,14 +1,14 @@
 useDynLib(rdyncall)
 export(
 # --- dyncall.R --------------------------------------------------------------
-  .dyncall,
-  .dyncall.default,
-  .dyncall.cdecl,
-  .dyncall.stdcall,
-  .dyncall.thiscall, .dyncall.thiscall.gcc, .dyncall.thiscall.msvc,
-  .dyncall.fastcall, .dyncall.fastcall.gcc, .dyncall.fastcall.msvc,
+  dyncall,
+  dyncall.default,
+  dyncall.cdecl,
+  dyncall.stdcall,
+  dyncall.thiscall, dyncall.thiscall.gcc, dyncall.thiscall.msvc,
+  dyncall.fastcall, dyncall.fastcall.gcc, dyncall.fastcall.msvc,
 # --- dynload.R --------------------------------------------------------------
-  .dynload, .dynunload, .dynsym,
+  dynload, dynunload, dynsym,
 # --- dynfind.R --------------------------------------------------------------
   dynfind,
 # --- dynbind.R --------------------------------------------------------------
@@ -17,7 +17,7 @@ export(
   new.struct, as.struct,
   parseStructInfos, parseUnionInfos,
 # --- pack.R -----------------------------------------------------------------
-  .pack, .unpack,
+  pack, unpack,
 # --- callback.R -------------------------------------------------------------
   new.callback,
 # --- utils.R ----------------------------------------------------------------
