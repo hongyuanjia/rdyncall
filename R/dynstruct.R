@@ -273,7 +273,7 @@ cdata <- function(type) {
             size <- fieldTypeInfo$size
             as.ctype(x[(offset + 1):(offset + 1 + size - 1)], fieldTypeName)
         } else if (is.externalptr(x)) {
-            as.ctype(offsetPtr(x, offset), fieldTypeName)
+            as.ctype(offset_ptr(x, offset), fieldTypeName)
         }
     } else {
         stop("invalid field type '", fieldTypeName, "' at field '", index)

@@ -24,6 +24,6 @@ BUGS:
   R version on OpenBSD does not provide a shared R library, thus
   the symbols are not resolvable.
   Additional Test for resolving self:
-  While dynsym(as_extptr(NULL), "R_ShowMessage") works on Mac OS X, it fails on OpenBSD.
+  While dynsym(as.externalptr(NULL), "R_ShowMessage") works on Mac OS X, it fails on OpenBSD.
 - demo(ttf) failed on Mac OS X 10.6
 
