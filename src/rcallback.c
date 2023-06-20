@@ -178,7 +178,7 @@ char R_dcCallbackHandler( DCCallback* pcb, DCArgs* args, DCValue* result, void* 
 
 void R_callback_finalizer(SEXP x);
 
-SEXP C_new_callback(SEXP sig_x, SEXP fun_x, SEXP rho_x)
+SEXP C_callback(SEXP sig_x, SEXP fun_x, SEXP rho_x)
 {
   const char* signature;
   R_Callback* rdata;

@@ -7,5 +7,5 @@ new.callback <- function(signature, fun, envir = new.env()) {
     stopifnot(is.function(fun))
     stopifnot(is.environment(envir))
 
-    .Call("C_new_callback", signature, fun, envir, PACKAGE = "rdyncall")
+    .Call("C_callback", signature, fun, envir, PACKAGE = "rdyncall")
 }
