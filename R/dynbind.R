@@ -59,7 +59,8 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
         }
     }
     # return dynbind.report
-    x <- list(libhandle = libh, unresolved.symbols = syms.failed)
-    class(x) <- "dynbind.report"
-    return(x)
+    structure(
+        list(libhandle = libh, unresolved.symbols = syms.failed),
+        class = "dynbind.report"
+    )
 }
