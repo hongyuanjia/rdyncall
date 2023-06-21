@@ -2,6 +2,7 @@
 # File: R/dynbind.R
 # Description: single-entry front-end to dynamic binding of library functions
 
+# TODO: use named character vector for signatures?
 dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "default", pattern = NULL, replace = NULL, funcptr = FALSE) {
     # load shared library
     libh <- dynfind(libnames)
@@ -18,9 +19,9 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
     # eat white spaces
     sigtab <- gsub("[ \n\t]*", "", signature)
     # split functions at ';'
-    sigtab <- strsplit(sigtab, ";", fixed = TRUE)[[1]]
+    sigtab <- strsplit(sigtab, ";", fixed = TRUE)[[1L]]
     # split name/call signature at '('
-    sigtab <- strsplit(sigtab, "\\(", fixed = TRUE)
+    sigtab <- strsplit(sigtab, "(", fixed = TRUE)
 
     # -- install functions
 
