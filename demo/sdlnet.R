@@ -37,7 +37,7 @@ init <- function() {
 
   tcp <<- SDLNet_TCP_Open(ip)
 
-  socket <<- as.ctype(offsetPtr(tcp,0),"SDLNet_GenericSocket_")
+  socket <<- as.ctype(offset_ptr(tcp,0),"SDLNet_GenericSocket_")
 
   sockets <<- SDLNet_AllocSocketSet(1+MAX_CLIENT_SOCKETS)
   SDLNet_AddSocket(sockets, socket )
@@ -127,7 +127,7 @@ loop <- function() {
         if (is.null(ctcp)) {
           cat("warning: client is NULL\n")
         } else {
-          csock  <- as.ctype(offsetPtr(ctcp,0),"SDLNet_GenericSocket_")
+          csock  <- as.ctype(offset_ptr(ctcp,0),"SDLNet_GenericSocket_")
           ctcps  <- c(ctcps, ctcp)
           csocks <- c(csocks, csock)
           if ( SDLNet_AddSocket(sockets, csock) == -1 ) {
@@ -149,7 +149,7 @@ loop <- function() {
               cat("ERROR: SDLNet_TCP_Recv result <= 0.\n")
             } else {
               buf[result] <- as.raw(0)
-              txt <- ptr2str(offsetPtr(buf,0))
+              txt <- ptr2str(offset_ptr(buf,0))
               cat("DATA:'",txt,"'\n")
 
               tryCatch({

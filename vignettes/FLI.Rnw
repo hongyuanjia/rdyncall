@@ -695,7 +695,7 @@ function instead for registration and a slightly different signature format:
 
 The underlying low-level C type read- and write operations and conversions
 from R data types are performed by the functions \code{pack} and
-\code{.unpack}. These can be used for various low-level operations as well,
+\code{unpack}. These can be used for various low-level operations as well,
 such as dereferencing of pointers on pointers.
 
 R objects such as external pointers and atomic raw, integer and numeric

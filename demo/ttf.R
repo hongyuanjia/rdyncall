@@ -56,14 +56,14 @@ main <- function()
 
   while(!quit) {
 
-    SDL_FillRect(fbSurf, as.ctype( as.extptr(NULL), "SDL_Rect" ), 0xFFFFFFL)
+    SDL_FillRect(fbSurf, as.ctype( as.externalptr(NULL), "SDL_Rect" ), 0xFFFFFFL)
     rect
     i <- 1
     while(i < numTexts*2) {
       rect2$x <- rect$x + distance * displace[i]
       rect2$y <- rect$y + distance * displace[i+1]
       i <- i + 2
-      SDL_BlitSurface(textSurf, as.ctype(as.extptr(NULL),"SDL_Rect"),fbSurf,rect2)
+      SDL_BlitSurface(textSurf, as.ctype(as.externalptr(NULL),"SDL_Rect"),fbSurf,rect2)
     }
     SDL_Flip(fbSurf)
 

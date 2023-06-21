@@ -5,7 +5,7 @@
 # ----------------------------------------------------------------------------
 # dynport basetype sizes
 
-.basetypeSizes <- c(
+.BASETYPE_SIZES <- c(
     B = .Machine$sizeof.long,
     c = 1,
     C = 1,
@@ -29,58 +29,65 @@
 # dynport type information
 #
 
-TypeInfo <- function(name, type = c("base", "pointer", "struct", "union"), size = NA, align = NA, basetype = NA, fields = NA, signature = NA) {
+typeinfo <- function(name, type = c("base", "pointer", "struct", "union"),
+                     size = NA, align = NA, basetype = NA, fields = NA,
+                     signature = NA) {
     type <- match.arg(type)
-    x <- list(name = name, type = type, size = size, align = align, basetype = basetype, fields = fields, signature = signature)
-    class(x) <- "typeinfo"
-    return(x)
+    structure(
+        list(
+            name = name, type = type, size = size, align = align,
+            basetype = basetype, fields = fields, signature = signature
+        ),
+        class = "typeinfo"
+    )
 }
 
-is.TypeInfo <- function(x) {
+is.typeinfo <- function(x) {
     inherits(x, "typeinfo")
 }
 
-getTypeInfo <- function(name, envir = parent.frame()) {
+get_typeinfo <- function(name, envir = parent.frame()) {
     if (is.character(name)) {
-        getTypeInfoByName(name, envir)
-    } else if (is.TypeInfo(name)) {
+        get_typeinfo_by_name(name, envir)
+    } else if (is.typeinfo(name)) {
         name
     } else {
         stop("unknown type")
     }
 }
 
-getTypeInfoByName <- function(typeName, envir = parent.frame()) {
-    char1 <- substr(typeName, 1, 1)
+get_typeinfo_by_name <- function(type_name, envir = parent.frame()) {
+    char1 <- substr(type_name, 1, 1)
     switch(char1,
-        "*" = TypeInfo(name = typeName, type = "pointer", size = .Machine$sizeof.pointer, align = .Machine$sizeof.pointer, basetype = substr(typeName, 2, nchar(typeName)), signature = typeName),
+        "*" = typeinfo(name = type_name, type = "pointer",
+            size = .Machine$sizeof.pointer, align = .Machine$sizeof.pointer,
+            basetype = substr(type_name, 2, nchar(type_name)),
+            signature = type_name
+        ),
         "<" = {
-            x <- getTypeInfo(substr(typeName, 2, nchar(typeName) - 1), envir = envir)
-            if (!is.null(x)) {
-                return(x)
-            } else {
-                return(TypeInfo(name = typeName, type = "struct"))
-            }
+            x <- get_typeinfo(substr(type_name, 2, nchar(type_name) - 1), envir = envir)
+            if (!is.null(x)) x else typeinfo(name = type_name, type = "struct")
         },
         {
             # try as basetype
-            basetypeSize <- unname(.basetypeSizes[typeName])
-            if (!is.na(basetypeSize)) {
-                return(TypeInfo(name = typeName, type = "base", size = basetypeSize, align = basetypeSize, signature = typeName))
-            } # try lookup symbol
-            else if (exists(typeName, envir = envir)) {
-                info <- get(typeName, envir = envir)
+            basetype_sizes <- unname(.BASETYPE_SIZES[type_name])
+            if (!is.na(basetype_sizes)) {
+                typeinfo(name = type_name, type = "base", size = basetype_sizes,
+                    align = basetype_sizes, signature = type_name
+                )
+            } else if (exists(type_name, envir = envir)) {
+                # try lookup symbol
+                info <- get(type_name, envir = envir)
                 if (!inherits(info, "typeinfo")) stop("not a type information symbol")
-                return(info)
-            }
-            # otherwise fail
-            else {
+                info
+            } else {
+                # otherwise fail
                 NULL
             }
-            # else stop("unknown type info: ",typeName)
         }
     )
 }
+
 # ----------------------------------------------------------------------------
 # align C offsets
 
@@ -91,19 +98,19 @@ align <- function(offset, alignment) {
 # ----------------------------------------------------------------------------
 # field information (structures and unions)
 
-makeFieldInfo <- function(fieldNames, types, offsets) {
-    data.frame(type = I(types), offset = offsets, row.names = fieldNames)
+make_field_info <- function(field_names, types, offsets) {
+    data.frame(type = I(types), offset = offsets, row.names = field_names)
 }
 
 # ----------------------------------------------------------------------------
 # parse structure signature
 
-makeStructInfo <- function(name, signature, fieldNames, envir = parent.frame()) {
+make_struct_info <- function(name, signature, field_names, envir = parent.frame()) {
     # computations:
     types    <- character()
     offsets  <- integer()
     offset   <- 0
-    maxAlign <- 1
+    max_align <- 1
     # scan variables:
     n <- nchar(signature)
     i <- 1
@@ -120,26 +127,26 @@ makeStructInfo <- function(name, signature, fieldNames, envir = parent.frame()) 
                 i <- i + 1
             }
         }
-        typeName  <- substr(signature, start, i)
-        types     <- c(types, typeName)
-        typeInfo  <- getTypeInfo(typeName, envir = envir)
-        alignment <- typeInfo$align
-        maxAlign  <- max(maxAlign, alignment)
-        offset    <- align(offset, alignment)
-        offsets   <- c(offsets, offset)
+        type_name  <- substr(signature, start, i)
+        types      <- c(types, type_name)
+        type_info  <- get_typeinfo(type_name, envir = envir)
+        alignment  <- type_info$align
+        max_align  <- max(max_align, alignment)
+        offset     <- align(offset, alignment)
+        offsets    <- c(offsets, offset)
 
         # increment offset by size
-        offset    <- offset + typeInfo$size
+        offset    <- offset + type_info$size
 
         # next token
         i <- i + 1
         start <- i
     }
     # align the structure size (compiler-specific?)
-    size <- align(offset, maxAlign)
+    size <- align(offset, max_align)
     # build field information
-    fields <- makeFieldInfo(fieldNames, types, offsets)
-    TypeInfo(name = name, type = "struct", size = size, align = maxAlign, fields = fields)
+    fields <- make_field_info(field_names, types, offsets)
+    typeinfo(name = name, type = "struct", size = size, align = max_align, fields = fields)
 }
 
 cstruct <- function(sigs, envir = parent.frame()) {
@@ -147,9 +154,7 @@ cstruct <- function(sigs, envir = parent.frame()) {
     sigs <- unlist(strsplit(sigs, ";"))
     # split name/struct signature at '('
     sigs <- strsplit(sigs, "[{]")
-    infos <- list()
-    for (i in seq(along = sigs))
-    {
+    for (i in seq(along = sigs)) {
         n <- length(sigs[[i]])
         if (n == 2) {
             # parse structure name
@@ -163,7 +168,7 @@ cstruct <- function(sigs, envir = parent.frame()) {
             } else {
                 fields <- NULL
             }
-            assign(name, makeStructInfo(name, sig, fields, envir = envir), envir = envir)
+            assign(name, make_struct_info(name, sig, fields, envir = envir), envir = envir)
         }
     }
 }
@@ -171,11 +176,11 @@ cstruct <- function(sigs, envir = parent.frame()) {
 # ----------------------------------------------------------------------------
 # parse union signature
 
-makeUnionInfo <- function(name, signature, fieldNames, envir = parent.frame()) {
+make_union_info <- function(name, signature, field_names, envir = parent.frame()) {
     # computations:
     types <- character()
-    maxSize <- 0
-    maxAlign <- 1
+    max_size <- 0
+    max_align <- 1
     # scan variables:
     i <- 1
     start <- i
@@ -192,18 +197,18 @@ makeUnionInfo <- function(name, signature, fieldNames, envir = parent.frame()) {
                 i <- i + 1
             }
         }
-        typeName <- substr(signature, start, i)
-        types <- c(types, typeName)
-        typeInfo <- getTypeInfo(typeName, envir)
-        maxSize <- max(maxSize, typeInfo$size)
-        maxAlign <- max(maxAlign, typeInfo$align)
+        type_name  <- substr(signature, start, i)
+        types      <- c(types, type_name)
+        type_info  <- get_typeinfo(type_name, envir)
+        max_size   <- max(max_size, type_info$size)
+        max_align  <- max(max_align, type_info$align)
         # next token
         i <- i + 1
         start <- i
     }
     offsets <- rep(0, length(types))
-    fields <- makeFieldInfo(fieldNames, types, offsets)
-    TypeInfo(name = name, type = "union", fields = fields, size = maxSize, align = maxAlign)
+    fields <- make_field_info(field_names, types, offsets)
+    typeinfo(name = name, type = "union", fields = fields, size = max_size, align = max_align)
 }
 
 cunion <- function(sigs, envir = parent.frame()) {
@@ -211,9 +216,7 @@ cunion <- function(sigs, envir = parent.frame()) {
     sigs <- unlist(strsplit(sigs, ";"))
     # split name/union signature at '|'
     sigs <- strsplit(sigs, "[|]")
-    infos <- list()
-    for (i in seq(along = sigs))
-    {
+    for (i in seq(along = sigs)) {
         n <- length(sigs[[i]])
         if (n == 2) {
             # parse union name
@@ -227,7 +230,7 @@ cunion <- function(sigs, envir = parent.frame()) {
             } else {
                 fields <- NULL
             }
-            assign(name, makeUnionInfo(name, sig, fields, envir = envir), envir = envir)
+            assign(name, make_union_info(name, sig, fields, envir = envir), envir = envir)
         }
     }
 }
@@ -236,7 +239,8 @@ cunion <- function(sigs, envir = parent.frame()) {
 # raw backed struct's (S3 Class)
 
 as.ctype <- function(x, type) {
-    if (is.TypeInfo(x)) structName <- type$name
+    # TODO: check
+    if (is.typeinfo(x)) struct_name <- type$name
     attr(x, "ctype") <- type
     class(x) <- "ctype"
     return(x)
@@ -245,11 +249,11 @@ as.ctype <- function(x, type) {
 cdata <- function(type) {
     if (is.character(type)) {
         name <- type
-        type <- getTypeInfo(type)
-    } else if (is.TypeInfo(type)) {
+        type <- get_typeinfo(type)
+    } else if (is.typeinfo(type)) {
         name <- type$name
     } else {
-        stop("type is not of class TypeInfo and no character string")
+        stop("type is not of class typeinfo and no character string")
     }
     if (!type$type %in% c("struct", "union")) stop("type must be C struct or union.")
     x <- raw(type$size)
@@ -259,54 +263,54 @@ cdata <- function(type) {
 }
 
 `$.struct` <- unpack.struct <- function(x, index) {
-    structName <- attr(x, "struct")
-    structInfo <- getTypeInfo(structName)
-    fieldInfos <- structInfo$fields
-    offset <- fieldInfos[index, "offset"]
+    struct_name <- attr(x, "struct")
+    struct_info <- get_typeinfo(struct_name)
+    field_info <- struct_info$fields
+    offset <- field_info[index, "offset"]
     if (is.na(offset)) stop("unknown field index '", index, "'")
-    fieldTypeName <- as.character(fieldInfos[[index, "type"]])
-    fieldTypeInfo <- getTypeInfo(fieldTypeName)
-    if (fieldTypeInfo$type %in% c("base", "pointer")) {
-        unpack(x, offset, fieldTypeInfo$signature)
-    } else if (!is.null(fieldTypeInfo$fields)) {
+    field_type_name <- as.character(field_info[[index, "type"]])
+    field_type_info <- get_typeinfo(field_type_name)
+    if (field_type_info$type %in% c("base", "pointer")) {
+        unpack(x, offset, field_type_info$signature)
+    } else if (!is.null(field_type_info$fields)) {
         if (is.raw(x)) {
-            size <- fieldTypeInfo$size
-            as.ctype(x[(offset + 1):(offset + 1 + size - 1)], fieldTypeName)
+            size <- field_type_info$size
+            as.ctype(x[(offset + 1):(offset + 1 + size - 1)], field_type_name)
         } else if (is.externalptr(x)) {
-            as.ctype(offsetPtr(x, offset), fieldTypeName)
+            as.ctype(offset_ptr(x, offset), field_type_name)
         }
     } else {
-        stop("invalid field type '", fieldTypeName, "' at field '", index)
+        stop("invalid field type '", field_type_name, "' at field '", index)
     }
 }
 
 `$<-.struct` <- pack.struct <- function(x, index, value) {
-    structName <- attr(x, "struct")
-    structInfo <- getTypeInfo(structName)
-    fieldInfos <- structInfo$fields
-    offset <- fieldInfos[index, "offset"]
+    struct_name <- attr(x, "struct")
+    struct_info <- get_typeinfo(struct_name)
+    field_info <- struct_info$fields
+    offset <- field_info[index, "offset"]
     if (is.na(offset)) stop("unknown field index '", index, "'")
-    fieldTypeName <- as.character(fieldInfos[index, "type"])
-    fieldTypeInfo <- getTypeInfo(fieldTypeName)
-    if (fieldTypeInfo$type %in% c("base", "pointer")) {
-        pack(x, offset, fieldTypeInfo$signature, value)
-    } else if (!is.null(fieldTypeInfo$fields)) {
+    field_type_name <- as.character(field_info[index, "type"])
+    field_type_info <- get_typeinfo(field_type_name)
+    if (field_type_info$type %in% c("base", "pointer")) {
+        pack(x, offset, field_type_info$signature, value)
+    } else if (!is.null(field_type_info$fields)) {
         # substructure
-        size <- fieldTypeInfo$size
+        size <- field_type_info$size
         x[(offset + 1):(offset + 1 + size - 1)] <- as.raw(value)
     } else {
-        stop("invalid field type '", fieldTypeName, "' at field '", index)
+        stop("invalid field type '", field_type_name, "' at field '", index)
     }
     return(x)
 }
 
 print.struct <- function(x, indent = 0, ...) {
-    structName <- attr(x, "struct")
-    structInfo <- getTypeInfo(structName)
-    fieldInfos <- structInfo$fields
-    fieldNames <- rownames(fieldInfos)
+    struct_name <- attr(x, "struct")
+    struct_info <- get_typeinfo(struct_name)
+    field_info <- struct_info$fields
+    field_names <- rownames(field_info)
 
-    cat("struct ", structName, " ")
+    cat("struct ", struct_name, " ")
     if (typeof(x) == "externalptr") {
         cat("*")
         if (is.nullptr(x)) {
@@ -316,10 +320,10 @@ print.struct <- function(x, indent = 0, ...) {
     }
     cat("{\n")
     # print data without last
-    for (i in seq(along = fieldNames))
+    for (i in seq(along = field_names))
     {
-        cat(rep("  ", indent + 1), fieldNames[[i]], ":")
-        val <- unpack.struct(x, fieldNames[[i]])
+        cat(rep("  ", indent + 1), field_names[[i]], ":")
+        val <- unpack.struct(x, field_names[[i]])
         if (typeof(val) == "externalptr") val <- "ptr" # .extptr2str(val)
         if (inherits(val, "struct")) {
             print.struct(val, indent = indent + 1)

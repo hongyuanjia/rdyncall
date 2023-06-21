@@ -21,7 +21,7 @@ export(
 # --- callback.R -------------------------------------------------------------
   ccallback,
 # --- utils.R ----------------------------------------------------------------
-  is.nullptr, as.extptr, is.externalptr, offsetPtr,
+  is.nullptr, as.externalptr, is.externalptr, offset_ptr,
 # --- utils_str.R ------------------------------------------------------------
   ptr2str, strarrayptr, strptr,
 # --- utils_float.R ----------------------------------------------------------
@@ -33,4 +33,3 @@ export(
 S3method("$<-", struct)
 S3method("$", struct)
 S3method(print,struct)
-

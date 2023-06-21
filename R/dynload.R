@@ -26,7 +26,7 @@ dynload <- function(libname, auto.unload = TRUE) {
 
 dynunload <- function(libhandle) {
     if (!is.externalptr(libhandle)) stop("libhandle argument must be of type 'externalptr'")
-    .Call("dynunload", libhandle, PACKAGE = "rdyncall")
+    .Call("C_dynunload", libhandle, PACKAGE = "rdyncall")
 }
 
 dynsym <- function(libhandle, symname, protect.lib = TRUE) {
