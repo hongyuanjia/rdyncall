@@ -33,12 +33,13 @@ typeinfo <- function(name, type = c("base", "pointer", "struct", "union"),
                      size = NA, align = NA, basetype = NA, fields = NA,
                      signature = NA) {
     type <- match.arg(type)
-    x <- list(
-        name = name, type = type, size = size, align = align,
-        basetype = basetype, fields = fields, signature = signature
+    structure(
+        list(
+            name = name, type = type, size = size, align = align,
+            basetype = basetype, fields = fields, signature = signature
+        ),
+        class = "typeinfo"
     )
-    class(x) <- "typeinfo"
-    return(x)
 }
 
 is.typeinfo <- function(x) {
