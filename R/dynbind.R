@@ -18,9 +18,9 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
     # eat white spaces
     sigtab <- gsub("[ \n\t]*", "", signature)
     # split functions at ';'
-    sigtab <- strsplit(sigtab, ";")[[1]]
+    sigtab <- strsplit(sigtab, ";", fixed = TRUE)[[1]]
     # split name/call signature at '('
-    sigtab <- strsplit(sigtab, "\\(")
+    sigtab <- strsplit(sigtab, "\\(", fixed = TRUE)
 
     # -- install functions
 
@@ -29,7 +29,7 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
     # report info
     syms.failed <- character(0)
 
-    for (i in seq(along = sigtab))
+    for (i in seq_along(sigtab))
     {
         symname <- sigtab[[i]][[1]]
         rname <- if (!is.null(pat)) sub(pat, replace, symname) else symname
