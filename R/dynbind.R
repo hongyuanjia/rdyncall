@@ -2,7 +2,8 @@
 # File: R/dynbind.R
 # Description: single-entry front-end to dynamic binding of library functions
 
-dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "default", pat = NULL, replace = NULL, funcptr = FALSE) {
+# TODO: use named character vector for signatures?
+dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "default", pattern = NULL, replace = NULL, funcptr = FALSE) {
     # load shared library
     libh <- dynfind(libnames)
     if (is.null(libh)) {
@@ -18,9 +19,9 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
     # eat white spaces
     sigtab <- gsub("[ \n\t]*", "", signature)
     # split functions at ';'
-    sigtab <- strsplit(sigtab, ";")[[1]]
+    sigtab <- strsplit(sigtab, ";", fixed = TRUE)[[1L]]
     # split name/call signature at '('
-    sigtab <- strsplit(sigtab, "\\(")
+    sigtab <- strsplit(sigtab, "(", fixed = TRUE)
 
     # -- install functions
 
@@ -29,10 +30,10 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
     # report info
     syms.failed <- character(0)
 
-    for (i in seq(along = sigtab))
+    for (i in seq_along(sigtab))
     {
         symname <- sigtab[[i]][[1]]
-        rname <- if (!is.null(pat)) sub(pat, replace, symname) else symname
+        rname <- if (!is.null(pattern)) sub(pattern, replace, symname) else symname
         signature <- sigtab[[i]][[2]]
         # lookup symbol
         address <- dynsym(libh, symname)
@@ -41,9 +42,15 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
             # make call function f
             f <- function(...) NULL
             if (funcptr) {
-                body(f) <- substitute(dyncallfunc(.unpack(address, 0, "p"), signature, ...), list(dyncallfunc = dyncallfunc, address = address, signature = signature))
+                body(f) <- substitute(
+                    dyncallfunc(unpack(address, 0, "p"), signature, ...),
+                    list(dyncallfunc = dyncallfunc, address = address, signature = signature)
+                )
             } else {
-                body(f) <- substitute(dyncallfunc(address, signature, ...), list(dyncallfunc = dyncallfunc, address = address, signature = signature))
+                body(f) <- substitute(
+                    dyncallfunc(address, signature, ...),
+                    list(dyncallfunc = dyncallfunc, address = address, signature = signature)
+                )
             }
             environment(f) <- envir # NEW
             # install symbol
@@ -53,7 +60,8 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
         }
     }
     # return dynbind.report
-    x <- list(libhandle = libh, unresolved.symbols = syms.failed)
-    class(x) <- "dynbind.report"
-    return(x)
+    structure(
+        list(libhandle = libh, unresolved.symbols = syms.failed),
+        class = "dynbind.report"
+    )
 }

@@ -29,9 +29,9 @@ SEXP C_unpack(SEXP ptr, SEXP offset, SEXP sig);
 SEXP C_callback(SEXP sig, SEXP fun, SEXP rho, SEXP mode);
 
 /* rutils.c */
-SEXP C_asextptr(SEXP v);
+SEXP C_asexternalptr(SEXP v);
 SEXP C_isnullptr(SEXP x);
-SEXP C_offsetPtr(SEXP x, SEXP offset);
+SEXP C_offsetptr(SEXP x, SEXP offset);
 
 /* rutils_str.c */
 SEXP C_ptr2str(SEXP ptr);
@@ -73,9 +73,9 @@ R_CallMethodDef callMethods[] =
   {"C_pack"                     , (DL_FUNC) &C_pack             , 4},
   {"C_unpack"                   , (DL_FUNC) &C_unpack           , 3},
   /* --- rutils.c ---------------------------------------------------------- */
-  {"C_asextptr"                 , (DL_FUNC) &C_asextptr         , 1},
+  {"C_asexternalptr"            , (DL_FUNC) &C_asexternalptr    , 1},
   {"C_isnullptr"                , (DL_FUNC) &C_isnullptr        , 1},
-  {"C_offsetPtr"                , (DL_FUNC) &C_offsetPtr        , 2},
+  {"C_offsetptr"                , (DL_FUNC) &C_offsetptr        , 2},
   /* --- rutils_str.c ------------------------------------------------------ */
   {"C_ptr2str"                  , (DL_FUNC) &C_ptr2str          , 1},
   {"C_strarrayptr"              , (DL_FUNC) &C_strarrayptr      , 1},

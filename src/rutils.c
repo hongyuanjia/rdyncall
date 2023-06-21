@@ -14,7 +14,7 @@ SEXP C_isnullptr(SEXP x)
   return ScalarLogical( ( R_ExternalPtrAddr(x) == NULL ) ? TRUE : FALSE );
 }
 
-SEXP C_asextptr(SEXP x)
+SEXP C_asexternalptr(SEXP x)
 {
   if (isVector(x)) {
     return R_MakeExternalPtr( DATAPTR(x), R_NilValue, x );
@@ -23,7 +23,7 @@ SEXP C_asextptr(SEXP x)
   return R_NilValue; /* dummy */
 }
 
-SEXP C_offsetPtr(SEXP x, SEXP offset)
+SEXP C_offsetptr(SEXP x, SEXP offset)
 {
   if ( LENGTH(offset) == 0 ) error("offset is missing");
   ptrdiff_t offsetval = INTEGER(offset)[0];
@@ -37,4 +37,3 @@ SEXP C_offsetPtr(SEXP x, SEXP offset)
   }
   return R_MakeExternalPtr( ptr + offsetval , R_NilValue, x );
 }
-

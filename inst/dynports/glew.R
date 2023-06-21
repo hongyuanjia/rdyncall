@@ -1464,7 +1464,7 @@ __glewWindowPos4ivMESA(p)v;
 __glewWindowPos4sMESA(SSSS)v;
 __glewWindowPos4svMESA(p)v;
 __glewWriteMaskEXT(iiiiii)v;
-",funcptr=TRUE, pat="__glew", replace="gl")
+",funcptr=TRUE, pattern="__glew", replace="gl")
 dynbind(c("glew","glew32"),"
 glAccum(If)v;
 glAlphaFunc(If)v;

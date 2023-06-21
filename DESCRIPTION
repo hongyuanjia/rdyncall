@@ -1,7 +1,8 @@
 Package: rdyncall
-Version: 0.9.0
+Version: 0.9.0.9000
 Title: Improved Foreign Function Interface and Dynamic Bindings to C Libraries
-Author: Daniel Adler <dadler@uni-goettingen.de>, Hongyuan Jia <hongyuanjia@cqust.edu.cn>
+Author: Daniel Adler <dadler@uni-goettingen.de>, Hongyuan Jia
+         <hongyuanjia@cqust.edu.cn>
 Maintainer: Hongyuan Jia <hongyuanjia@cqust.edu.cn>
 Depends: R (>= 3.0.0)
 Description: Provides a cross-platform framework for dynamic binding of C libraries using a flexible Foreign Function Interface ('FFI').
@@ -10,3 +11,4 @@ Description: Provides a cross-platform framework for dynamic binding of C librar
   The package includes a variety of technology demos and OS-specific notes for installation of shared libraries.
 License: file LICENSE
 URL: https://dyncall.org
+Suggests: tinytest

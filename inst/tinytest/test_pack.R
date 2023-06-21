@@ -1,0 +1,5 @@
+buf <- raw(8)
+expect_null(pack(buf, 0, "f", 1.0))
+expect_null(pack(buf, 4, "f", 2.0))
+expect_equal(unpack(buf, 0, "f"), 1.0)
+expect_equal(unpack(buf, 4, "f"), 2.0)
