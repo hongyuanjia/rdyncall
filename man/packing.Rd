@@ -15,10 +15,12 @@ pack(x, offset, sigchar, value)
 \item{value}{R object value to be coerced and packed to a foreign C data type.} 
 }
 \details{
-The function \code{pack} converts an R \code{value} into a C data type specified by the \link{signature} \code{sigchar} 
-and it writes the raw C foreign data value at byte position \code{offset} into the object \code{x}.
-The function \code{.unpack} extracts a C data type according to the \link{signature} \code{sigchar} 
-at byte position \code{offset} from the object \code{x} and converts the C value to an R value and returns it.
+    The function \code{pack} converts an R \code{value} into a C data type
+    specified by the \link{signature} \code{sigchar} and it writes the raw C
+    foreign data value at byte position \code{offset} into the object \code{x}.
+    The function \code{unpack} extracts a C data type according to the
+    \link{signature} \code{sigchar} at byte position \code{offset} from the
+    object \code{x} and converts the C value to an R value and returns it.
 
 Byte \code{offset} calculations start at 0 relative to the first byte in an atomic vectors data area.
 
