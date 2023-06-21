@@ -33,4 +33,3 @@ export(
 S3method("$<-", struct)
 S3method("$", struct)
 S3method(print,struct)
-
