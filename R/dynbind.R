@@ -2,7 +2,7 @@
 # File: R/dynbind.R
 # Description: single-entry front-end to dynamic binding of library functions
 
-dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "default", pat = NULL, replace = NULL, funcptr = FALSE) {
+dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "default", pattern = NULL, replace = NULL, funcptr = FALSE) {
     # load shared library
     libh <- dynfind(libnames)
     if (is.null(libh)) {
@@ -32,7 +32,7 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
     for (i in seq_along(sigtab))
     {
         symname <- sigtab[[i]][[1]]
-        rname <- if (!is.null(pat)) sub(pat, replace, symname) else symname
+        rname <- if (!is.null(pattern)) sub(pattern, replace, symname) else symname
         signature <- sigtab[[i]][[2]]
         # lookup symbol
         address <- dynsym(libh, symname)
