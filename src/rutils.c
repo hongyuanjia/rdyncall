@@ -37,4 +37,3 @@ SEXP C_offsetptr(SEXP x, SEXP offset)
   }
   return R_MakeExternalPtr( ptr + offsetval , R_NilValue, x );
 }
-
