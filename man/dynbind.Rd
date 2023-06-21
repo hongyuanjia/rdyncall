@@ -46,7 +46,7 @@ The assignment name is obtained from the function signature.
 If \code{pat} and \code{replace} is given, a text replacement is applied to the name before assignment, useful for basic C name space mangling such as exchanging the prefix.
 
 As a special case, \code{dynbind} supports binding of pointer-to-function variables, indicated by setting \code{funcptr} to \code{TRUE}, in which case \code{<TARGET>}
-is replaced with the expression \code{.unpack(<TARGET>,"p",0)} in order to dereference \code{<TARGET>} as a pointer-to-function variable at call-time.
+is replaced with the expression \code{unpack(<TARGET>,"p",0)} in order to dereference \code{<TARGET>} as a pointer-to-function variable at call-time.
 }
 
 \value{
@@ -71,7 +71,7 @@ R_ShowMessage("hello")
 \seealso{
 \code{\link{dyncall}} for details on call signatures and calling conventions,
 \code{\link{dynfind}} for details on short library names, 
-\code{\link{.unpack}} for details on reading low-level memory (e.g. dereferencing of (function) pointer variables). 
+\code{\link{unpack}} for details on reading low-level memory (e.g. dereferencing of (function) pointer variables).
 }
 \keyword{programming}
 \keyword{interface}
