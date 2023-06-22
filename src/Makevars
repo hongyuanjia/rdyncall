@@ -1,15 +1,11 @@
-VERSION=1.4
 PKG_CPPFLAGS=-Idyncall/dyncall -Idyncall/dynload -Idyncall/dyncallback
 PKG_LIBS=dyncall/dyncall/libdyncall_s.a dyncall/dynload/libdynload_s.a dyncall/dyncallback/libdyncallback_s.a
 
-.PHONY: all bootstrap mylibs
+.PHONY: all mylibs
 
-all: bootstrap $(SHLIB)
+all: $(SHLIB)
 $(SHLIB): mylibs
 
-bootstrap:
-	("${R_HOME}/bin${R_ARCH_BIN}/Rscript" "../tools/bootstrap.R" $(VERSION))
-
 mylibs:
-	(cd dyncall ; CC="$(CC)" AR="$(AR)" CFLAGS="-fPIC $(CFLAGS)" CPPFLAGS="-DNDEBUG ${CPPFLAGS}" make -f Makefile.embedded clean)
+	(cd dyncall ; CC="$(CC)" AR="$(AR)" CFLAGS="-fPIC $(CFLAGS)" CPPFLAGS="-DNDEBUG ${CPPFLAGS}" make -f Makefile.embedded)
 
