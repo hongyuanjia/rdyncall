@@ -9,12 +9,12 @@ if (VERSION == "latest") {
     }
 
     # Delete the folder if it is not the checkout source
-    if (!dir.exists("src/dyncall/.hg")) {
-        unlink("src/dyncall", recursive = TRUE, force = TRUE)
+    if (!dir.exists("dyncall/.hg")) {
+        unlink("dyncall", recursive = TRUE, force = TRUE)
     }
 
-    if (!file.exists("src/dyncall/dyncall/dyncall_version.h")) {
-        system2(hg, c("clone", "https://dyncall.org/pub/dyncall/dyncall", "src/dyncall"))
+    if (!file.exists("dyncall/dyncall/dyncall_version.h")) {
+        system2(hg, c("clone", "https://dyncall.org/pub/dyncall/dyncall", "dyncall"))
     } else {
         system2(hg, "pull")
     }
@@ -23,19 +23,19 @@ if (VERSION == "latest") {
     if (getRversion() < "3.3.0") setInternet2()
 
     # Delete the folder if it is the checkout source
-    if (dir.exists("src/dyncall/.hg")) {
-        unlink("src/dyncall", recursive = TRUE, force = TRUE)
+    if (dir.exists("dyncall/.hg")) {
+        unlink("dyncall", recursive = TRUE, force = TRUE)
     }
 
     # Version header is missing
-    if (!file.exists("src/dyncall/dyncall/dyncall_version.h")) {
+    if (!file.exists("dyncall/dyncall/dyncall_version.h")) {
         # Delete the folder since the source is incomplete
-        if (dir.exists("src/dyncall")) {
-            unlink("src/dyncall", recursive = TRUE, force = TRUE)
+        if (dir.exists("dyncall")) {
+            unlink("dyncall", recursive = TRUE, force = TRUE)
         }
     } else {
         # Check if the version matches
-        dyncall_ver_h <- readLines("src/dyncall/dyncall/dyncall_version.h")
+        dyncall_ver_h <- readLines("dyncall/dyncall/dyncall_version.h")
         dyncall_ver <- regexec("^#define DYNCALL_VERSION\\s+0x(.*)", dyncall_ver_h)
         dyncall_ver <- unlist(regmatches(dyncall_ver_h, dyncall_ver))[2L]
 
@@ -43,7 +43,7 @@ if (VERSION == "latest") {
         # This is the checkout source
         if (endsWith(dyncall_ver, "c")) {
             # Delete the folder
-            unlink("src/dyncall", recursive = TRUE, force = TRUE)
+            unlink("dyncall", recursive = TRUE, force = TRUE)
         # f -> release version
         } else if (endsWith(dyncall_ver, "f")) {
             ver_spl <- strsplit(dyncall_ver, "")[[1L]]
@@ -65,22 +65,22 @@ if (VERSION == "latest") {
 
             # Delete the folder if version mismatches
             if (numeric_version(dyncall_ver) != numeric_version(VERSION)) {
-                unlink("src/dyncall", recursive = TRUE, force = TRUE)
+                unlink("dyncall", recursive = TRUE, force = TRUE)
             }
         # Unknown version pattern
         } else {
             # Delete the folder
-            unlink("src/dyncall", recursive = TRUE, force = TRUE)
+            unlink("dyncall", recursive = TRUE, force = TRUE)
         }
     }
 
     # Download the corresponding version of source
-    if (!dir.exists("src/dyncall")) {
+    if (!dir.exists("dyncall")) {
         name <- sprintf("dyncall-%s", VERSION)
         zip <- sprintf("%s.zip", name)
         download.file(sprintf("https://dyncall.org/r%s/%s", VERSION, zip), zip, quiet = TRUE)
-        unzip(zip, exdir = "src")
-        file.rename(file.path("src", name), file.path("src", "dyncall"))
+        unzip(zip, exdir = ".")
+        file.rename(name, "dyncall")
         unlink(zip)
     }
 }

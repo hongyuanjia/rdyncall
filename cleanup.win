@@ -1,5 +1,0 @@
-#!/bin/sh
-VERSION="1.4"
-cd ${R_PACKAGE_DIR}
-"${R_HOME}/bin/Rscript.exe" "tools/bootstrap.R" ${VERSION}
-cd src/dyncall && make -f Makefile.embedded clean
