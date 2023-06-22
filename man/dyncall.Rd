@@ -7,6 +7,7 @@
 \alias{dyncall.thiscall}
 \alias{dyncall.thiscall.msvc}
 \alias{dyncall.thiscall.gcc}
+\alias{dyncall.fastcall}
 \alias{dyncall.fastcall.msvc}
 \alias{dyncall.fastcall.gcc}
 \alias{signature}
@@ -24,6 +25,7 @@ dyncall.stdcall      ( address, signature, ... )
 dyncall.thiscall     ( address, signature, ... )
 dyncall.thiscall.msvc( address, signature, ... )
 dyncall.thiscall.gcc ( address, signature, ... )
+dyncall.fastcall     ( address, signature, ... )
 dyncall.fastcall.msvc( address, signature, ... )
 dyncall.fastcall.gcc ( address, signature, ... )
 }
