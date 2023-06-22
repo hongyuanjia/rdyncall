@@ -11,5 +11,5 @@ bootstrap:
 	"${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" "../tools/bootstrap.R" $(VERSION)
 
 mylibs:
-	(cd dyncall ; CC="$(CC)" AR="$(AR)" CFLAGS="$(CFLAGS)" CPPFLAGS="-DNDEBUG ${CPPFLAGS}" make -f Makefile.embedded)
+	(cd dyncall ; CC="$(CC)" AR="$(AR)" CFLAGS="$(CFLAGS)" CPPFLAGS="-DNDEBUG ${CPPFLAGS}" make -f Makefile.embedded clean)
 
