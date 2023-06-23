@@ -1,5 +1,11 @@
 # rdyncall
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/hongyuanjia/rdyncall/actions/workflows/R-CMD-
+check.yaml/badge.svg)](https://github.com/hongyuanjia/rdyncall/actions/workflows/R
+-CMD-check.yaml)
+<!-- badges: end -->
+
 rdyncall is the R bindings to the [DynCall](https://dyncall.org) libries for
 flexible Foreign Function Interface (FFI) between R and C.
 

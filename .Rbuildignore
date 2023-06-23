@@ -3,5 +3,8 @@
 ^\.gitignore$
 ^README\.Rmd$
 ^README-.*\.png$
-^tools$
 ^src/dyncall/test$
+^\.github$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

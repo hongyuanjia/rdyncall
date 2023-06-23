@@ -8,4 +8,4 @@ syntax: glob
 *.so
 *.dll
 
-src/dyncall
+docs
