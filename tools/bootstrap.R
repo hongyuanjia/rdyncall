@@ -47,7 +47,7 @@ if (VERSION == "latest") {
         # f -> release version
         } else if (endsWith(dyncall_ver, "f")) {
             ver_spl <- strsplit(dyncall_ver, "")[[1L]]
-            if (length(dyncall_ver) >= 4L) {
+            if (length(ver_spl) >= 4L) {
                 dyncall_ver <- paste(
                     major = ver_spl[1L],
                     minor = ver_spl[2L],
@@ -64,6 +64,7 @@ if (VERSION == "latest") {
             }
 
             # Delete the folder if version mismatches
+            if (grepl("^\\d+\\.\\d+", VERSION)) VERSION <- paste0(VERSION, ".0")
             if (numeric_version(dyncall_ver) != numeric_version(VERSION)) {
                 unlink("src/dyncall", recursive = TRUE, force = TRUE)
             }
