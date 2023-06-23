@@ -138,7 +138,7 @@ of the callback could lead to a <strong>fatal R process crash</strong> as well.<
 <span class="r-in"><span><span class="co"># Sort vectors directly via 'qsort' C library function using an R callback:</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="dynbind.html">dynbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"msvcrt"</span>,<span class="st">"c"</span>,<span class="st">"c.so.6"</span><span class="op">)</span>, <span class="st">"qsort(piip)v;"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $libhandle</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;pointer: 0x7f7ffd52dc30&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;pointer: 0x7f194b29cc30&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"path")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "libc.so.6"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"auto.unload")</span>
@@ -158,23 +158,23 @@ of the callback could lead to a <strong>fatal R process crash</strong> as well.<
 <span class="r-in"><span><span class="fu">qsort</span><span class="op">(</span><span class="va">x</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="fl">8</span>, <span class="va">cb</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
 <span class="r-in"><span><span class="va">x</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1] -1.95897171 -1.61722469 -1.56513720 -1.47387371 -1.44373523 -1.32843005</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [7] -1.31533258 -1.21953870 -1.21821140 -1.19639308 -1.15753126 -1.09846549</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [13] -1.02970568 -1.01929137 -0.95701139 -0.94163271 -0.93322481 -0.84908533</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [19] -0.79262120 -0.74438140 -0.73501347 -0.71220144 -0.56882164 -0.55425822</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [25] -0.53744054 -0.51166692 -0.50330680 -0.49609347 -0.46760821 -0.43990801</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [31] -0.39502198 -0.32831085 -0.32042575 -0.31562708 -0.29783092 -0.26265181</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [37] -0.24242987 -0.19004121 -0.16006043 -0.13770189 -0.11948749 -0.11512651</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [43] -0.10442717 -0.04850461 -0.04180578  0.04603334  0.07131174  0.07807642</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [49]  0.14601418  0.17758311  0.18949241  0.20904991  0.27721959  0.28086151</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [55]  0.30943550  0.31022287  0.33676620  0.37468937  0.39286154  0.42862020</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [61]  0.43010996  0.46919944  0.47506468  0.49442049  0.50144764  0.51558196</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [67]  0.57651624  0.58023884  0.63308713  0.63756569  0.68169416  0.69833676</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [73]  0.74209645  0.76566616  0.83915712  0.86990182  0.87369537  0.88510750</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [79]  0.93398270  0.94653792  1.00739078  1.03615894  1.10367989  1.14459891</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [85]  1.17618607  1.23124849  1.23808235  1.27918516  1.31646824  1.46691619</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [91]  1.48964017  1.54537776  1.55556596  1.57450176  1.58557857  1.58561155</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [97]  1.89316658  1.90876520  2.19620912  2.67633743</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [1] -2.38522244 -1.86449352 -1.73451441 -1.55967487 -1.54382468 -1.53294451</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [7] -1.34708908 -1.24717386 -1.22305337 -1.21405299 -1.12616199 -1.12123984</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [13] -1.02031104 -1.01033483 -0.91128224 -0.90487151 -0.88192189 -0.87465293</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [19] -0.86490339 -0.84939789 -0.82037232 -0.80556315 -0.78483523 -0.68892789</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [25] -0.68106088 -0.67930166 -0.65168158 -0.62833235 -0.61350944 -0.46258421</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [31] -0.44257700 -0.40316910 -0.34370481 -0.31070892 -0.27736100 -0.27719334</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [37] -0.21964153 -0.20894433 -0.20204341 -0.18708519 -0.18157073 -0.11765854</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [43] -0.10011418 -0.08970302 -0.08376107 -0.07493962 -0.01768816 -0.01335815</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [49]  0.02250571  0.02587341  0.18924302  0.21431505  0.24595023  0.29974584</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [55]  0.36940352  0.37029475  0.37133409  0.39593934  0.39946943  0.45126832</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [61]  0.49494114  0.50556534  0.54800558  0.56433378  0.57087680  0.57515860</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [67]  0.62231350  0.62634964  0.65026012  0.67143198  0.71612085  0.75210885</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [73]  0.75915697  0.77348994  0.92669094  0.93283383  0.94238656  0.94240723</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [79]  0.95690820  0.96934524  0.97011204  1.09225667  1.10569415  1.11940719</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [85]  1.12437391  1.22427347  1.27989404  1.28190400  1.37875474  1.41423968</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [91]  1.48649589  1.49437156  1.50203471  1.61782226  1.74695088  1.92206047</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [97]  2.08370032  2.14427855  2.26984807  2.44312061</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
