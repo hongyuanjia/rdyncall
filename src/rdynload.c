@@ -109,7 +109,7 @@ SEXP C_dynlist(SEXP libh)
   DLSyms* pSyms;
 
   path = C_dynpath(libh);
-  pSyms = dlSymsInit(R_CHAR(STRING_ELT(path, 0)));
+  pSyms = dlSymsInit(CHAR(STRING_ELT(path, 0)));
   count = dlSymsCount(pSyms);
 
   ans = PROTECT(Rf_allocVector(STRSXP, count));
