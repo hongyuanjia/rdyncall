@@ -1,8 +1,7 @@
 # rdyncall
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/hongyuanjia/rdyncall/actions/workflows/R-CMD-
-check.yaml/badge.svg)](https://github.com/hongyuanjia/rdyncall/actions/workflows/R
+[![R-CMD-check](https://github.com/hongyuanjia/rdyncall/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hongyuanjia/rdyncall/actions/workflows/R
 -CMD-check.yaml)
 <!-- badges: end -->
 
