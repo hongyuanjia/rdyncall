@@ -15,6 +15,7 @@
 SEXP C_callvm_new(SEXP callmode, SEXP size);
 SEXP C_callvm_free(SEXP callvm);
 SEXP C_dyncall(SEXP args); /* .External() with args = callvm, address, signature, args */
+SEXP C_dynpath(SEXP libh);
 
 /* rdynload.c */
 SEXP C_dynload(SEXP libpath);
@@ -67,6 +68,7 @@ R_CallMethodDef callMethods[] =
   {"C_dynload"                  , (DL_FUNC) &C_dynload          , 1},
   {"C_dynsym"                   , (DL_FUNC) &C_dynsym           , 3},
   {"C_dynunload"                , (DL_FUNC) &C_dynunload        , 1},
+  {"C_dynpath"                  , (DL_FUNC) &C_dynpath          , 1},
   /* --- rcallback.c ------------------------------------------------------- */
   {"C_callback"                 , (DL_FUNC) &C_callback     , 3},
   /* --- rpack.c ----------------------------------------------------------- */

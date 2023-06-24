@@ -69,3 +69,17 @@ SEXP C_dynsym(SEXP libh, SEXP symname_x, SEXP protectlib)
   protect = (LOGICAL(protectlib)[0]) ? libh : R_NilValue;
   return (addr) ? R_MakeExternalPtr(addr, R_NilValue, protect) : R_NilValue;
 }
+
+SEXP C_dynpath(SEXP libh)
+{
+  int len;
+  static char buf[1024];
+
+  void* libHandle;
+  libHandle = R_ExternalPtrAddr(libh);
+
+  len = dlGetLibraryPath(libHandle, &buf, 1024);
+  SEXP ans;
+  ans = Rf_mkString(&buf);
+  return ans;
+}
