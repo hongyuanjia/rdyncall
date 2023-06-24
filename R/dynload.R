@@ -30,11 +30,21 @@ dynunload <- function(libhandle) {
 }
 
 dynsym <- function(libhandle, symname, protect.lib = TRUE) {
-    if (!is.externalptr(libhandle)) stop("libh argument must be of type 'externalptr'")
+    if (!is.externalptr(libhandle)) stop("libhandle argument must be of type 'externalptr'")
     .Call("C_dynsym", libhandle, as.character(symname), as.logical(protect.lib), PACKAGE = "rdyncall")
 }
 
 dynpath <- function(libhandle) {
-    if (!is.externalptr(libhandle)) stop("libh argument must be of type 'externalptr'")
+    if (!is.externalptr(libhandle)) stop("libhandle argument must be of type 'externalptr'")
     .Call("C_dynpath", libhandle, PACKAGE = "rdyncall")
+}
+
+dyncount <- function(libhandle) {
+    if (!is.externalptr(libhandle)) stop("libhandle argument must be of type 'externalptr'")
+    .Call("C_dyncount", libhandle, PACKAGE = "rdyncall")
+}
+
+dynlist <- function(libhandle) {
+    if (!is.externalptr(libhandle)) stop("libhandle argument must be of type 'externalptr'")
+    .Call("C_dynlist", libhandle, PACKAGE = "rdyncall")
 }

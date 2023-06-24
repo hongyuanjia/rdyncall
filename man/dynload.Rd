@@ -4,6 +4,8 @@
 \alias{dynunload}
 \alias{dynsym}
 \alias{dynpath}
+\alias{dyncount}
+\alias{dynlist}
 \title{Loading of shared libraries and resolving of symbols (Alternative Framework)}
 \description{Alternative framework for loading of shared libraries and resolving of symbols.
 The framework offers \emph{automatic unload management} of shared libraries and
@@ -14,6 +16,8 @@ dynload(libname, auto.unload=TRUE)
 dynsym(libhandle, symname, protect.lib=TRUE)
 dynunload(libhandle)
 dynpath(libhandle)
+dyncount(libhandle)
+dynlist(libhandle)
 }
 \arguments{
   \item{libname}{character string giving the pathname to a shared library in OS-specific notation.}
@@ -30,6 +34,10 @@ dynpath(libhandle)
 \code{dynunload} always returns \code{NULL}.
 
 \code{dynpath} returns a single string.
+
+\code{dyncount} returns a single integer.
+
+\code{dynlist} returns a character vector.
 }
 \details{
 \code{dynload} loads a shared library into the current R process using the OS-specific dynamic linker interface.
@@ -42,6 +50,10 @@ Otherwise \code{NULL} is returned.
 If \code{protect.lib} is \code{TRUE}, the library handle is \emph{protected} by resolved address external pointers from unloading.
 
 \code{dynpath} returns the full path of the loaded library specified by \code{libhandle}.
+
+\code{dyncount} returns the number of symbols in the loaded library specified by \code{libhandle}.
+
+\code{dynlist} returns all symbol names in the loaded library specified by \code{libhandle}.
 
 \code{dynunload} explicitly unreferences the loaded library specified by \code{libhandle}.
 

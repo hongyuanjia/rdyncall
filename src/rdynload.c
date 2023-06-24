@@ -72,14 +72,53 @@ SEXP C_dynsym(SEXP libh, SEXP symname_x, SEXP protectlib)
 
 SEXP C_dynpath(SEXP libh)
 {
-  int len;
   static char buf[1024];
-
   void* libHandle;
-  libHandle = R_ExternalPtrAddr(libh);
-
-  len = dlGetLibraryPath(libHandle, &buf, 1024);
   SEXP ans;
-  ans = Rf_mkString(&buf);
+
+  libHandle = R_ExternalPtrAddr(libh);
+  dlGetLibraryPath(libHandle, buf, 1024);
+  ans = Rf_mkString(buf);
+  return ans;
+}
+
+SEXP C_dyncount(SEXP libh)
+{
+  int count;
+  SEXP ans;
+  SEXP path;
+  DLSyms* pSyms;
+
+  path = C_dynpath(libh);
+  pSyms = dlSymsInit(R_CHAR(STRING_ELT(path, 0)));
+  count = dlSymsCount(pSyms);
+  dlSymsCleanup(pSyms);
+
+  ans = PROTECT(Rf_ScalarInteger(count));
+  UNPROTECT(1);
+  return ans;
+}
+
+SEXP C_dynlist(SEXP libh)
+{
+  int i;
+  int count;
+  const char* name;
+  SEXP ans;
+  SEXP path;
+  DLSyms* pSyms;
+
+  path = C_dynpath(libh);
+  pSyms = dlSymsInit(R_CHAR(STRING_ELT(path, 0)));
+  count = dlSymsCount(pSyms);
+
+  ans = PROTECT(Rf_allocVector(STRSXP, count));
+  for (i = 0; i < count; i++) {
+    name = dlSymsName(pSyms, i);
+    SET_STRING_ELT(ans, i, Rf_mkChar(name));
+  }
+  dlSymsCleanup(pSyms);
+
+  UNPROTECT(1);
   return ans;
 }
