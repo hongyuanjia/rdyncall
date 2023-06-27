@@ -27,6 +27,13 @@ dynfind1 <- if (.Platform$OS.type == "windows") {
             # into a single shared file called 'libSystem.dylib'.
             #
             # Here have to try the full path
+            #
+            # Also, for C libraries, it seems that using
+            # '/usr/lib/system/libsystem_*' works for 'dlSymsName'
+            handle <- dynload(paste("/usr/lib/system/libsystem_", name, ".dylib", sep = ""), ...)
+            if (!is.null(handle)) {
+                return(handle)
+            }
             dynload(paste("/usr/lib/lib", name, ".dylib", sep = ""), ...)
         }
     } else {
