@@ -115,8 +115,15 @@ SEXP C_dynlist(SEXP libh)
   ans = PROTECT(Rf_allocVector(STRSXP, count));
   for (i = 0; i < count; i++) {
     name = dlSymsName(pSyms, i);
-    SET_STRING_ELT(ans, i, Rf_mkChar(name));
+    /* it is possible that name is NULL at some indices */
+    /* in this case, return an empty string */
+    if (!name) {
+      SET_STRING_ELT(ans, i, Rf_mkChar(""));
+    } else {
+      SET_STRING_ELT(ans, i, Rf_mkChar(name));
+    }
   }
+
   dlSymsCleanup(pSyms);
 
   UNPROTECT(1);
