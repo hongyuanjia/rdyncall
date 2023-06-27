@@ -50,7 +50,10 @@ provides a direct interface to the dynamic linker of the OS.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">dynload</span><span class="op">(</span><span class="va">libname</span>, auto.unload<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu">dynsym</span><span class="op">(</span><span class="va">libhandle</span>, <span class="va">symname</span>, protect.lib<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="fu">dynunload</span><span class="op">(</span><span class="va">libhandle</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">dynunload</span><span class="op">(</span><span class="va">libhandle</span><span class="op">)</span></span>
+<span><span class="fu">dynpath</span><span class="op">(</span><span class="va">libhandle</span><span class="op">)</span></span>
+<span><span class="fu">dyncount</span><span class="op">(</span><span class="va">libhandle</span><span class="op">)</span></span>
+<span><span class="fu">dynlist</span><span class="op">(</span><span class="va">libhandle</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -82,22 +85,34 @@ provides a direct interface to the dynamic linker of the OS.</p>
 
 
 <p><code>dynunload</code> always returns <code>NULL</code>.</p>
+
+
+<p><code>dynpath</code> returns a single string.</p>
+
+
+<p><code>dyncount</code> returns a single integer.</p>
+
+
+<p><code>dynlist</code> returns a character vector.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code>dynload</code> loads a shared library into the current R process using the OS-specific dynamic linker interface. 
-The <code>libname</code> is passed <em>as-is</em> directly to the dynamic linker and thus is given in OS-specific notation - see below for details. 
-On success, a handle to the library represented as an external pointer R objects is returned, otherwise <code>NULL</code>. 
+    <p><code>dynload</code> loads a shared library into the current R process using the OS-specific dynamic linker interface.
+The <code>libname</code> is passed <em>as-is</em> directly to the dynamic linker and thus is given in OS-specific notation - see below for details.
+On success, a handle to the library represented as an external pointer R objects is returned, otherwise <code>NULL</code>.
 If <code>auto.unload</code> is <code>TRUE</code>, a finalizer function is registered that will unload the library on garbage collection via <code>dynunload</code>.</p>
 <p><code>dynsym</code> looks up symbol names in loaded libraries and resolves them to memory addresses returned as external pointer R objects.
-Otherwise <code>NULL</code> is returned. 
+Otherwise <code>NULL</code> is returned.
 If <code>protect.lib</code> is <code>TRUE</code>, the library handle is <em>protected</em> by resolved address external pointers from unloading.</p>
+<p><code>dynpath</code> returns the full path of the loaded library specified by <code>libhandle</code>.</p>
+<p><code>dyncount</code> returns the number of symbols in the loaded library specified by <code>libhandle</code>.</p>
+<p><code>dynlist</code> returns all symbol names in the loaded library specified by <code>libhandle</code>.</p>
 <p><code>dynunload</code> explicitly unreferences the loaded library specified by <code>libhandle</code>.</p>
-<p>Setting both <code>auto.unload</code> and <code>protect.lib</code> to <code>TRUE</code>, libraries remain loaded as long as resolved symbols are in use, and they get automatic unloaded 
+<p>Setting both <code>auto.unload</code> and <code>protect.lib</code> to <code>TRUE</code>, libraries remain loaded as long as resolved symbols are in use, and they get automatic unloaded
 when no resolved symbols remain.</p>
-<p>Dynamic linkers usually hold an internal link count, such that a library can be opened multiple times via <code>dynload</code> 
+<p>Dynamic linkers usually hold an internal link count, such that a library can be opened multiple times via <code>dynload</code>
 - with a balanced number of calls to <code>dynunload</code> that decreases the link count to unload the library again.</p>
-<p>Similar functionality is available via <code><a href="https://rdrr.io/r/base/dynload.html" class="external-link">dyn.load</a></code> and <code>getNativeSymbolInfo</code>, 
+<p>Similar functionality is available via <code><a href="https://rdrr.io/r/base/dynload.html" class="external-link">dyn.load</a></code> and <code>getNativeSymbolInfo</code>,
 except that path names are filtered and no automatic unloading of libraries is supported.</p>
     </div>
     <div class="section level2">
@@ -106,19 +121,19 @@ except that path names are filtered and no automatic unloading of libraries is s
 
 <p>Shared libraries are single files that contain compiled code, data and meta-information.
 The code and data can be loaded and mapped to a process at run-time once.
-Operating system platforms have slightly different schemes for naming, 
+Operating system platforms have slightly different schemes for naming,
 searching and linking options.</p>
 <table class="table table"><tr><td><strong>Platform</strong></td><td><strong>Binary format</strong></td><td><strong>File Extension</strong></td></tr><tr><td>Linux, BSD derivates and Sun Solaris</td><td>ELF format</td><td><code>so</code></td></tr><tr><td>Darwin / Apple Mac OS X</td><td>Mach-O format</td><td><code>dylib</code></td></tr><tr><td>Microsoft Windows</td><td>PE format</td><td><code>dll</code></td></tr></table></div>
     <div class="section level2">
     <h2 id="library-search-on-posix-platforms-linux-bsd-sun-solaris-">Library search on Posix platforms (Linux,BSD,Sun Solaris)<a class="anchor" aria-label="anchor" href="#library-search-on-posix-platforms-linux-bsd-sun-solaris-"></a></h2>
-      
+    
 
 <p>The following text is taken from the Linux <code>dlopen</code> manual page:</p>
 <p>These search rules will only be applied to path names that do not contain an embedded '/'.</p><ul><li><p>If the <code>LD_LIBRARY_PATH</code> environment variable is defined to contain a colon-separated list of
 directories, then these are searched.</p></li>
 <li><p>The cache file <code>/etc/ld.so.cache</code> is checked to see whether it contains an entry for filename.</p></li>
 <li><p>The directories <code>/lib</code> and <code>/usr/lib</code> are searched (in that order).</p></li>
-</ul><p>If the library has dependencies on other shared libraries, then these are also automatically 
+</ul><p>If the library has dependencies on other shared libraries, then these are also automatically
 loaded by the dynamic linker using the same rules.</p>
     </div>
     <div class="section level2">
@@ -127,13 +142,13 @@ loaded by the dynamic linker using the same rules.</p>
 
 <p>The following text is taken from the Mac OS X dlopen manual page:</p>
 <p><code>dlopen()</code> searches for a compatible Mach-O file in the directories specified by a set of environment
-variables and the process's current working directory.  When set, the environment variables must contain 
+variables and the process's current working directory.  When set, the environment variables must contain
 a colon-separated list of directory paths, which can be absolute or relative to the current working
-directory. The environment variables are $LD_LIBRARY_PATH, $DYLD_LIBRARY_PATH, and $DYLD_FALLBACK_LIBRARY_PATH. 
+directory. The environment variables are $LD_LIBRARY_PATH, $DYLD_LIBRARY_PATH, and $DYLD_FALLBACK_LIBRARY_PATH.
 The first two variables have no default value. The default value of $DYLD_FALLBACK_LIBRARY_PATH
 is $HOME/lib;/usr/local/lib;/usr/lib.  <code>dlopen()</code> searches the directories specified in
 the environment variables in the order they are listed.</p>
-<p>When path doesn't contain a slash character (i.e. it is just a leaf name), <code>dlopen()</code> searches the following 
+<p>When path doesn't contain a slash character (i.e. it is just a leaf name), <code>dlopen()</code> searches the following
 until it finds a compatible Mach-O file: $LD_LIBRARY_PATH, $DYLD_LIBRARY_PATH,
 current working directory, $DYLD_FALLBACK_LIBRARY_PATH.</p>
 <p>When path contains a slash (i.e. a full path or a partial path) <code>dlopen()</code> searches the following the
@@ -145,11 +160,11 @@ working directory (for partial paths), $DYLD_FALLBACK_LIBRARY_PATH (with leaf na
     
 
 <p>The following text is taken from the Window SDK Documentation:</p>
-<p>If no file name extension is specified [...], the default library extension 
-<code>.dll</code> is appended. However, the file name string can include a trailing point character (.) to 
-indicate that the [shared library] module name has no extension. When no path is specified, the function searches 
-for loaded modules whose base name matches the base name of the module to be loaded. 
-If the name matches, the load succeeds. Otherwise, the function searches for the file in the 
+<p>If no file name extension is specified [...], the default library extension
+<code>.dll</code> is appended. However, the file name string can include a trailing point character (.) to
+indicate that the [shared library] module name has no extension. When no path is specified, the function searches
+for loaded modules whose base name matches the base name of the module to be loaded.
+If the name matches, the load succeeds. Otherwise, the function searches for the file in the
 following sequence:</p>
 <ul><li><p>The directory from which the application loaded.</p></li>
 <li><p>The current directory.</p></li>
