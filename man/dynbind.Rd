@@ -62,7 +62,8 @@ library signature:
 
 The \strong{library signature} is a compact plain-text format to specify a
 set of function bindings.
-It consists of function names and corresponding \link{call signature}.
+It consists of function names and corresponding
+\link[=call-signature]{call signature}.
 Function bindings are separated by ";" (semicolon);
 white spaces (including tab and new line) are allowed before and after
 semicolon.

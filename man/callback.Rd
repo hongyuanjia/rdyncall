@@ -10,7 +10,7 @@ ccallback(signature, fun, envir = new.env())
 }
 \arguments{
 \item{signature}{character string specifying the
-\href{#call_signature}{call signature} of the C function callback type.}
+\link[=call-signature]{call signature} of the C function callback type.}
 
 \item{fun}{R function to be wrapped as a C function pointer.}
 
@@ -31,12 +31,12 @@ generic sort algorithm.
 
 The function \code{ccallback()} wraps an R function \code{fun} as a C function pointer
 and returns an external pointer.
-The foreign C function type of the wrapped R function is specified by a \href{#call_signature}{call signature} given by \code{signature}.
+The foreign C function type of the wrapped R function is specified by a \link[=call-signature]{call signature} given by \code{signature}.
 
 When the C function pointer is called, a global callback handler (implemented
 in C) is executed first, that dynamically creates an R call expression to
 \code{fun} using the arguments, passed from C and converted to R, according to the
-argument types signature within the \href{#call_signature}{call signature}
+argument types signature within the \link[=call-signature]{call signature}
 specified. See \code{\link[=dyncall]{dyncall()}} for details on the format.
 
 Finally, the handler evaluates the R call expression within the environment
@@ -86,8 +86,8 @@ Adler, D., Philipp, T. (2008) \emph{DynCall Project}.
 \url{https://dyncall.org}
 }
 \seealso{
-See \link{signature} for details on call signatures, \code{\link[=reg.finalizer]{reg.finalizer()}} for details
-on finalizers.
+See \link[=call-signature]{call signature} for details on call signatures,
+\code{\link[=reg.finalizer]{reg.finalizer()}} for details on finalizers.
 }
 \keyword{interface}
 \keyword{programming}

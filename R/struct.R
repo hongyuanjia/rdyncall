@@ -1,7 +1,3 @@
-# Package: rdyncall
-# File: R/dynstruct.R
-# Description: Handling of aggregate (struct/union) C types
-
 # ----------------------------------------------------------------------------
 # dynport basetype sizes
 
@@ -29,6 +25,54 @@
 # dynport type information
 #
 
+#' S3 class for run-time type information of foreign C data types
+#'
+#' @description
+#' S3 class for run-time type information of foreign C data types.
+#'
+#' @details
+#' Type information objects are created at run-time to describe the concrete
+#' layout of foreign C data types on the host machine.
+#' While [type signature][type-signature]s give an abstract information on e.g.
+#' the field types and names of aggregate structure types, these objects store
+#' concrete memory size, alignment and layout information about C data types.
+#'
+#' @param name character string specifying the type name.
+#'
+#' @param type character string specifying the type.
+#'
+#' @param size integer, size of type in bytes.
+#'
+#' @param align integer, alignment of type in bytes.
+#'
+#' @param basetype character string, base type of 'pointer' types.
+#'
+#' @param signature character string specifying the struct/union type
+#'        [signature][type-signature].
+#'
+#' @param envir the environment to look for type object.
+#'
+#' @param fields data frame with type and offset information that specifies
+#'        aggregate struct and union types.
+#'
+#' @return
+#' List object tagged as S3 class `typeinfo` with the following named entries
+#' \item{type}{Type name.}
+#' \item{size}{Size in bytes.}
+#' \item{align}{Alignment in bytes.}
+#' \item{fields}{Data frame for field information with the following columns:
+#'     \tabular{ll}{
+#'         \code{type} \tab type name\cr
+#'         \code{offset} \tab byte offset (starts counted from 0)\cr
+#'     }
+#' }
+#'
+#' @seealso
+#' [cstruct()] for details on the framework for handling foreign C data types.
+#'
+#' @aliases type-information
+#' @rdname typeinfo
+#' @export
 typeinfo <- function(name, type = c("base", "pointer", "struct", "union"),
                      size = NA, align = NA, basetype = NA, fields = NA,
                      signature = NA) {
@@ -46,6 +90,8 @@ is.typeinfo <- function(x) {
     inherits(x, "typeinfo")
 }
 
+#' @rdname typeinfo
+#' @export
 get_typeinfo <- function(name, envir = parent.frame()) {
     if (is.character(name)) {
         get_typeinfo_by_name(name, envir)
@@ -149,6 +195,131 @@ make_struct_info <- function(name, signature, field_names, envir = parent.frame(
     typeinfo(name = name, type = "struct", size = size, align = max_align, fields = fields)
 }
 
+#' Allocation and handling of foreign C aggregate data types
+#'
+#' @description
+#' Functions for allocation, access and registration of foreign C `struct` and
+#' `union` data type.
+#'
+#' @details
+#'
+#' References to foreign C data objects are represented by objects of class
+#' 'struct'.
+#'
+#' Two reference types are supported:
+#'
+#' - _External pointers_ returned by [dyncall()] using a call signature with a
+#'   _typed pointer_ return type signature and pointers extracted as a result of
+#'   [unpack()] and S3 `struct` `$`-operators.
+#' - _Internal objects_, memory-managed by R, are allocated by `cdata()`: An
+#'   atomic `raw` storage object is returned, initialized with length equal to
+#'   the byte size of the foreign C data type.
+#'
+#' In order to access and manipulate the data fields of foreign C aggregate data
+#' objects, the `$` and `$<-` S3 operator methods can be used.
+#'
+#' S3 objects of class `struct` have an attribute `struct` set to the name of a
+#' [typeinfo] object, which provides the run-time type information of a
+#' particular foreign C type.
+#'
+#' The run-time type information for foreign C `struct` and `union` types need
+#' to be registered once via `cstruct` and `cunion` functions.
+#' The C data types are specified by `sigs`, a signature character string.
+#' The formats for both types are described next:
+#'
+#' **Structure type signatures** describe the layout of aggregate `struct` C
+#' data types.
+#' Type Signatures are used within the `field-types`.
+#' `field-names` consists of space separated identifier names and should match
+#' the number of fields.
+#'
+#' ```
+#' struct-name { field-types } field-names ;
+#' ```
+#' Here is an example of a C `struct` type:
+#'
+#' ```
+#' struct Rect {
+#'   signed short x, y;
+#'   unsigned short w, h;
+#' };
+#' ```
+#'
+#' The corresponding structure type signature string is:
+#' ```
+#' "Rect{ssSS}x y w h;"
+#' ```
+#'
+#' **Union type signatures** describe the components of the `union` C
+#' data type.
+#' Type signatures are used within the `field-types`.
+#' `field-names` consists of space separated identifier names and should match
+#' the number of fields.
+#'
+#' ```
+#' union-name | field-types } field-names ;
+#' ```
+#'
+#' Here is an example of a C \code{union} type:
+#'
+#' ```
+#' union Value {
+#'   int anInt;
+#'   float aFloat;
+#'   struct LongValue aStruct
+#' };
+#' ```
+#'
+#' The corresponding union type signature string is:
+#'
+#' ```
+#' "Value|if<LongValue>}anInt aFloat aStruct;"
+#' ```
+#'
+#' [as.ctype()] can be used to _cast_ a foreign C data reference to a different
+#' type.
+#' When using an external pointer reference, this can lead quickly to a
+#' **fatal R process crash** - like in C.
+#'
+#' @param x external pointer or atomic raw vector of S3 class 'struct'.
+#'
+#' @param type S3 [typeinfo()] Object or character string that names the
+#'        structure type.
+#'
+#' @param sigs character string that specifies several C struct/union type
+#'        `signature`s.
+#'
+#' @param envir the environment to install S3 type information object(s).
+#'
+#' @param index character string specifying the field name.
+#'
+#' @param indent indentation level for pretty printing structures.
+#'
+#' @param value value to be converted according to struct/union field type given
+#'        by field index.
+#' @param ... additional arguments to be passed to [base::print()] method.
+#'
+#' @seealso
+#' [dyncall()] for type signatures and [typeinfo()] for details on run-time type
+#' information S3 objects.
+#' @examples
+#' # Specify the following foreign type:
+#' # struct Rect {
+#' #     short x, y;
+#' #     unsigned short w, h;
+#' # }
+#' cstruct("Rect{ssSS}x y w h;")
+#' r <- cdata(Rect)
+#' print(r)
+#' r$x <- 40
+#' r$y <- 60
+#' r$w <- 10
+#' r$h <- 15
+#' print(r)
+#' str(r)
+#' @keywords programming interface
+#' @rdname struct
+#' @export
 cstruct <- function(sigs, envir = parent.frame()) {
     # split functions at ';'
     sigs <- unlist(strsplit(sigs, ";"))
@@ -211,6 +382,8 @@ make_union_info <- function(name, signature, field_names, envir = parent.frame()
     typeinfo(name = name, type = "union", fields = fields, size = max_size, align = max_align)
 }
 
+#' @rdname struct
+#' @export
 cunion <- function(sigs, envir = parent.frame()) {
     # split functions at ';'
     sigs <- unlist(strsplit(sigs, ";"))
@@ -238,6 +411,8 @@ cunion <- function(sigs, envir = parent.frame()) {
 # ----------------------------------------------------------------------------
 # raw backed struct's (S3 Class)
 
+#' @rdname struct
+#' @export
 as.ctype <- function(x, type) {
     # TODO: check
     if (is.typeinfo(x)) struct_name <- type$name
@@ -246,6 +421,8 @@ as.ctype <- function(x, type) {
     return(x)
 }
 
+#' @rdname struct
+#' @export
 cdata <- function(type) {
     if (is.character(type)) {
         name <- type
@@ -262,6 +439,8 @@ cdata <- function(type) {
     return(x)
 }
 
+#' @rdname struct
+#' @export
 `$.struct` <- unpack.struct <- function(x, index) {
     struct_name <- attr(x, "struct")
     struct_info <- get_typeinfo(struct_name)
@@ -284,6 +463,8 @@ cdata <- function(type) {
     }
 }
 
+#' @rdname struct
+#' @export
 `$<-.struct` <- pack.struct <- function(x, index, value) {
     struct_name <- attr(x, "struct")
     struct_info <- get_typeinfo(struct_name)
@@ -304,6 +485,8 @@ cdata <- function(type) {
     return(x)
 }
 
+#' @rdname struct
+#' @export
 print.struct <- function(x, indent = 0, ...) {
     struct_name <- attr(x, "struct")
     struct_info <- get_typeinfo(struct_name)

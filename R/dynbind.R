@@ -12,7 +12,8 @@
 #'
 #' The **library signature** is a compact plain-text format to specify a
 #' set of function bindings.
-#' It consists of function names and corresponding [call signature].
+#' It consists of function names and corresponding
+#' [call signature][call-signature].
 #' Function bindings are separated by ";" (semicolon);
 #' white spaces (including tab and new line) are allowed before and after
 #' semicolon.
@@ -102,6 +103,7 @@
 #' (function) pointer variables).
 #'
 #' @keywords programming interface
+#' @export
 # TODO: use named character vector for signatures?
 dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "default", pattern = NULL, replace = NULL, funcptr = FALSE) {
     # load shared library

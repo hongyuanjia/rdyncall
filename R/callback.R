@@ -4,7 +4,7 @@
 #' Function to wrap R functions as C function pointers.
 #'
 #' @param signature character string specifying the
-#'        [call signature](#call_signature) of the C function callback type.
+#'        [call signature][call-signature] of the C function callback type.
 #'
 #' @param fun R function to be wrapped as a C function pointer.
 #'
@@ -21,12 +21,12 @@
 #' The function `ccallback()` wraps an R function `fun` as a C function pointer
 #' and returns an external pointer.
 #' The foreign C function type of the wrapped R function is specified by a [call
-#' signature](#call_signature) given by `signature`.
+#' signature][call-signature] given by `signature`.
 #'
 #' When the C function pointer is called, a global callback handler (implemented
 #' in C) is executed first, that dynamically creates an R call expression to
 #' `fun` using the arguments, passed from C and converted to R, according to the
-#' argument types signature within the [call signature](#call_signature)
+#' argument types signature within the [call signature][call-signature]
 #' specified. See [dyncall()] for details on the format.
 #'
 #' Finally, the handler evaluates the R call expression within the environment
@@ -55,14 +55,14 @@
 #' @references
 #' Adler, D. (2012) "Foreign Library Interface", *The R Journal*,
 #'   **4(1)** , 30--40, June 2012.
-#'   [https://journal.r-project.org/articles/RJ-2012-004/](https://journal.r-project.org/articles/RJ-2012-004/)
+#'   \url{https://journal.r-project.org/articles/RJ-2012-004/}
 #'
 #'  Adler, D., Philipp, T. (2008) *DynCall Project*.
-#'    [https://dyncall.org](https://dyncall.org)
+#'    \url{https://dyncall.org}
 #'
 #' @seealso
-#' See [signature] for details on call signatures, [reg.finalizer()] for details
-#' on finalizers.
+#' See [call signature][call-signature] for details on call signatures,
+#' [reg.finalizer()] for details on finalizers.
 #'
 #' @examples
 #' # Create a function, wrap it to a callback and call it via dyncall:
@@ -83,6 +83,8 @@
 #'
 #' @keywords programming interface
 #' @aliases callback dyncallback
+#' @rdname callback
+#' @export
 ccallback <- function(signature, fun, envir = new.env()) {
     stopifnot(is.character(signature))
     stopifnot(is.function(fun))
