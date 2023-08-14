@@ -102,28 +102,28 @@ get_typeinfo <- function(name, envir = parent.frame()) {
     }
 }
 
-get_typeinfo_by_name <- function(type_name, envir = parent.frame()) {
-    char1 <- substr(type_name, 1, 1)
+get_typeinfo_by_name <- function(name, envir = parent.frame()) {
+    char1 <- substr(name, 1L, 1L)
     switch(char1,
-        "*" = typeinfo(name = type_name, type = "pointer",
+        "*" = typeinfo(name = name, type = "pointer",
             size = .Machine$sizeof.pointer, align = .Machine$sizeof.pointer,
-            basetype = substr(type_name, 2, nchar(type_name)),
-            signature = type_name
+            basetype = substr(name, 2L, nchar(name)),
+            signature = name
         ),
         "<" = {
-            x <- get_typeinfo(substr(type_name, 2, nchar(type_name) - 1), envir = envir)
-            if (!is.null(x)) x else typeinfo(name = type_name, type = "struct")
+            x <- get_typeinfo(substr(name, 2L, nchar(name) - 1L), envir = envir)
+            if (!is.null(x)) x else typeinfo(name = name, type = "struct")
         },
         {
             # try as basetype
-            basetype_sizes <- unname(.BASETYPE_SIZES[type_name])
+            basetype_sizes <- unname(.BASETYPE_SIZES[name])
             if (!is.na(basetype_sizes)) {
-                typeinfo(name = type_name, type = "base", size = basetype_sizes,
-                    align = basetype_sizes, signature = type_name
+                typeinfo(name = name, type = "base", size = basetype_sizes,
+                    align = basetype_sizes, signature = name
                 )
-            } else if (exists(type_name, envir = envir)) {
+            } else if (exists(name, envir = envir)) {
                 # try lookup symbol
-                info <- get(type_name, envir = envir)
+                info <- get(name, envir = envir)
                 if (!inherits(info, "typeinfo")) stop("not a type information symbol")
                 info
             } else {
@@ -138,6 +138,7 @@ get_typeinfo_by_name <- function(type_name, envir = parent.frame()) {
 # align C offsets
 
 align <- function(offset, alignment) {
+    if (is.na(alignment) || alignment <= 0L) return(offset)
     as.integer(as.integer((offset + alignment - 1) / alignment) * alignment)
 }
 
