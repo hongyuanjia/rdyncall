@@ -1,0 +1,12 @@
+* using log directory ‘/home/stoure/Projects/LLM_APPLICATIONS/RGCCTranslationUnit/rdyncall/rdyncall.Rcheck’
+* using R version 4.5.1 (2025-06-13)
+* using platform: x86_64-pc-linux-gnu
+* R was compiled by
+    gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
+    GNU Fortran (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
+* running under: Ubuntu 22.04.5 LTS
+* using session charset: UTF-8
+* using option ‘--as-cran’
+* checking for file ‘rdyncall/DESCRIPTION’ ... OK
+* this is package ‘rdyncall’ version ‘0.9.0.9000’
+* checking CRAN incoming feasibility ...

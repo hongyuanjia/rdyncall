@@ -1,0 +1,11 @@
+PKG_CPPFLAGS=-Idyncall/dyncall -Idyncall/dynload -Idyncall/dyncallback
+PKG_LIBS=dyncall/dyncall/libdyncall_s.a dyncall/dynload/libdynload_s.a dyncall/dyncallback/libdyncallback_s.a
+
+.PHONY: all mylibs
+
+all: $(SHLIB)
+$(SHLIB): mylibs
+
+mylibs:
+	(cd dyncall ; CC="$(CC)" AR="$(AR)" CFLAGS="$(CFLAGS)" CPPFLAGS="-DNDEBUG ${CPPFLAGS}" make -f Makefile.embedded)
+
