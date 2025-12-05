@@ -6,6 +6,7 @@
 
 #include "Rinternals.h"
 #include "Rdefines.h"
+#include <R_ext/Memory.h>
 #include "dyncall_callback.h"
 
 typedef struct
@@ -185,7 +186,7 @@ SEXP C_callback(SEXP sig_x, SEXP fun_x, SEXP rho_x)
   const char* ptr;
   char ch;
   signature  = CHAR( STRING_ELT( sig_x, 0 ) );
-  rdata = Calloc(1, R_Callback);
+  rdata = R_Calloc(1, R_Callback);
   rdata->disabled = 0;
   rdata->fun = fun_x;
   rdata->rho = rho_x;
@@ -216,7 +217,7 @@ void R_callback_finalizer(SEXP x)
   R_Callback* rdata = dcbGetUserData(cb);
   R_ReleaseObject(rdata->fun);
   R_ReleaseObject(rdata->rho);
-  Free(rdata);
+  R_Free(rdata);
   dcbFreeCallback(cb);
 }
 
