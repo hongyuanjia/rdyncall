@@ -26,9 +26,9 @@ SEXP C_asexternalptr(SEXP x)
       case REALSXP: ptr = REAL(x); break;
       case LGLSXP:  ptr = LOGICAL(x); break;
       case CPLXSXP: ptr = COMPLEX(x); break;
-      case STRSXP:  ptr = STRING_PTR(x); break;
+      case STRSXP:  ptr = (void*) STRING_PTR_RO(x); break;
       case RAWSXP:  ptr = RAW(x); break;
-      case VECSXP:  ptr = VECTOR_PTR(x); break;
+      case VECSXP:  ptr = (void*) VECTOR_PTR_RO(x); break;
       default: error("unsupported vector type");
     }
     return R_MakeExternalPtr( ptr, R_NilValue, x );
@@ -48,9 +48,9 @@ SEXP C_offsetptr(SEXP x, SEXP offset)
       case REALSXP: ptr = (unsigned char*) REAL(x); break;
       case LGLSXP:  ptr = (unsigned char*) LOGICAL(x); break;
       case CPLXSXP: ptr = (unsigned char*) COMPLEX(x); break;
-      case STRSXP:  ptr = (unsigned char*) STRING_PTR(x); break;
+      case STRSXP:  ptr = (unsigned char*) STRING_PTR_RO(x); break;
       case RAWSXP:  ptr = (unsigned char*) RAW(x); break;
-      case VECSXP:  ptr = (unsigned char*) VECTOR_PTR(x); break;
+      case VECSXP:  ptr = (unsigned char*) VECTOR_PTR_RO(x); break;
       default: error("unsupported vector type");
     }
   } else if (TYPEOF(x) == EXTPTRSXP ) {
