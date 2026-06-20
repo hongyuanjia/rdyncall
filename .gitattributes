@@ -1,0 +1,7 @@
+# Keep text normalization predictable without forcing broad vendored-tree churn.
+* text=auto
+.gitattributes text eol=lf
+
+# Package cleanup hooks are run by POSIX sh; CRLF breaks the shebang.
+cleanup text eol=lf
+cleanup.win text eol=lf
