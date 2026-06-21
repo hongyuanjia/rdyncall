@@ -33,10 +33,17 @@ SEXP C_callvm_new(SEXP mode_x, SEXP size_x)
   else if (strcmp(mode_S,"fastcall") == 0)      mode_i = DC_CALL_C_X86_WIN32_FAST_GNU;
   else if (strcmp(mode_S,"fastcall.msvc") == 0) mode_i = DC_CALL_C_X86_WIN32_FAST_MS;
   else if (strcmp(mode_S,"fastcall.gcc") == 0)  mode_i = DC_CALL_C_X86_WIN32_FAST_GNU;
+#else
+  else if (strcmp(mode_S,"stdcall") == 0 ||
+           strcmp(mode_S,"thiscall") == 0 ||
+           strcmp(mode_S,"thiscall.gcc") == 0 ||
+           strcmp(mode_S,"thiscall.msvc") == 0 ||
+           strcmp(mode_S,"fastcall") == 0 ||
+           strcmp(mode_S,"fastcall.msvc") == 0 ||
+           strcmp(mode_S,"fastcall.gcc") == 0)  mode_i = DC_CALL_C_DEFAULT;
 #endif
-/*
-   else { error("invalid 'callmode'"); return R_NilValue; }
-*/
+  /* return NULL for invalid callmode */
+  else { Rf_error("invalid 'callmode' found: '%s'", mode_S); return R_NilValue; }
 
   DCCallVM* pvm = dcNewCallVM(size_i);
   dcMode( pvm, mode_i );
