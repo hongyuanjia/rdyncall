@@ -3,6 +3,7 @@
 - Restore package compilation on current R toolchains.
 - Update the bundled dyncall source and stop tracking generated static libraries.
 - Replace deprecated/internal R C API usage with public accessors where possible.
+- Support `dynlist()` for macOS dyld shared cache libraries.
 - Refresh roxygen-generated documentation and package metadata for renewed development.
 - Modernize GitHub Actions checks across Linux, macOS, and Windows, with an optional R-hub workflow for extended platform checks.
 

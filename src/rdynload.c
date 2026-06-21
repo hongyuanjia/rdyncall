@@ -7,6 +7,120 @@
 #include <Rinternals.h>
 #include <R_ext/RS.h>
 #include "dynload.h"
+#include <string.h>
+
+SEXP C_dynpath(SEXP libh);
+
+#if defined(__APPLE__)
+#define RDYNCALL_DARWIN_LIBSYSTEM_PATH "/usr/lib/libSystem.B.dylib"
+#define RDYNCALL_DARWIN_SYSTEM_DIR "/usr/lib/system/"
+#define RDYNCALL_DARWIN_LIB_PREFIX "lib"
+#define RDYNCALL_DARWIN_LIBSYSTEM_PREFIX "libsystem_"
+#define RDYNCALL_DARWIN_DYLIB_SUFFIX ".dylib"
+#endif
+
+#if defined(__APPLE__)
+static const char* C_last_path_component(const char* path)
+{
+  const char* slash = path ? strrchr(path, '/') : NULL;
+  return slash ? slash + 1 : path;
+}
+
+static int C_darwin_fill_system_path(char* out, size_t out_size, const char* prefix, const char* alias, size_t alias_len)
+{
+  const size_t dir_len = strlen(RDYNCALL_DARWIN_SYSTEM_DIR);
+  const size_t prefix_len = strlen(prefix);
+  const size_t suffix_len = strlen(RDYNCALL_DARWIN_DYLIB_SUFFIX);
+  const size_t len = dir_len + prefix_len + alias_len + suffix_len;
+
+  if(len >= out_size)
+    return 0;
+
+  memcpy(out, RDYNCALL_DARWIN_SYSTEM_DIR, dir_len);
+  memcpy(out + dir_len, prefix, prefix_len);
+  memcpy(out + dir_len + prefix_len, alias, alias_len);
+  memcpy(out + dir_len + prefix_len + alias_len, RDYNCALL_DARWIN_DYLIB_SUFFIX, suffix_len + 1);
+  return 1;
+}
+
+static DLSyms* C_darwin_try_system_syms(const char* prefix, const char* alias, size_t alias_len)
+{
+  char candidate[1024];
+  DLSyms* pSyms;
+
+  if(!C_darwin_fill_system_path(candidate, sizeof(candidate), prefix, alias, alias_len))
+    return NULL;
+
+  pSyms = dlSymsInit(candidate);
+  if(pSyms && dlSymsCount(pSyms) > 0)
+    return pSyms;
+
+  dlSymsCleanup(pSyms);
+  return NULL;
+}
+
+static DLSyms* C_darwin_libsystem_alias_syms(SEXP libh, SEXP resolved_path)
+{
+  SEXP requested_path;
+  const char* resolved;
+  const char* requested;
+  const char* leaf;
+  const char* alias;
+  size_t leaf_len;
+  size_t alias_len;
+  DLSyms* pSyms;
+
+  if(TYPEOF(resolved_path) != STRSXP || XLENGTH(resolved_path) < 1 || STRING_ELT(resolved_path, 0) == NA_STRING)
+    return NULL;
+
+  resolved = CHAR(STRING_ELT(resolved_path, 0));
+  if(strcmp(resolved, RDYNCALL_DARWIN_LIBSYSTEM_PATH) != 0)
+    return NULL;
+
+  requested_path = Rf_getAttrib(libh, Rf_install("path"));
+  if(TYPEOF(requested_path) != STRSXP || XLENGTH(requested_path) < 1 || STRING_ELT(requested_path, 0) == NA_STRING)
+    return NULL;
+
+  requested = CHAR(STRING_ELT(requested_path, 0));
+  leaf = C_last_path_component(requested);
+  if(!leaf || strncmp(leaf, RDYNCALL_DARWIN_LIB_PREFIX, strlen(RDYNCALL_DARWIN_LIB_PREFIX)) != 0)
+    return NULL;
+
+  leaf_len = strlen(leaf);
+  if(leaf_len <= strlen(RDYNCALL_DARWIN_LIB_PREFIX) + strlen(RDYNCALL_DARWIN_DYLIB_SUFFIX) ||
+     strcmp(leaf + leaf_len - strlen(RDYNCALL_DARWIN_DYLIB_SUFFIX), RDYNCALL_DARWIN_DYLIB_SUFFIX) != 0)
+    return NULL;
+
+  alias = leaf + strlen(RDYNCALL_DARWIN_LIB_PREFIX);
+  alias_len = leaf_len - strlen(RDYNCALL_DARWIN_LIB_PREFIX) - strlen(RDYNCALL_DARWIN_DYLIB_SUFFIX);
+  if(alias_len == 0)
+    return NULL;
+
+  pSyms = C_darwin_try_system_syms(RDYNCALL_DARWIN_LIBSYSTEM_PREFIX, alias, alias_len);
+  if(pSyms)
+    return pSyms;
+
+  return C_darwin_try_system_syms(RDYNCALL_DARWIN_LIB_PREFIX, alias, alias_len);
+}
+#endif
+
+static DLSyms* C_dlSymsInitFromHandle(SEXP libh)
+{
+  SEXP path;
+  DLSyms* pSyms = NULL;
+
+  path = PROTECT(C_dynpath(libh));
+
+#if defined(__APPLE__)
+  pSyms = C_darwin_libsystem_alias_syms(libh, path);
+#endif
+
+  if(!pSyms)
+    pSyms = dlSymsInit(CHAR(STRING_ELT(path, 0)));
+
+  UNPROTECT(1);
+  return pSyms;
+}
 
 /** ---------------------------------------------------------------------------
  ** C-Function: dynload
@@ -109,11 +223,9 @@ SEXP C_dyncount(SEXP libh)
 {
   int count;
   SEXP ans;
-  SEXP path;
   DLSyms* pSyms;
 
-  path = C_dynpath(libh);
-  pSyms = dlSymsInit(R_CHAR(STRING_ELT(path, 0)));
+  pSyms = C_dlSymsInitFromHandle(libh);
   count = dlSymsCount(pSyms);
   dlSymsCleanup(pSyms);
 
@@ -128,11 +240,9 @@ SEXP C_dynlist(SEXP libh)
   int count;
   const char* name;
   SEXP ans;
-  SEXP path;
   DLSyms* pSyms;
 
-  path = C_dynpath(libh);
-  pSyms = dlSymsInit(CHAR(STRING_ELT(path, 0)));
+  pSyms = C_dlSymsInitFromHandle(libh);
   count = dlSymsCount(pSyms);
 
   ans = PROTECT(Rf_allocVector(STRSXP, count));
