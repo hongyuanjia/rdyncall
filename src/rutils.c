@@ -11,6 +11,7 @@
 
 SEXP C_isnullptr(SEXP x)
 {
+  if (TYPEOF(x) != EXTPTRSXP) return ScalarLogical(FALSE);
   return ScalarLogical( ( R_ExternalPtrAddr(x) == NULL ) ? TRUE : FALSE );
 }
 
