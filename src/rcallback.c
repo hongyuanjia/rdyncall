@@ -37,7 +37,7 @@ char R_dcCallbackHandler( DCCallback* pcb, DCArgs* args, DCValue* result, void* 
 	//   rest is arguments from callback
 	n = 1 + rdata->nargs;
 
-	PROTECT( s = Rf_allocLang(n) );
+	PROTECT( s = Rf_allocVector(LANGSXP, n) );
 	SETCAR( s, rdata->fun ); x = CDR(s);
 
 	// fill up call object
