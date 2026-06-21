@@ -143,7 +143,9 @@ Adler, D., Philipp, T. (2008) \emph{DynCall Project}.
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://github.com/hongyuanjia/rdyncall}
   \item \url{https://dyncall.org}
+  \item Report bugs at \url{https://github.com/hongyuanjia/rdyncall/issues}
 }
 
 }

@@ -93,11 +93,12 @@ SEXP C_dynpath(SEXP libh)
       if (size <= 1) {
         SET_STRING_ELT(ans, 0, NA_STRING);
       } else {
-        SET_STRING_ELT(ans, 0, Rf_mkCharCE(buf, CE_UTF8));
+        SET_STRING_ELT(ans, 0, Rf_mkCharCE(newbuf, CE_UTF8));
       }
+      R_Free(newbuf);
     }
-  } else if (size == 0) {
-    ans = NA_STRING;
+  } else {
+    SET_STRING_ELT(ans, 0, NA_STRING);
   }
 
   UNPROTECT(1);
