@@ -1,6 +1,21 @@
 This file lists bigger/noteworthy changes, only...
 
 
+Version 1.5 (upcoming)
+
+general:
+  o removed subproject 'autovar' (was supposed to be a more modular version of
+    dyncall_macros.h, but never fully replaced latter, thus just duplicating code)
+dyncall:
+  o riscv64 hard-float (rv64imafdc-lp64d, rvg calling convention) support, w/o syscalls and aggregates (thanks Jun Jeon!)
+dyncallback:
+  o riscv64 hard-float (rv64imafdc-lp64d, rvg calling convention) support, w/o syscalls and aggregates (thanks Jun Jeon!)
+  o small arm64 callback optimization (saving 32b of stack space and one instruction)
+doc:
+  o riscv64 calling convention description
+  o marked riscv64 as supported (basic) for *nix, tested on Linux, FreeBSD and Haiku
+
+
 Version 1.4 (2022/12/06)
 
 dyncall:

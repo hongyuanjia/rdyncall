@@ -75,6 +75,7 @@ typedef struct DCaggr_      DCaggr;
 #define DC_CALL_C_ARM64                22
 #define DC_CALL_C_PPC64                23
 #define DC_CALL_C_PPC64_LINUX          DC_CALL_C_PPC64 /* alias */
+#define DC_CALL_C_RISCV64              24
 /* syscalls, default */
 #define DC_CALL_SYS_DEFAULT           200
 /* syscalls, platform specific */

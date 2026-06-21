@@ -1,4 +1,4 @@
-APP       = resolve_self
+APP       = resolve_self${APP_SUFFIX}
 OBJS      = main.o
 SRCTOP    = ${VPATH}/../..
 BLDTOP    = ../..

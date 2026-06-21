@@ -59,11 +59,11 @@ static void a_i64(DCCallVM* in_self, DClonglong x)
   }
 }
 
-static void a_bool    (DCCallVM* self, DCbool  x)   { a_i64(self, (DClonglong)x); }
-static void a_char    (DCCallVM* self, DCchar  x)   { a_i64(self, x); }
-static void a_short   (DCCallVM* self, DCshort x)   { a_i64(self, x); }
-static void a_int     (DCCallVM* self, DCint x)     { a_i64(self, x); }
-static void a_long    (DCCallVM* self, DClong  x)   { a_i64(self, x); }
+static void a_bool    (DCCallVM* self, DCbool    x) { a_i64(self, (DClonglong)x); }
+static void a_char    (DCCallVM* self, DCchar    x) { a_i64(self, x); }
+static void a_short   (DCCallVM* self, DCshort   x) { a_i64(self, x); }
+static void a_int     (DCCallVM* self, DCint     x) { a_i64(self, x); }
+static void a_long    (DCCallVM* self, DClong    x) { a_i64(self, x); }
 static void a_pointer (DCCallVM* self, DCpointer x) { a_i64(self, (DClonglong) x ); }
 
 static void a_float(DCCallVM* in_p, DCfloat x)

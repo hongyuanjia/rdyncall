@@ -25,7 +25,7 @@
 
 
 #define BEGIN_ASM
-#include "../autovar/autovar_OS.h"
+#include "../dyncall/dyncall_macros.h"
 
 #if defined(GEN_MASM)
 #define TEXTAREA AREA .text, CODE, ARM64
@@ -46,7 +46,7 @@
 #define END_PROC
 #define END_ASM
 
-#if defined(OS_Darwin)
+#if defined(DC__OS_Darwin)
 #define GLOBAL_C(X) .globl _##X
 #define ENTRY_C(X) _##X:
 #else

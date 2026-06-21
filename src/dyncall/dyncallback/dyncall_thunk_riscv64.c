@@ -2,12 +2,11 @@
 
  Package: dyncall
  Library: dyncallback
- File: dyncallback/dyncall_args_sparc64.h
- Description: Callback's Arguments VM - Header for sparc64 - not yet
+ File: dyncallback/dyncall_thunk_riscv64.c
+ Description: Thunk - Implementation for RISCV64
  License:
 
-   Copyright (c) 2007-2018 Daniel Adler <dadler@uni-goettingen.de>,
-                           Tassilo Philipp <tphilipp@potion-studios.com>
+   Copyright (c) 2023 Jun Jeon <yjeon@netflix.com>
 
    Permission to use, copy, modify, and distribute this software for any
    purpose with or without fee is hereby granted, provided that the above
@@ -24,19 +23,16 @@
 */
 
 
-#ifndef DYNCALLBACK_ARGS_SPARC64_H
-#define DYNCALLBACK_ARGS_SPARC64_H
 
-#include "dyncall_args.h"
+#include "dyncall_thunk.h"
 
-#define DCARGS_SPARC64_NUM_DOUBLE_REGS 16
-struct DCArgs
+void dcbInitThunk(DCThunk* p, void (*entry)())
 {
-	/* Don't change order or types, laid out for asm code to fill in! */
-	DClonglong *arg_ptr;
-	DCdouble   dreg_data[DCARGS_SPARC64_NUM_DOUBLE_REGS];
-	DClonglong i; /* args fetched */
-};
-
-#endif /* DYNCALLBACK_ARGS_SPARC64_H */
+  /* t5 - thunk register */
+  p->code[0] = 0x00000f17; /* auipc t5, 0                 */
+  p->code[1] = 0x010f3f83; /* ld    t6, 16(t5)            */
+  p->code[2] = 0x000f8067; /* jr    t6 (= jalr x0, 0(t6)) */
+  p->code[3] = 0x00000013; /* nop      (= addi x0, x0, 0) */
+  p->entry   = entry;
+}
 

@@ -1,4 +1,4 @@
-APP        = dynload_plain
+APP        = dynload_plain${APP_SUFFIX}
 OBJS       = dynload_plain.o
 TEST_C_LD  = dynload_plain_c_ld   # helper to deduce default c lib apps are linked with
 TEST_U8_SO = dynload_plain_ß_test # @@@ unsure if every platform handles ß, here (ANSI, UTF-8, ...)
@@ -21,6 +21,8 @@ ${APP}: ${OBJS}
 	${CC} ${CFLAGS} ${LDFLAGS} ${OBJS} ${LDLIBS_D} ${LDLIBS} -o ${APP}
 ${TEST_U8_SO}:
 	echo 'int dynload_plain_testfunc() { return 5; }' | ${CC} ${CFLAGS} -`[ \`uname\` = Darwin ] && echo dynamiclib || echo shared` -x c - -o ${TEST_U8_SO}
+	# clang tries to be too smart, appending .exe on some platforms (e.g. *nix based mingw cross builds), despite -o being explicity
+	[ -f "${TEST_U8_SO}.exe" ] && mv "${TEST_U8_SO}.exe" "${TEST_U8_SO}" || true
 clean:
 	rm -f ${APP} ${OBJS} ${TEST_C_LD} ${TEST_U8_SO}
 install:

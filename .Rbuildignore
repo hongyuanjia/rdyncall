@@ -4,6 +4,7 @@
 ^README\.Rmd$
 ^README-.*\.png$
 ^src/dyncall/test$
+^src/dyncall/\.hg$
 ^\.github$
 ^_pkgdown\.yml$
 ^docs$

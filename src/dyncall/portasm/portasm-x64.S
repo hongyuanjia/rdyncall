@@ -87,8 +87,8 @@
 	.text
 #  define BEGIN_ASM
 #  define END_ASM
-#  include "../autovar/autovar_ABI.h"
-#  if defined (OS_Darwin)
+#  include "../dyncall/dyncall_macros.h"
+#  if defined(DC__OS_Darwin)
 #    define CSYM(X) _##X
 #  else
 #    define CSYM(X) X

@@ -9,6 +9,8 @@ syntax: glob
 *.dll
 *.a
 
+src/dyncall/.hg/
+
 docs
 
 .cache

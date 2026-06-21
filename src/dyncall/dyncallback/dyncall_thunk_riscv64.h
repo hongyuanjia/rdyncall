@@ -2,12 +2,11 @@
 
  Package: dyncall
  Library: dyncallback
- File: dyncallback/dyncall_args_arm32.h
- Description: Callback's Arguments VM - Header for ARM32 (ARM and THUMB mode)
+ File: dyncallback/dyncall_thunk_riscv64.h
+ Description: Thunk - Header for RISCV64
  License:
 
-   Copyright (c) 2007-2018 Daniel Adler <dadler@uni-goettingen.de>,
-                           Tassilo Philipp <tphilipp@potion-studios.com>
+   Copyright (c) 2023 Jun Jeon <yjeon@netflix.com>
 
    Permission to use, copy, modify, and distribute this software for any
    purpose with or without fee is hereby granted, provided that the above
@@ -23,24 +22,15 @@
 
 */
 
+#ifndef DYNCALL_THUNK_RISCV64_H
+#define DYNCALL_THUNK_RISCV64_H
 
-#ifndef DYNCALLBACK_ARGS_ARM32_H
-#define DYNCALLBACK_ARGS_ARM32_H
+struct DCThunk_          /* off  size */
+{                        /* ----|---- */
+  unsigned int code[4];  /*   0   16  */
+  void (*entry)();       /*  16    8  */
+  void* reserved;        /*  24    8  */
+};                       /*  32 total */
 
-#include "dyncall_args.h"
-
-struct DCArgs
-{
-	/* Don't change order! */
-	long  reg_data[4];
-	int   reg_count;
-	long* stack_ptr;
-#if defined(DC__ABI_ARM_HF)
-	DCfloat f[16];
-	int     freg_count;
-	int     dreg_count;
-#endif
-};
-
-#endif /* DYNCALLBACK_ARGS_ARM32_H */
+#endif /* DYNCALL_THUNK_RISCV64_H */
 

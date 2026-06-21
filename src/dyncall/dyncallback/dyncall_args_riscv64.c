@@ -2,12 +2,11 @@
 
  Package: dyncall
  Library: dyncallback
- File: dyncallback/dyncall_args_arm64.c
- Description: Callback's Arguments VM - Implementation for ARM64 / ARMv8 / AAPCS64
+ File: dyncallback/dyncall_args_riscv64.c
+ Description: Callback's Arguments VM - Implementation for RISCV64
  License:
 
-   Copyright (c) 2015-2022 Daniel Adler <dadler@uni-goettingen.de>,
-                           Tassilo Philipp <tphilipp@potion-studios.com>
+   Copyright (c) 2023 Jun Jeon <yjeon@netflix.com>
 
    Permission to use, copy, modify, and distribute this software for any
    purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +21,6 @@
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 */
-
 #include "dyncall_args.h"
 
 #include <stdint.h>
@@ -38,21 +36,38 @@ struct DCArgs
   uint64_t  I[8];
   DCFPU_t   F[8];
   uint64_t* sp;
-
+  
   /* counters: */
   int i;
   int f;
 };
 
-DClonglong  dcbArgLongLong (DCArgs* p) { return (p->i < 8) ? p->I[p->i++] : *(p->sp)++; }
-DCdouble    dcbArgDouble   (DCArgs* p) { return (p->f < 8) ? p->F[p->f++].d.value : * ( (double*) (p->sp++) ); }
-DCfloat     dcbArgFloat    (DCArgs* p) { return (p->f < 8) ? p->F[p->f++].f.value : * ( (float*)  (p->sp++) ); }
+DClonglong dcbArgLongLong (DCArgs* p) {
+  return  (p->i < 8) ? p->I[p->i++] : *(p->sp)++;
+}
+
+DCdouble  dcbArgDouble (DCArgs* p) {
+  if (p->f < 8)
+    return p->F[p->f++].d.value;
+  else if (p->i < 8)
+    return ((DCFPU_t*)&(p->I[p->i++]))->d.value;
+  else
+    return *(double*)(p->sp++);
+}
+DCfloat   dcbArgFloat  (DCArgs* p) {
+  if (p->f < 8)
+    return p->F[p->f++].f.value;
+  else if (p->i < 8)
+    return ((DCFPU_t*)&(p->I[p->i++]))->f.value;
+  else
+    return *(float*)(p->sp++);
+}
 
 
-DClong      dcbArgLong     (DCArgs* p) { return (DClong)  dcbArgLongLong(p); }
-DCint       dcbArgInt      (DCArgs* p) { return (DCint)   dcbArgLongLong(p); }
-DCshort     dcbArgShort    (DCArgs* p) { return (DCshort) dcbArgLongLong(p); }
-DCchar      dcbArgChar     (DCArgs* p) { return (DCchar)  dcbArgLongLong(p); }
+DClong      dcbArgLong     (DCArgs* p) { return (DClong)   dcbArgLongLong(p); }
+DCint       dcbArgInt      (DCArgs* p) { return (DCint)    dcbArgLongLong(p); }
+DCshort     dcbArgShort    (DCArgs* p) { return (DCshort)  dcbArgLongLong(p); }
+DCchar      dcbArgChar     (DCArgs* p) { return (DCchar)   dcbArgLongLong(p); }
 DCbool      dcbArgBool     (DCArgs* p) { return dcbArgLongLong(p) & 0x1; }
 DCpointer   dcbArgPointer  (DCArgs* p) { return (DCpointer)dcbArgLongLong(p); }
 

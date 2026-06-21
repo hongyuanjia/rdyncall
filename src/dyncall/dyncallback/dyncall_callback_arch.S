@@ -86,6 +86,8 @@
 #    include "dyncall_callback_sparc64.s"
 #  elif defined(DC__Arch_ARM64)
 #    include "dyncall_callback_arm64.S"
+#  elif defined(DC__Arch_RiscV64)
+#    include "dyncall_callback_riscv64.S"
 #  endif
 #endif
 

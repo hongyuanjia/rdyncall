@@ -110,7 +110,7 @@ static char handler(DCCallback* that, DCArgs* input, DCValue* output, void* user
       case DC_SIGCHAR_STRING:
       case DC_SIGCHAR_POINTER:  V_p[pos] = dcbArgPointer  (input); break;
       case DC_SIGCHAR_CC_PREFIX: ++signature; /* skip cconv prefix */ continue;
-	  default: assert(0);
+      default: assert(0);
     }
     ++pos;
   }
@@ -136,7 +136,7 @@ static char handler(DCCallback* that, DCArgs* input, DCValue* output, void* user
     case DC_SIGCHAR_DOUBLE:   output->d = K_d[pos]; break;
     case DC_SIGCHAR_STRING:
     case DC_SIGCHAR_POINTER:  output->p = K_p[pos]; break;
-	default: assert(0);
+    default: assert(0);
   }
 
   /* return type info for dyncallback */

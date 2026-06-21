@@ -484,9 +484,9 @@ $LN3:
         mov     DWORD PTR a$[rsp], eax                     ; /
         lea     rax, QWORD PTR $T1[rsp]                    ; @@@ unsure
         mov     QWORD PTR $T2[rsp], rax                    ; ... @@@
-        lea     rdx, QWORD PTR n$[rsp]                     ; \               ptr to dest of copy of n
-        mov     rcx, QWORD PTR $T2[rsp]                    ; | copy n        ptr to n
-        call    NonTrivial::NonTrivial(NonTrivial const &) ; /               NonTrivial::NonTrivial(const NonTrivial&) / copy ctor
+        lea     rdx, QWORD PTR n$[rsp]                     ; \               ptr to n
+        mov     rcx, QWORD PTR $T2[rsp]                    ; | copy n        ptr to dest of copy of n
+        call    NonTrivial::NonTrivial(NonTrivial const &) ; |               NonTrivial::NonTrivial(const NonTrivial&) / copy ctor
         mov     rcx, rax                                   ; f2 arg 0 (ptr to copy of struct NonTrivial), via ptr as non-trivial
         call    f2                                         ; call f2(struct NonTrivial)
         mov     eax, DWORD PTR a$[rsp]                     ; |

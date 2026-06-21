@@ -34,7 +34,7 @@
 
 
 #include "dynload.h"
-#include "../autovar/autovar_OS.h"
+#include "../dyncall/dyncall_macros.h"
 
 #include <string.h>
 
@@ -101,7 +101,7 @@ static int dl_strlen_strcpy(char* dst, const char* src, int dstSize)
  * RTLD_DI_LINKMAP and RTLD_SELF, which are #defines used by dlinfo() on most
  * supported targets, or specifically check the OS (e.g. dlinfo() is originally
  * from Solaris) */
-#if ((defined(RTLD_DI_LINKMAP) && defined(RTLD_SELF)) || defined(OS_SunOS)) && !defined(DL_USE_GLIBC_ITER_PHDR)
+#if ((defined(RTLD_DI_LINKMAP) && defined(RTLD_SELF)) || defined(DC__OS_SunOS)) && !defined(DL_USE_GLIBC_ITER_PHDR)
 
 #include <link.h>
 
@@ -117,7 +117,7 @@ int dlGetLibraryPath(DLLib* pLib, char* sOut, int bufSize)
 
 
 /* specific implementation needed on Darwin -----> */
-#elif defined(OS_Darwin)
+#elif defined(DC__OS_Darwin)
 
 #include <stdint.h>
 #include <mach-o/dyld.h>
@@ -164,7 +164,7 @@ int dlGetLibraryPath(DLLib* pLib, char* sOut, int bufSize)
      with dl_iterate_phdr (which comes from ELF program header iteration), so base it on that
    - skip and use dladdr()-based guessing (see below) if explicitly requested, e.g. by ./configure
    - Haiku/BeOS does have the headers but no implementation of dl_iterate_phdr() (at least as of 2021) */
-#elif !defined(DL_DLADDR_TO_LIBPATH) && (defined(OS_OpenBSD) || defined(DL_USE_GLIBC_ITER_PHDR) || (!defined(RTLD_SELF) && defined(__ELF__))) && !defined(OS_BeOS)
+#elif !defined(DL_DLADDR_TO_LIBPATH) && (defined(DC__OS_OpenBSD) || defined(DL_USE_GLIBC_ITER_PHDR) || (!defined(RTLD_SELF) && defined(__ELF__))) && !defined(DC__OS_BeOS)
 
 #include <sys/types.h>
 #include <link.h>
