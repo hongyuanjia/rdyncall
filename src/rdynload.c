@@ -137,7 +137,7 @@ SEXP C_dynlist(SEXP libh)
   ans = PROTECT(Rf_allocVector(STRSXP, count));
   for (i = 0; i < count; i++) {
     name = dlSymsName(pSyms, i);
-    SET_STRING_ELT(ans, i, Rf_mkChar(name));
+    SET_STRING_ELT(ans, i, name ? Rf_mkChar(name) : NA_STRING);
   }
   dlSymsCleanup(pSyms);
 
