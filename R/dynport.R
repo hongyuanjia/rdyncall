@@ -62,10 +62,10 @@
 #' | `glpk`                     | GNU Linear Programming Kit                      |
 #' | `EGL`                      | Embedded Systems Graphics Library               |
 #'
-#' As of the current implementation _DynPort_ files are DCF (Debian Contrl File)
+#' As of the current implementation _DynPort_ files are DCF (Debian Control File)
 #' files which follow the same rules for R package `DESCRIPTION` files.
 #'
-#' TODO: scripts that perform up to three tasks:
+#' The format records the following binding metadata:
 #'
 #' - Functions (and pointer-to-function variables) are mapped via [dynbind()]
 #'   and a description of the C library using a _library signatures_.
@@ -89,7 +89,7 @@
 #' a language-neutral text file document.
 #'
 #' @param portname the name of a dynport, given as a literal or character
-#'        string. It will be used as the namesapce name.
+#'        string. It will be used as the namespace name.
 #'
 #' @param portfile `NULL` or character string giving a script file to parse.
 #'

@@ -240,8 +240,8 @@ callvm.fastcall.msvc <- NULL
 #' @examples
 #' \donttest{
 #' libm <- dynfind(c("msvcrt", "m", "m.so.6"))
-#' C_sqrt <- dynsym(libm, "C_sqrt")
-#' dyncall(C_sqrt, "d)d", 144L)
+#' c_sqrt <- dynsym(libm, "sqrt")
+#' dyncall(c_sqrt, "d)d", 144)
 #' }
 #'
 #' @references

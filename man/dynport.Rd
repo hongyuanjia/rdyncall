@@ -13,7 +13,7 @@ dynport(
 }
 \arguments{
 \item{portname}{the name of a dynport, given as a literal or character
-string.}
+string. It will be used as the namespace name.}
 
 \item{portfile}{\code{NULL} or character string giving a script file to parse.}
 
@@ -38,7 +38,7 @@ libraries.
 The binding method is data-driven using platform-portable specifications
 named \emph{DynPort} files.
 \emph{DynPort} files are stored in a repository that is installed as part of the
-package installation.
+package installation. They are generated using the \pkg{porter} package.
 When \code{dynport()} processes a \emph{DynPort} file given by \code{portname}, an
 environment object is created, populated with R wrapper and helper objects
 that make up the interface to the C library, and attached to the search path
@@ -82,8 +82,10 @@ The following gives a list of currently available \emph{DynPorts}:\tabular{ll}{
 }
 
 
-As of the current implementation \emph{DynPort} files are R scripts that perform
-up to three tasks:
+As of the current implementation \emph{DynPort} files are DCF (Debian Control File)
+files which follow the same rules for R package \code{DESCRIPTION} files.
+
+The format records the following binding metadata:
 \itemize{
 \item Functions (and pointer-to-function variables) are mapped via \code{\link[=dynbind]{dynbind()}}
 and a description of the C library using a \emph{library signatures}.
@@ -94,9 +96,9 @@ union) are registered via \code{\link[=cstruct]{cstruct()}} and \code{\link[=cun
 }
 
 The file path to the \emph{DynPort} file is derived from \code{portname} per default.
-This would refer to \code{"<repo>/<portname>.R"} where \code{repo} usually refers to
-the initial \emph{DynPort} repository located at the sub-folder \code{"dynports/"} of
-the package.
+This would refer to \code{"<repo>/<portname>.dynport"} where \code{repo} usually refers
+to the initial \emph{DynPort} repository located at the sub-folder \code{"dynports/"}
+of the package.
 If \code{portfile} is given, then this value is taken as file path (usually for
 testing purpose).
 
@@ -106,11 +108,6 @@ by extracting type information from C library header files.
 
 In a future release, the DynPort format will be changed to
 a language-neutral text file document.
-For the interested reader:
-A first prototype is currently available in an FFI extension to the Lua
-programming language (see \code{luadyncall} subversion sub-tree).
-A third revision (including function types in call signatures, bitfields,
-arrays, etc..) is currently in development.
 }
 \examples{
 \dontrun{
