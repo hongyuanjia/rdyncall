@@ -390,7 +390,7 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, args ... */
           dcArgPointer(pvm, cstringValue);
         }
         break;
-        default: Rf_error("Signature type mismatch at position %d: Unknown token '%c' at argument %d.", ch, argpos); /* dummy */ return R_NilValue;
+        default: Rf_error("Signature type mismatch at position %d: Unknown token '%c' at argument %d.", argpos, ch, argpos); /* dummy */ return R_NilValue;
       }
     } else { /* ptrcnt > 0 */
       DCpointer ptrValue;
