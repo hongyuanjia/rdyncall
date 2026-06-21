@@ -53,7 +53,7 @@
 #' - Cross-platform naming and loading of shared libraries. See [dynfind()].
 #' - Binding C library functions via thin call wrappers. See [dynbind()].
 #' - Handling of foreign C pointer, array and struct/union data types. See
-#'   [packing] and [struct].
+#'   [pack()] and [cstruct()].
 #' - Dynamic wrapping of R functions as C function pointers to be used in C
 #'   callbacks. See [ccallback].
 #' - Dynamic bindings to standard and common C libraries and APIs (functions,

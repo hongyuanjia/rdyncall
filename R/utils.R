@@ -45,6 +45,13 @@
 #' with class `floatraw`.
 #' `floatraw2numeric` returns a `numeric` atomic vector.
 #'
+#' @param x object to test, convert, or pass to a pointer/string helper.
+#'
+#' @param offset integer specifying _byte offset_ starting at 0.
+#'
+#' @param n integer specifying the number of single-precision C `float` values
+#'        to allocate.
+#'
 #' @examples
 #' is.nullptr(NULL)
 #'

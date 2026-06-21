@@ -107,7 +107,7 @@
 #' If no file name extension is specified [...], the default library extension
 #' `.dll` is appended.
 #' However, the file name string can include a trailing point character (.) to
-#' indicate that the [shared library] module name has no extension.
+#' indicate that the shared library module name has no extension.
 #' When no path is specified, the function searches for loaded modules whose
 #' base name matches the base name of the module to be loaded.
 #' If the name matches, the load succeeds.

@@ -57,7 +57,7 @@ direct access to OS linker. See \code{\link[=dynload]{dynload()}}.
 \item Cross-platform naming and loading of shared libraries. See \code{\link[=dynfind]{dynfind()}}.
 \item Binding C library functions via thin call wrappers. See \code{\link[=dynbind]{dynbind()}}.
 \item Handling of foreign C pointer, array and struct/union data types. See
-\link{packing} and \link{struct}.
+\code{\link[=pack]{pack()}} and \code{\link[=cstruct]{cstruct()}}.
 \item Dynamic wrapping of R functions as C function pointers to be used in C
 callbacks. See \link{ccallback}.
 \item Dynamic bindings to standard and common C libraries and APIs (functions,

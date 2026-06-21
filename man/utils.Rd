@@ -33,6 +33,14 @@ strarrayptr(x)
 
 strptr(x)
 }
+\arguments{
+\item{x}{object to test, convert, or pass to a pointer/string helper.}
+
+\item{offset}{integer specifying \emph{byte offset} starting at 0.}
+
+\item{n}{integer specifying the number of single-precision C \code{float} values
+to allocate.}
+}
 \value{
 A logical value is returned by \code{is.nullptr()} and \code{is.externalptr()}.
 \code{as.externalptr()} and \code{offset_ptr()} returns an external pointer value.
