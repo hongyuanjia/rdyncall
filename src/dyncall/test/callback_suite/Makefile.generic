@@ -1,4 +1,4 @@
-APP      = callback_suite
+APP      = callback_suite${APP_SUFFIX}
 OBJS     = globals.o cases.o main.o
 SRCTOP   = ${VPATH}/../..
 BLDTOP   = ../..

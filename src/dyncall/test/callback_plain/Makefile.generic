@@ -1,4 +1,4 @@
-APP     = callback_plain
+APP     = callback_plain${APP_SUFFIX}
 OBJS    = callback_plain.o
 SRCTOP  = ${VPATH}/../..
 BLDTOP  = ../..

@@ -27,6 +27,8 @@ ${APP}: ${OBJS}
 
 ${TEST_U8_SO}:
 	echo 'int dynload_plain_testfunc() { return 5; }' | ${CC} ${CFLAGS} -`[ \`uname\` = Darwin ] && echo dynamiclib || echo shared` -x c - -o ${TEST_U8_SO}
+	# clang tries to be too smart, appending .exe on some platforms (e.g. *nix based mingw cross builds), despite -o being explicity
+	[ -f "${TEST_U8_SO}.exe" ] && mv "${TEST_U8_SO}.exe" "${TEST_U8_SO}" || true
 
 clean:
 	rm -f ${APP} ${OBJS} ${TEST_U8_SO}

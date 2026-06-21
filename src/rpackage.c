@@ -29,7 +29,7 @@ SEXP C_pack(SEXP ptr, SEXP offset, SEXP sig, SEXP value);
 SEXP C_unpack(SEXP ptr, SEXP offset, SEXP sig);
 
 /* rcallback.c */
-SEXP C_callback(SEXP sig, SEXP fun, SEXP rho, SEXP mode);
+SEXP C_callback(SEXP sig, SEXP fun, SEXP rho);
 
 /* rutils.c */
 SEXP C_asexternalptr(SEXP v);

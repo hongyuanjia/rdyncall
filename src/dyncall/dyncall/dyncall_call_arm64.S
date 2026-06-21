@@ -38,31 +38,30 @@ BEGIN_ASM
 */
 
 TEXTAREA
-//
-// DynCall Back-End arm64 
-// 
-// Supported ABIs:
-// - 'ARM 64-bit AArch64 PCS' (@dadler: work in progress)
-// 
-// Useful Links:
-// - http://lxr.free-electrons.com/source/arch/arm64/kernel/stacktrace.c
+/*
+   DynCall Back-End arm64 
+   
+   Supported ABIs:
+   - 'ARM 64-bit AArch64 PCS' (@dadler: work in progress)
+*/
 
 GLOBAL_C(dcCall_arm64)
 ENTRY_C(dcCall_arm64)
 ALIGN(2)
 
-// input:
-//   x0: target   (address of target)
-//   x1: data     (address of stack copy data)
-//   x2: size     (number of 'pair' 16-byte units)
-//   x3: regdata  (address of register data)
+/* input:
+     x0: target   (address of target)
+     x1: data     (address of stack copy data)
+     x2: size     (number of 'pair' 16-byte units)
+     x3: regdata  (address of register data)
+*/
 
-// prolog:
-	
-	stp  x29, x30, [sp, #-16]!	// allocate frame
+/* prolog: */
+
+	stp  x29, x30, [sp, #-16]! /* allocate frame */
 	mov  x29,  sp
 
-// load 64-bit floating-point registers
+/* load 64-bit floating-point registers */
         
 	ldr  d0,  [x3,#0 ]
 	ldr  d1,  [x3,#8 ]
@@ -73,35 +72,35 @@ ALIGN(2)
 	ldr  d6,  [x3,#48]
 	ldr  d7,  [x3,#56]
 
-// copy to stack
-	
-	sub  sp, sp, x2		// create call-frame
+/* copy to stack */
 
-	eor  x4, x4, x4		// x4: cnt = 0
+	sub  sp, sp, x2            /* create call-frame */
 
-	mov  x5, x1		// x5: read pointer = data
-	mov  x6, sp		// x6: write pointer = sp
+	eor  x4, x4, x4            /* x4: cnt = 0 */
+
+	mov  x5, x1                /* x5: read pointer = data */
+	mov  x6, sp                /* x6: write pointer = sp */
 
 LABELDEF(next)
 	cmp  x4, x2
 	b.ge  LABELUSE(done)
-	
-	ldp  x7, x9, [x5], #16	// get pair from data
-	stp  x7, x9, [x6], #16	// put to stack
-	add  x4, x4, 16	        // advance 16 bytes
+
+	ldp  x7, x9, [x5], #16     /* get pair from data */
+	stp  x7, x9, [x6], #16     /* put to stack */
+	add  x4, x4, 16            /* advance 16 bytes */
 
 	b   LABELUSE(next)
 
 LABELDEF(done)
-	
-// rescue temp int registers
 
-	mov  x9 , x0			// x9: target
-	add  x10, x3, 64                // x3: integer reg buffer
+/* rescue temp int registers */
 
-// load 64-bit integer registers ( 8 x 64-bit )
-	
-	// load register set
+	mov  x9 , x0               /* x9: target */
+	add  x10, x3, 64           /* x3: integer reg buffer */
+
+/* load 64-bit integer registers ( 8 x 64-bit ) */
+
+	/* load register set */
 
 	ldr  x0, [x10, #0]
 	ldr  x1, [x10, #8]
@@ -111,12 +110,12 @@ LABELDEF(done)
 	ldr  x5, [x10, #40]
 	ldr  x6, [x10, #48]
 	ldr  x7, [x10, #56]
-	
-// call target:
-	
+
+/* call target: */
+
 	blr  x9
 
-// epilog:
+/* epilog: */
 
 	mov  sp,  x29
 	ldp  x29, x30, [sp], 16

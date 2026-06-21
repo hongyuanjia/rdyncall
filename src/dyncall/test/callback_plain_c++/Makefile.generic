@@ -1,4 +1,4 @@
-APP       = callback_plain_c++
+APP       = callback_plain_c++${APP_SUFFIX}
 OBJS      = test_main.o
 SRCTOP    = ${VPATH}/../..
 BLDTOP    = ../..

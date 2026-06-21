@@ -171,7 +171,7 @@ bugs:
 
 missing nice-to-have implementations (descending priority):
 -----------------------------------------------------------
-- riscv
+- riscv32 and riscv128
 - itanium
 - superh/j-core
 - 68k, 88k, 6502, etc.

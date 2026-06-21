@@ -34,15 +34,14 @@
 
 #include "dynload.h"
 #include "dynload_alloc.h"
-#include "../autovar/autovar_ARCH.h"
-#include "../autovar/autovar_OS.h"
+#include "../dyncall/dyncall_macros.h"
 
 #include <mach-o/dyld.h>
 #include <mach-o/nlist.h>
 #include <dlfcn.h>
 #include <string.h>
 
-#if defined(ARCH_X64) || defined(ARCH_PPC64) || defined(ARCH_ARM64) /*@@@ use dyncall_macros.h*/
+#if defined(DC__Arch_AMD64) || defined(DC__Arch_PPC64) || defined(DC__Arch_ARM64)
 #define MACH_HEADER_TYPE mach_header_64
 #define MACH_HEADER_MAGIC_NR MH_MAGIC_64
 #define SEGMEND_COMMAND_ID LC_SEGMENT_64
@@ -228,7 +227,7 @@ const char* dlSymsName(DLSyms* pSyms, int index)
 
 	/* Return name - handles lookup of indirect names. */
 	return &pSyms->pStringTable[(t == N_INDR ? nl->n_value : nl->n_un.n_strx)
-#if defined(OS_Darwin)
+#if defined(DC__OS_Darwin)
 		+ 1 /* Skip '_'-prefix */
 #endif
 	];

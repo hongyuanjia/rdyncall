@@ -35,16 +35,13 @@ typedef union {
 struct DCArgs
 {
   /* buffers and stack-pointer: */
-
   uint64_t  I[8];
   DCFPU_t   F[8];
   uint8_t*  sp;
-  
+
   /* counters: */
   int i;
   int f;
-  int s;
-  int reserved;
 };
 
 static inline uint8_t* align(uint8_t* p, size_t v)
@@ -53,7 +50,7 @@ static inline uint8_t* align(uint8_t* p, size_t v)
 }
 
 
-DClonglong dcbArgLongLong (DCArgs* p) 
+DClonglong dcbArgLongLong(DCArgs* p)
 {
   if (p->i < 8) {
     return p->I[p->i++];
@@ -65,8 +62,10 @@ DClonglong dcbArgLongLong (DCArgs* p)
     return value;
   }
 }
-DCdouble  dcbArgDouble (DCArgs* p) {
-  if (p->f < 8) { 
+
+DCdouble dcbArgDouble(DCArgs* p)
+{
+  if (p->f < 8) {
     return p->F[p->f++].d.value;
   } else {
     DCdouble value;
@@ -76,7 +75,9 @@ DCdouble  dcbArgDouble (DCArgs* p) {
     return value;
   }
 }
-DCfloat   dcbArgFloat  (DCArgs* p) {
+
+DCfloat dcbArgFloat(DCArgs* p)
+{
   if (p->f < 8) {
     return p->F[p->f++].f.value;
   } else {
@@ -88,7 +89,8 @@ DCfloat   dcbArgFloat  (DCArgs* p) {
   }
 }
 
-DClong    dcbArgLong   (DCArgs* p) { 
+DClong dcbArgLong(DCArgs* p)
+{
   if (p->i < 8) {
     return (DClong) p->I[p->i++];
   } else {
@@ -100,7 +102,8 @@ DClong    dcbArgLong   (DCArgs* p) {
   }
 }
 
-DCint     dcbArgInt    (DCArgs* p) { 
+DCint dcbArgInt(DCArgs* p)
+{
   if (p->i < 8) {
     return (DCint) p->I[p->i++];
   } else {
@@ -112,7 +115,8 @@ DCint     dcbArgInt    (DCArgs* p) {
   }
 }
 
-DCshort   dcbArgShort  (DCArgs* p) { 
+DCshort dcbArgShort(DCArgs* p)
+{
   if (p->i < 8) {
     return (DCshort) p->I[p->i++];
   } else {
@@ -124,7 +128,8 @@ DCshort   dcbArgShort  (DCArgs* p) {
   }
 }
 
-DCchar    dcbArgChar   (DCArgs* p) { 
+DCchar dcbArgChar(DCArgs* p)
+{
   if (p->i < 8) {
     return (DCchar) p->I[p->i++];
   } else {
@@ -136,7 +141,8 @@ DCchar    dcbArgChar   (DCArgs* p) {
   }
 }
 
-DCbool    dcbArgBool   (DCArgs* p) { 
+DCbool dcbArgBool(DCArgs* p)
+{
   if (p->i < 8) {
     return (DCbool) p->I[p->i++];
   } else {
@@ -148,8 +154,8 @@ DCbool    dcbArgBool   (DCArgs* p) {
   }
 }
 
-DCpointer dcbArgPointer(DCArgs* p) { 
-  return (DCpointer) dcbArgLongLong(p); 
+DCpointer dcbArgPointer(DCArgs* p) {
+  return (DCpointer) dcbArgLongLong(p);
 }
 
 DCuint      dcbArgUInt     (DCArgs* p) { return (DCuint)      dcbArgInt(p);      }

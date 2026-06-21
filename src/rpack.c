@@ -37,7 +37,7 @@ static char* C_dataptr(SEXP x, SEXP off, size_t element_size)
     default: error("invalid object type"); break;
   }
   if (p == NULL) error("NULL address pointer");
-  if (o < 0 || o+element_size > s) error("offset %d is out-of-bounds of the R object (max size %d)", o, s);
+  if (o < 0 || o+element_size > s) error("offset %td is out-of-bounds of the R object (max size %td)", o, s);
   return p + o; 
 }
 

@@ -20,27 +20,35 @@ on:
 
 name: R-CMD-check
 
+permissions: read-all
+
 jobs:
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
 
-    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }}, ${{ matrix.config.id }})
 
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {os: macos-latest,    r: 'release'}
-          - {os: windows-latest,  r: 'release'}
-          - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
-          - {os: ubuntu-latest,   r: 'release'}
+          - {os: macos-latest,    r: 'release', id: 'macos-arm64'}
+          - {os: macos-15-intel,  r: 'release', id: 'macos-intel'}
+          - {os: windows-latest,  r: 'release', id: 'windows-release'}
+          - {os: windows-latest,  r: 'oldrel-4', id: 'windows-oldrel-4'}
+          - {os: ubuntu-latest,   r: 'devel', id: 'ubuntu-devel', http-user-agent: 'release'}
+          - {os: ubuntu-latest,   r: 'release', id: 'ubuntu-release'}
+          - {os: ubuntu-latest,   r: 'oldrel-1', id: 'ubuntu-oldrel-1'}
+          - {os: ubuntu-latest,   r: 'oldrel-4', id: 'ubuntu-oldrel-4'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
+
+      - uses: r-lib/actions/setup-pandoc@v2
 
       - uses: r-lib/actions/setup-tinytex@v2
       - name: Install additional LaTeX packages for building vignettes
@@ -61,6 +69,8 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
+          args: 'c("--no-manual")'
+          build_args: '"--no-manual"'
 
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
       - name: Setup tmate session

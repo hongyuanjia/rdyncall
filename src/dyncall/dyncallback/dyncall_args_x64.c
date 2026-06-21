@@ -6,7 +6,7 @@
  Description: Callback's Arguments VM - Implementation for x64
  License:
 
-   Copyright (c) 2007-2022 Daniel Adler <dadler@uni-goettingen.de>,
+   Copyright (c) 2007-2024 Daniel Adler <dadler@uni-goettingen.de>,
                            Tassilo Philipp <tphilipp@potion-studios.com>
 
    Permission to use, copy, modify, and distribute this software for any
@@ -25,10 +25,29 @@
 
 
 
-#include "dyncall_args_x64.h"
+#include "dyncall_args.h"
+#include "dyncall_callvm_x64.h" /* reuse DCRegCount_x64 and DCRegData_x64_s */
+#include "dyncall_aggregate.h"
 
 #include <assert.h>
 #include <string.h>
+
+
+struct DCArgs
+{
+  /* state */
+  int64*          stack_ptr;              /* offset 0 */
+  DCRegCount_x64  reg_count;              /* offset 8, size:win 4, size:*nix 8 */
+#if defined(DC_WINDOWS)
+  int             pad_w;                  /* alignment helper for win/x64 */
+#endif
+  int             aggr_return_register;   /* offset 16 */
+  int             pad;                    /* offset 20 */
+  DCaggr**        aggrs;                  /* offset 24 */
+
+  /* reg data */
+  DCRegData_x64_s reg_data;               /* offset 32 */
+};
 
 
 static int64* arg_i64(DCArgs* args)

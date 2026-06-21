@@ -10,5 +10,9 @@ Description: Provides a cross-platform framework for dynamic binding of C librar
   Dynamic bindings to shared C libraries are data-driven by cross-platform binding specification using a compact plain text format; an initial repository of bindings to a couple of common C libraries ('OpenGL', 'SDL2', 'Expat', 'glew', 'CUDA', 'OpenCL', 'ODE', 'R') comes with the package.
   The package includes a variety of technology demos and OS-specific notes for installation of shared libraries.
 License: file LICENSE
-URL: https://dyncall.org
+URL: https://github.com/hongyuanjia/rdyncall, https://dyncall.org
+BugReports: https://github.com/hongyuanjia/rdyncall/issues
 Suggests: tinytest
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Encoding: UTF-8

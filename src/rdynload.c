@@ -5,6 +5,7 @@
  **/
 
 #include <Rinternals.h>
+#include <R_ext/RS.h>
 #include "dynload.h"
 
 /** ---------------------------------------------------------------------------
@@ -72,13 +73,35 @@ SEXP C_dynsym(SEXP libh, SEXP symname_x, SEXP protectlib)
 
 SEXP C_dynpath(SEXP libh)
 {
+  int size;
+  /* should work for most cases */
   static char buf[1024];
   void* libHandle;
   SEXP ans;
 
+  ans = PROTECT(Rf_allocVector(STRSXP, 1));
+
   libHandle = R_ExternalPtrAddr(libh);
-  dlGetLibraryPath(libHandle, buf, 1024);
-  ans = Rf_mkString(buf);
+  size = dlGetLibraryPath(libHandle, buf, 1024);
+  if (size >= 1) {
+    if (size <= 1024) {
+      SET_STRING_ELT(ans, 0, Rf_mkCharCE(buf, CE_UTF8));
+    } else {
+      char * newbuf;
+      newbuf = R_Calloc(size, char);
+      size = dlGetLibraryPath(libHandle, newbuf, size);
+      if (size <= 1) {
+        SET_STRING_ELT(ans, 0, NA_STRING);
+      } else {
+        SET_STRING_ELT(ans, 0, Rf_mkCharCE(newbuf, CE_UTF8));
+      }
+      R_Free(newbuf);
+    }
+  } else {
+    SET_STRING_ELT(ans, 0, NA_STRING);
+  }
+
+  UNPROTECT(1);
   return ans;
 }
 
@@ -115,15 +138,8 @@ SEXP C_dynlist(SEXP libh)
   ans = PROTECT(Rf_allocVector(STRSXP, count));
   for (i = 0; i < count; i++) {
     name = dlSymsName(pSyms, i);
-    /* it is possible that name is NULL at some indices */
-    /* in this case, return an empty string */
-    if (!name) {
-      SET_STRING_ELT(ans, i, Rf_mkChar(""));
-    } else {
-      SET_STRING_ELT(ans, i, Rf_mkChar(name));
-    }
+    SET_STRING_ELT(ans, i, name ? Rf_mkChar(name) : NA_STRING);
   }
-
   dlSymsCleanup(pSyms);
 
   UNPROTECT(1);

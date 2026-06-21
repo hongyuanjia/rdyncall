@@ -4,9 +4,13 @@
 ^README\.Rmd$
 ^README-.*\.png$
 ^src/dyncall/test$
+^src/dyncall/\.hg$
 ^\.github$
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
 ^src/compile_commands\.json$
 ^\.cache$
+^src/dyncall/dyncall/libdyncall_s\.a$
+^src/dyncall/dyncallback/libdyncallback_s\.a$
+^src/dyncall/dynload/libdynload_s\.a$

@@ -1,4 +1,4 @@
-APP     = call_suite_aggrs
+APP     = call_suite_aggrs${APP_SUFFIX}
 OBJS    = globals.o cases.o main.o
 SRCTOP  = ${VPATH}/../..
 BLDTOP  = ../..
