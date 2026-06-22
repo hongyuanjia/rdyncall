@@ -71,8 +71,9 @@ dyncall_aggregate_layout <- function(name, envir = parent.frame(), seen = charac
     }
 
     size <- as.integer(info$size)
+    alignment <- as.integer(info$align)
     offsets <- as.integer(fields$offset)
-    if (is.na(size) || size < 1L || anyNA(offsets)) {
+    if (is.na(size) || size < 1L || is.na(alignment) || alignment < 1L || anyNA(offsets)) {
         stop("aggregate type '", name, "' does not contain a complete memory layout", call. = FALSE)
     }
 
@@ -102,6 +103,7 @@ dyncall_aggregate_layout <- function(name, envir = parent.frame(), seen = charac
         name = info$name,
         kind = info$type,
         size = size,
+        align = alignment,
         fields = data.frame(
             type = field_types,
             offset = offsets,

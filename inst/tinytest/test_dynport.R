@@ -55,6 +55,14 @@ expect_dynport_portfile_error("Struct: test{ab}", "type name")
 expect_dynport_portfile_error("Struct: test{ii}a", "number")
 expect_dynport_portfile_error("Struct: test{i} a b", "number")
 expect_dynport_portfile_error("Struct: test{ii} a b", "unexpected")
+expect_dynport_portfile_error("Struct: test{C} c @pack(3)", "power-of-two")
+expect_dynport_portfile_error("Struct: test{C} c @packed @pack(1)", "duplicate")
+expect_dynport_portfile_error("Struct: test{C} c @bytepack", "unknown")
+
+packed_struct <- rdyncall:::dynport_parse_struct("PackedDyn{Cd} c d @packed;")
+expect_equal(packed_struct$PackedDyn$size, 9L)
+expect_equal(packed_struct$PackedDyn$align, 1L)
+expect_equal(packed_struct$PackedDyn$fields$offset, c(0L, 1L))
 
 # union
 expect_dynport_portfile_error(c("Union:", "  "), "unexpected")
@@ -68,6 +76,11 @@ expect_dynport_portfile_error("Union: test{ab}", "type name")
 expect_dynport_portfile_error("Union: test{ii}a", "number")
 expect_dynport_portfile_error("Union: test{i} a b", "number")
 expect_dynport_portfile_error("Union: test{ii} a b", "unexpected")
+expect_dynport_portfile_error("Union: test{C} c @align(3)", "power-of-two")
+
+aligned_union <- rdyncall:::dynport_parse_union("AlignedDynUnion{Ci} c i @align(8);")
+expect_equal(aligned_union$AlignedDynUnion$size, 8L)
+expect_equal(aligned_union$AlignedDynUnion$align, 8L)
 
 # function
 expect_dynport_portfile_error(c("Function:", "  "), "unexpected")

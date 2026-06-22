@@ -528,18 +528,21 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
         if (!len || len > 2L) {
             issue_error(name, "Missing '}' in specification")
         } else if (len == 1L) {
-            fields <- NULL
+            field_layout <- list(fields = NULL, layout = aggregate_layout())
         } else {
             # TODO: invalid field names?
-            fields <- parse_field_names(tail[[2L]])
+            field_layout <- tryCatch(
+                parse_aggregate_fields(tail[[2L]]),
+                error = function(e) issue_error(name, conditionMessage(e))
+            )
             # this is the case when there are extra '}'
-            if (!length(fields)) {
+            if (!length(field_layout$fields)) {
                 issue_error(name, "Extra '}' in specification")
             }
         }
 
         # parse field types
-        parsed <- dynport_parse_types(kind, tail[[1L]], envir)
+        parsed <- dynport_parse_types(kind, tail[[1L]], envir, layout = field_layout$layout)
 
         # error if failed to parse field types
         if (!is.null(parsed) && !length(parsed)) {
@@ -558,10 +561,10 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
         }
 
         # check imbalance between signatures and field names
-        if (length(parsed$type) != length(fields)) {
+        if (length(parsed$type) != length(field_layout$fields)) {
             issue_error(name,
                 sprintf("Imbalance number of field types (%s) and names (%s) found",
-                    sQuote(length(parsed$type)), sQuote(length(fields))
+                    sQuote(length(parsed$type)), sQuote(length(field_layout$fields))
                 )
             )
         }
@@ -571,7 +574,7 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
         out[[i]] <- typeinfo(
             name = name, type = kind,
             size = parsed$size, align = parsed$align,
-            fields = make_field_info(fields, parsed$type, parsed$offset, parsed$array_len)
+            fields = make_field_info(field_layout$fields, parsed$type, parsed$offset, parsed$array_len)
         )
     }
 
@@ -580,9 +583,9 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
 }
 
 dynport_parse_types <- function(kind = c("struct", "union"), signature, envir = parent.frame(),
-                                allow_arrays = TRUE) {
+                                allow_arrays = TRUE, layout = aggregate_layout()) {
     parse_aggregate_types(kind, signature, envir = envir, allow_arrays = allow_arrays,
-        on_error = "return")
+        layout = layout, on_error = "return")
 }
 
 dynport_parse_enum <- function(value, lnum, key) {

@@ -4,6 +4,22 @@
 #define RDYNCALL_TEST_EXPORT __attribute__((visibility("default")))
 #endif
 
+#include <stddef.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#define RDYNCALL_TEST_PACKED __attribute__((packed))
+#define RDYNCALL_TEST_ALIGNED_8 __attribute__((aligned(8)))
+#define RDYNCALL_TEST_ALIGNOF(TYPE) __alignof__(TYPE)
+#elif defined(_MSC_VER)
+#define RDYNCALL_TEST_PACKED
+#define RDYNCALL_TEST_ALIGNED_8 __declspec(align(8))
+#define RDYNCALL_TEST_ALIGNOF(TYPE) __alignof(TYPE)
+#else
+#define RDYNCALL_TEST_PACKED
+#define RDYNCALL_TEST_ALIGNED_8
+#define RDYNCALL_TEST_ALIGNOF(TYPE) sizeof(TYPE)
+#endif
+
 typedef struct rdyncall_test_color_ {
   unsigned char r;
   unsigned char g;
@@ -87,6 +103,27 @@ typedef struct rdyncall_test_char_double_ {
   unsigned char c;
   double d;
 } rdyncall_test_char_double;
+
+typedef struct RDYNCALL_TEST_PACKED rdyncall_test_packed_char_double_ {
+  unsigned char c;
+  double d;
+} rdyncall_test_packed_char_double;
+
+#pragma pack(push, 4)
+typedef struct rdyncall_test_pack4_char_double_ {
+  unsigned char c;
+  double d;
+} rdyncall_test_pack4_char_double;
+#pragma pack(pop)
+
+typedef struct RDYNCALL_TEST_ALIGNED_8 rdyncall_test_aligned_char_ {
+  unsigned char c;
+} rdyncall_test_aligned_char;
+
+typedef struct RDYNCALL_TEST_PACKED RDYNCALL_TEST_ALIGNED_8 rdyncall_test_packed_aligned_char_double_ {
+  unsigned char c;
+  double d;
+} rdyncall_test_packed_aligned_char_double;
 
 typedef union rdyncall_test_value_union_ {
   int i;
@@ -281,6 +318,117 @@ RDYNCALL_TEST_EXPORT double rdyncall_test_char_double_sum(rdyncall_test_char_dou
 RDYNCALL_TEST_EXPORT rdyncall_test_char_double rdyncall_test_make_char_double(unsigned char c, double d)
 {
   rdyncall_test_char_double out;
+  out.c = c;
+  out.d = d;
+  return out;
+}
+
+RDYNCALL_TEST_EXPORT int rdyncall_test_packed_char_double_size(void)
+{
+  return (int) sizeof(rdyncall_test_packed_char_double);
+}
+
+RDYNCALL_TEST_EXPORT int rdyncall_test_packed_char_double_align(void)
+{
+  return (int) RDYNCALL_TEST_ALIGNOF(rdyncall_test_packed_char_double);
+}
+
+RDYNCALL_TEST_EXPORT int rdyncall_test_packed_char_double_offset_d(void)
+{
+  return (int) offsetof(rdyncall_test_packed_char_double, d);
+}
+
+RDYNCALL_TEST_EXPORT double rdyncall_test_packed_char_double_sum(rdyncall_test_packed_char_double x)
+{
+  return (double) x.c + x.d;
+}
+
+RDYNCALL_TEST_EXPORT rdyncall_test_packed_char_double rdyncall_test_make_packed_char_double(unsigned char c, double d)
+{
+  rdyncall_test_packed_char_double out;
+  out.c = c;
+  out.d = d;
+  return out;
+}
+
+RDYNCALL_TEST_EXPORT int rdyncall_test_pack4_char_double_size(void)
+{
+  return (int) sizeof(rdyncall_test_pack4_char_double);
+}
+
+RDYNCALL_TEST_EXPORT int rdyncall_test_pack4_char_double_align(void)
+{
+  return (int) RDYNCALL_TEST_ALIGNOF(rdyncall_test_pack4_char_double);
+}
+
+RDYNCALL_TEST_EXPORT int rdyncall_test_pack4_char_double_offset_d(void)
+{
+  return (int) offsetof(rdyncall_test_pack4_char_double, d);
+}
+
+RDYNCALL_TEST_EXPORT double rdyncall_test_pack4_char_double_sum(rdyncall_test_pack4_char_double x)
+{
+  return (double) x.c + x.d;
+}
+
+RDYNCALL_TEST_EXPORT rdyncall_test_pack4_char_double rdyncall_test_make_pack4_char_double(unsigned char c, double d)
+{
+  rdyncall_test_pack4_char_double out;
+  out.c = c;
+  out.d = d;
+  return out;
+}
+
+RDYNCALL_TEST_EXPORT int rdyncall_test_aligned_char_size(void)
+{
+  return (int) sizeof(rdyncall_test_aligned_char);
+}
+
+RDYNCALL_TEST_EXPORT int rdyncall_test_aligned_char_align(void)
+{
+  return (int) RDYNCALL_TEST_ALIGNOF(rdyncall_test_aligned_char);
+}
+
+RDYNCALL_TEST_EXPORT int rdyncall_test_aligned_char_offset_c(void)
+{
+  return (int) offsetof(rdyncall_test_aligned_char, c);
+}
+
+RDYNCALL_TEST_EXPORT int rdyncall_test_aligned_char_value(rdyncall_test_aligned_char x)
+{
+  return (int) x.c;
+}
+
+RDYNCALL_TEST_EXPORT rdyncall_test_aligned_char rdyncall_test_make_aligned_char(unsigned char c)
+{
+  rdyncall_test_aligned_char out;
+  out.c = c;
+  return out;
+}
+
+RDYNCALL_TEST_EXPORT int rdyncall_test_packed_aligned_char_double_size(void)
+{
+  return (int) sizeof(rdyncall_test_packed_aligned_char_double);
+}
+
+RDYNCALL_TEST_EXPORT int rdyncall_test_packed_aligned_char_double_align(void)
+{
+  return (int) RDYNCALL_TEST_ALIGNOF(rdyncall_test_packed_aligned_char_double);
+}
+
+RDYNCALL_TEST_EXPORT int rdyncall_test_packed_aligned_char_double_offset_d(void)
+{
+  return (int) offsetof(rdyncall_test_packed_aligned_char_double, d);
+}
+
+RDYNCALL_TEST_EXPORT double rdyncall_test_packed_aligned_char_double_sum(rdyncall_test_packed_aligned_char_double x)
+{
+  return (double) x.c + x.d;
+}
+
+RDYNCALL_TEST_EXPORT rdyncall_test_packed_aligned_char_double rdyncall_test_make_packed_aligned_char_double(unsigned char c, double d)
+{
+  rdyncall_test_packed_aligned_char_double out;
   out.c = c;
   out.d = d;
   return out;
