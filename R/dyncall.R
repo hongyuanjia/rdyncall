@@ -77,6 +77,15 @@ dyncall_aggregate_layout <- function(name, envir = parent.frame(), seen = charac
     }
 
     field_types <- as.character(fields$type)
+    array_lens <- if ("array_len" %in% names(fields)) {
+        as.integer(fields$array_len)
+    } else {
+        rep.int(1L, length(field_types))
+    }
+    if (length(array_lens) != length(field_types) || anyNA(array_lens) || any(array_lens < 1L)) {
+        stop("aggregate type '", name, "' contains invalid fixed array lengths", call. = FALSE)
+    }
+
     supported <- vapply(field_types, dyncall_aggregate_field_is_supported, logical(1L))
     if (any(!supported)) {
         stop("unsupported aggregate field type '", field_types[which(!supported)[[1L]]], "'", call. = FALSE)
@@ -96,6 +105,7 @@ dyncall_aggregate_layout <- function(name, envir = parent.frame(), seen = charac
         fields = data.frame(
             type = field_types,
             offset = offsets,
+            array_len = array_lens,
             stringsAsFactors = FALSE
         ),
         field_layouts = field_layouts
@@ -172,7 +182,11 @@ dyncall_aggregate_layouts <- function(signature, envir = parent.frame()) {
 
 dyncall_call <- function(callvm, address, signature, ..., envir = parent.frame()) {
     aggregates <- dyncall_aggregate_layouts(signature, envir = envir)
-    .External("C_dyncall", callvm, address, signature, aggregates, ..., PACKAGE = "rdyncall")
+    ans <- .External("C_dyncall", callvm, address, signature, aggregates, ..., PACKAGE = "rdyncall")
+    if (!is.null(aggregates$return) && inherits(ans, "struct")) {
+        attr(ans, "typeinfo") <- get_typeinfo(aggregates$return$name, envir = envir)
+    }
+    ans
 }
 
 # ----------------------------------------------------------------------------
@@ -268,7 +282,8 @@ dyncall_call <- function(callvm, address, signature, ..., envir = parent.frame()
 #' Aggregate by-value signatures support `struct` and `union` type
 #' information registered with [cstruct()] or [cunion()]. Aggregate arguments and
 #' returns are passed through dyncall aggregate descriptors, including nested
-#' aggregate fields that are already represented in the registered typeinfo.
+#' aggregate and fixed-size array fields that are already represented in the
+#' registered typeinfo.
 #'
 #' The last typed pointer rows of the table above refer to _typed pointer_ signatures.
 #' If they appear as a return type signature, the external pointer returned is a

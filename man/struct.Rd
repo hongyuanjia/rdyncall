@@ -77,6 +77,9 @@ The formats for both types are described next:
 \strong{Structure type signatures} describe the layout of aggregate \code{struct} C
 data types.
 Type Signatures are used within the \code{field-types}.
+Fixed-size array fields are written as a type signature followed by \verb{[N]},
+for example \code{C[4]} for \verb{unsigned char[4]} or \verb{<Point>[2]} for two nested
+aggregate values.
 \code{field-names} consists of space separated identifier names and should match
 the number of fields.
 
@@ -99,6 +102,7 @@ The corresponding structure type signature string is:
 \strong{Union type signatures} describe the components of the \code{union} C
 data type.
 Type signatures are used within the \code{field-types}.
+Fixed-size array fields use the same \verb{[N]} suffix as structure fields.
 \code{field-names} consists of space separated identifier names and should match
 the number of fields.
 

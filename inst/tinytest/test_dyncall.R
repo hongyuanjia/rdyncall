@@ -179,6 +179,17 @@ for (n in c(1L, 2L, 4L, 8L, 9L, 16L, 17L)) {
     expect_repeated(ret, info, "C", as.integer(10L + seq_len(n) - 1L))
 }
 
+# Fixed array fields pass the same aggregate descriptor as C arrays.
+cstruct("ByteArray4{C[4]}b;")
+byte_array4 <- cdata(ByteArray4)
+byte_array4$b <- 1:4
+byte_array4_sum <- dynsym(aggregate_fixture, "rdyncall_test_bytes4_sum")
+expect_equal(dyncall(byte_array4_sum, "<ByteArray4>)i", byte_array4), 10L)
+make_byte_array4 <- dynsym(aggregate_fixture, "rdyncall_test_make_bytes4")
+byte_array4_ret <- dyncall(make_byte_array4, "C)<ByteArray4>", 20L)
+expect_struct_raw(byte_array4_ret, "ByteArray4")
+expect_equal(byte_array4_ret$b, 20:23)
+
 # Float and double HFA matrices cover 1-4 register HFA cases plus the 5-element fallback path.
 for (case in list(list(prefix = "Float", kind = "float", sig = "f", base = 2),
                   list(prefix = "Double", kind = "double", sig = "d", base = 20))) {
@@ -198,6 +209,17 @@ for (case in list(list(prefix = "Float", kind = "float", sig = "f", base = 2),
         expect_repeated(ret, info, case$sig, values)
     }
 }
+
+# Fixed float arrays preserve ARM64 homogeneous floating-point aggregate handling.
+cstruct("FloatArray3{f[3]}v;")
+float_array3 <- cdata(FloatArray3)
+float_array3$v <- c(2, 3, 4)
+float_array3_sum <- dynsym(aggregate_fixture, "rdyncall_test_float3_sum")
+expect_equal(dyncall(float_array3_sum, "<FloatArray3>)d", float_array3), 9)
+make_float_array3 <- dynsym(aggregate_fixture, "rdyncall_test_make_float3")
+float_array3_ret <- dyncall(make_float_array3, "f)<FloatArray3>", 5)
+expect_struct_raw(float_array3_ret, "FloatArray3")
+expect_equal(float_array3_ret$v, c(5, 6, 7))
 
 # Mixed non-HFA aggregates make sure field order and padding stay visible to the backend.
 cstruct("FloatInt{fi}f i;")

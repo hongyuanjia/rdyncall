@@ -47,6 +47,7 @@ List object tagged as S3 class \code{typeinfo} with the following named entries
 \code{name} \tab field name\cr
 \code{type} \tab type name\cr
 \code{offset} \tab byte offset (starts counted from 0)\cr
+\code{array_len} \tab fixed array length, or 1 for scalar fields\cr
 }
 }
 }

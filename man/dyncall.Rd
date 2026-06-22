@@ -145,7 +145,8 @@ types.\tabular{llll}{
 Aggregate by-value signatures support \code{struct} and \code{union} type
 information registered with \code{\link[=cstruct]{cstruct()}} or \code{\link[=cunion]{cunion()}}. Aggregate arguments and
 returns are passed through dyncall aggregate descriptors, including nested
-aggregate fields that are already represented in the registered typeinfo.
+aggregate and fixed-size array fields that are already represented in the
+registered typeinfo.
 
 The last typed pointer rows of the table above refer to \emph{typed pointer} signatures.
 If they appear as a return type signature, the external pointer returned is a
