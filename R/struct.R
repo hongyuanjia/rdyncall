@@ -65,6 +65,7 @@
 #'         \code{name} \tab field name\cr
 #'         \code{type} \tab type name\cr
 #'         \code{offset} \tab byte offset (starts counted from 0)\cr
+#'         \code{array_len} \tab fixed array length, or 1 for scalar fields\cr
 #'     }
 #' }
 #'
@@ -146,12 +147,12 @@ align <- function(offset, alignment) {
 # ----------------------------------------------------------------------------
 # field information (structures and unions)
 
-make_field_info <- function(field_names, types, offsets) {
+make_field_info <- function(field_names, types, offsets, array_len = rep.int(1L, length(types))) {
     if (is.null(field_names)) field_names <- character()
     if (length(types) != length(field_names)) {
         stop("number of field types and names does not match")
     }
-    data.frame(name = field_names, type = I(types), offset = offsets)
+    data.frame(name = field_names, type = I(types), offset = offsets, array_len = array_len)
 }
 
 parse_field_names <- function(x) {
@@ -160,51 +161,163 @@ parse_field_names <- function(x) {
     strsplit(x, "[ \n\t]+")[[1L]]
 }
 
+parse_type_error <- function(pos, type = NULL, reason = NULL) {
+    res <- list()
+    attr(res, "pos") <- pos
+    if (!is.null(type)) attr(res, "type") <- type
+    if (!is.null(reason)) attr(res, "reason") <- reason
+    res
+}
+
+parse_array_suffix <- function(signature, i, token_start) {
+    n <- nchar(signature)
+    array_len <- 1
+
+    while (i <= n && substr(signature, i, i) == "[") {
+        close <- regexpr("]", substr(signature, i + 1L, n), fixed = TRUE)[[1L]]
+        if (close < 0L) {
+            return(parse_type_error(c(token_start, n), reason = "array"))
+        }
+
+        close <- i + close
+        len <- substr(signature, i + 1L, close - 1L)
+        if (!grepl("^[1-9][0-9]*$", len)) {
+            return(parse_type_error(c(i, close), reason = "array"))
+        }
+
+        len <- suppressWarnings(as.integer(len))
+        if (is.na(len) || len < 1L || array_len * len > .Machine$integer.max) {
+            return(parse_type_error(c(i, close), reason = "array"))
+        }
+
+        array_len <- array_len * len
+        i <- close + 1L
+    }
+
+    list(array_len = as.integer(array_len), next_index = i)
+}
+
+parse_type_token <- function(signature, start) {
+    n <- nchar(signature)
+    i <- start
+
+    while (i <= n && substr(signature, i, i) == "*") {
+        i <- i + 1L
+    }
+
+    if (i > n) {
+        type_end <- n
+        i <- n + 1L
+    } else if (substr(signature, i, i) == "<") {
+        i <- i + 1L
+        while (i <= n && substr(signature, i, i) != ">") {
+            i <- i + 1L
+        }
+        if (i > n) {
+            return(parse_type_error(c(start, i)))
+        }
+        type_end <- i
+        i <- i + 1L
+    } else {
+        type_end <- i
+        i <- i + 1L
+    }
+
+    array <- parse_array_suffix(signature, i, start)
+    if (!is.null(attr(array, "pos"))) return(array)
+
+    list(type = substr(signature, start, type_end), array_len = array$array_len, next_index = array$next_index)
+}
+
+parse_aggregate_types <- function(kind = c("struct", "union"), signature,
+                                  envir = parent.frame(), allow_arrays = TRUE,
+                                  on_error = c("stop", "return")) {
+    kind <- match.arg(kind)
+    on_error <- match.arg(on_error)
+    signature <- trimws(signature)
+
+    fail <- function(pos, type = NULL, reason = NULL) {
+        if (on_error == "return") {
+            return(parse_type_error(pos, type = type, reason = reason))
+        }
+        if (!is.null(type)) {
+            stop("invalid base type name ", sQuote(type), call. = FALSE)
+        }
+        if (identical(reason, "array")) {
+            stop("invalid array length in type signature", call. = FALSE)
+        }
+        stop("missing '>' in struct member", call. = FALSE)
+    }
+
+    types <- character()
+    array_lens <- integer()
+    max_size <- 0L
+    max_align <- 1L
+
+    if (kind == "struct") {
+        offset <- 0L
+        offsets <- integer()
+    }
+
+    n <- nchar(signature)
+    if (n == 0L) {
+        return(list(
+            size = 0L, align = max_align, type = character(),
+            offset = integer(), array_len = integer()
+        ))
+    }
+
+    i <- 1L
+    while (i <= n) {
+        token <- parse_type_token(signature, i)
+        if (!is.null(attr(token, "pos"))) {
+            return(fail(attr(token, "pos"), reason = attr(token, "reason")))
+        }
+
+        type <- token$type
+        if (!allow_arrays && token$array_len != 1L) {
+            return(fail(c(i, token$next_index - 1L), reason = "array"))
+        }
+
+        info <- get_typeinfo(type, envir = envir)
+        if (is.null(info)) {
+            return(fail(c(i, token$next_index - 1L), type = type))
+        }
+
+        types <- c(types, type)
+        array_lens <- c(array_lens, token$array_len)
+        field_size <- info$size * token$array_len
+
+        if (kind == "struct") {
+            max_align <- max(max_align, info$align)
+            offset <- align(offset, info$align)
+            offsets <- c(offsets, offset)
+            offset <- offset + field_size
+        } else {
+            max_align <- max(max_align, info$align)
+            max_size <- max(max_size, field_size)
+        }
+
+        i <- token$next_index
+    }
+
+    if (kind == "struct") {
+        size <- align(offset, max_align)
+    } else {
+        size <- align(max_size, max_align)
+        offsets <- rep(0L, length(types))
+    }
+
+    list(size = size, align = max_align, type = types, offset = offsets, array_len = array_lens)
+}
+
 # ----------------------------------------------------------------------------
 # parse structure signature
 
 make_struct_info <- function(name, signature, field_names, envir = parent.frame()) {
-    # computations:
-    types    <- character()
-    offsets  <- integer()
-    offset   <- 0
-    max_align <- 1
-    # scan variables:
-    n <- nchar(signature)
-    i <- 1
-    start <- i
-    while (i <= n) {
-        char <- substr(signature, i, i)
-        if (char == "*") {
-            i <- i + 1
-            next
-        } else if (char == "<") {
-            i <- i + 1
-            while (i < n) {
-                if (substr(signature, i, i) == ">") break
-                i <- i + 1
-            }
-        }
-        type_name  <- substr(signature, start, i)
-        types      <- c(types, type_name)
-        type_info  <- get_typeinfo(type_name, envir = envir)
-        alignment  <- type_info$align
-        max_align  <- max(max_align, alignment)
-        offset     <- align(offset, alignment)
-        offsets    <- c(offsets, offset)
-
-        # increment offset by size
-        offset    <- offset + type_info$size
-
-        # next token
-        i <- i + 1
-        start <- i
-    }
-    # align the structure size (compiler-specific?)
-    size <- align(offset, max_align)
-    # build field information
-    fields <- make_field_info(field_names, types, offsets)
-    typeinfo(name = name, type = "struct", size = size, align = max_align, fields = fields)
+    parsed <- parse_aggregate_types("struct", signature, envir = envir)
+    fields <- make_field_info(field_names, parsed$type, parsed$offset, parsed$array_len)
+    typeinfo(name = name, type = "struct", size = parsed$size, align = parsed$align, fields = fields)
 }
 
 #' Allocation and handling of foreign C aggregate data types
@@ -242,6 +355,9 @@ make_struct_info <- function(name, signature, field_names, envir = parent.frame(
 #' **Structure type signatures** describe the layout of aggregate `struct` C
 #' data types.
 #' Type Signatures are used within the `field-types`.
+#' Fixed-size array fields are written as a type signature followed by `[N]`,
+#' for example `C[4]` for `unsigned char[4]` or `<Point>[2]` for two nested
+#' aggregate values.
 #' `field-names` consists of space separated identifier names and should match
 #' the number of fields.
 #'
@@ -265,6 +381,7 @@ make_struct_info <- function(name, signature, field_names, envir = parent.frame(
 #' **Union type signatures** describe the components of the `union` C
 #' data type.
 #' Type signatures are used within the `field-types`.
+#' Fixed-size array fields use the same `[N]` suffix as structure fields.
 #' `field-names` consists of space separated identifier names and should match
 #' the number of fields.
 #'
@@ -360,38 +477,9 @@ cstruct <- function(sigs, envir = parent.frame()) {
 # parse union signature
 
 make_union_info <- function(name, signature, field_names, envir = parent.frame()) {
-    # computations:
-    types <- character()
-    max_size <- 0
-    max_align <- 1
-    # scan variables:
-    i <- 1
-    start <- i
-    n <- nchar(signature)
-    while (i <= n) {
-        char <- substr(signature, i, i)
-        if (char == "*") {
-            i <- i + 1
-            next
-        } else if (char == "<") {
-            i <- i + 1
-            while (i < n) {
-                if (substr(signature, i, i) == ">") break
-                i <- i + 1
-            }
-        }
-        type_name  <- substr(signature, start, i)
-        types      <- c(types, type_name)
-        type_info  <- get_typeinfo(type_name, envir)
-        max_size   <- max(max_size, type_info$size)
-        max_align  <- max(max_align, type_info$align)
-        # next token
-        i <- i + 1
-        start <- i
-    }
-    offsets <- rep(0, length(types))
-    fields <- make_field_info(field_names, types, offsets)
-    typeinfo(name = name, type = "union", fields = fields, size = max_size, align = max_align)
+    parsed <- parse_aggregate_types("union", signature, envir = envir)
+    fields <- make_field_info(field_names, parsed$type, parsed$offset, parsed$array_len)
+    typeinfo(name = name, type = "union", fields = fields, size = parsed$size, align = parsed$align)
 }
 
 #' @rdname struct
@@ -448,29 +536,110 @@ cdata <- function(type) {
     x <- raw(type$size)
     class(x) <- "struct"
     attr(x, "struct") <- type$name
+    attr(x, "typeinfo") <- type
     return(x)
+}
+
+struct_typeinfo <- function(x, envir = parent.frame()) {
+    struct_name <- attr(x, "struct")
+    info <- attr(x, "typeinfo")
+    if (is.typeinfo(info) && identical(info$name, struct_name)) {
+        return(info)
+    }
+
+    info <- get_typeinfo(struct_name, envir = envir)
+    if (!is.null(info)) return(info)
+
+    stop("unknown struct type '", struct_name, "'")
+}
+
+field_array_len <- function(field_info, field_index) {
+    if ("array_len" %in% names(field_info)) {
+        len <- as.integer(field_info[[field_index, "array_len"]])
+        if (!is.na(len) && len > 0L) return(len)
+    }
+    1L
+}
+
+unpack_array_field <- function(x, offset, field_type_info, array_len) {
+    if (array_len == 1L) {
+        return(unpack(x, offset, field_type_info$signature))
+    }
+
+    values <- lapply(seq_len(array_len), function(i) {
+        unpack(x, offset + (i - 1L) * field_type_info$size, field_type_info$signature)
+    })
+
+    if (field_type_info$signature %in% c("p", "x", "Z") || startsWith(field_type_info$signature, "*")) {
+        values
+    } else {
+        unlist(values, recursive = FALSE, use.names = FALSE)
+    }
+}
+
+pack_array_field <- function(x, offset, field_type_info, array_len, value) {
+    if (array_len == 1L) {
+        return(pack(x, offset, field_type_info$signature, value))
+    }
+
+    if (length(value) != array_len) {
+        stop("value length does not match fixed array field length")
+    }
+
+    for (i in seq_len(array_len)) {
+        pack(x, offset + (i - 1L) * field_type_info$size, field_type_info$signature, value[[i]])
+    }
+    invisible(NULL)
+}
+
+unpack_aggregate_array_field <- function(x, offset, field_type_name, field_type_info, array_len) {
+    unpack_one <- function(i) {
+        element_offset <- offset + (i - 1L) * field_type_info$size
+        if (is.raw(x)) {
+            size <- field_type_info$size
+            as.ctype(x[(element_offset + 1):(element_offset + size)], field_type_name)
+        } else if (is.externalptr(x)) {
+            as.ctype(offset_ptr(x, element_offset), field_type_name)
+        }
+    }
+
+    if (array_len == 1L) unpack_one(1L) else lapply(seq_len(array_len), unpack_one)
+}
+
+pack_aggregate_array_field <- function(x, offset, field_type_info, array_len, value) {
+    if (array_len == 1L) {
+        size <- field_type_info$size
+        x[(offset + 1):(offset + size)] <- as.raw(value)
+        return(invisible(NULL))
+    }
+
+    if (!is.list(value) || length(value) != array_len) {
+        stop("value for fixed aggregate array field must be a list with the array length")
+    }
+
+    size <- field_type_info$size
+    for (i in seq_len(array_len)) {
+        element_offset <- offset + (i - 1L) * size
+        x[(element_offset + 1):(element_offset + size)] <- as.raw(value[[i]])
+    }
+    invisible(NULL)
 }
 
 #' @rdname struct
 #' @export
 `$.struct` <- unpack.struct <- function(x, index) {
-    struct_name <- attr(x, "struct")
-    struct_info <- get_typeinfo(struct_name)
+    struct_info <- struct_typeinfo(x, parent.frame())
     field_info <- struct_info$fields
     field_index <- match(index, field_info$name)
     if (is.na(field_index)) stop("unknown field index '", index, "'")
     offset <- field_info[field_index, "offset"]
     field_type_name <- as.character(field_info[[field_index, "type"]])
     field_type_info <- get_typeinfo(field_type_name)
+    array_len <- field_array_len(field_info, field_index)
     if (field_type_info$type %in% c("base", "pointer")) {
-        unpack(x, offset, field_type_info$signature)
+        unpack_array_field(x, offset, field_type_info, array_len)
     } else if (!is.null(field_type_info$fields)) {
-        if (is.raw(x)) {
-            size <- field_type_info$size
-            as.ctype(x[(offset + 1):(offset + 1 + size - 1)], field_type_name)
-        } else if (is.externalptr(x)) {
-            as.ctype(offset_ptr(x, offset), field_type_name)
-        }
+        unpack_aggregate_array_field(x, offset, field_type_name, field_type_info, array_len)
     } else {
         stop("invalid field type '", field_type_name, "' at field '", index)
     }
@@ -479,20 +648,19 @@ cdata <- function(type) {
 #' @rdname struct
 #' @export
 `$<-.struct` <- pack.struct <- function(x, index, value) {
-    struct_name <- attr(x, "struct")
-    struct_info <- get_typeinfo(struct_name)
+    struct_info <- struct_typeinfo(x, parent.frame())
     field_info <- struct_info$fields
     field_index <- match(index, field_info$name)
     if (is.na(field_index)) stop("unknown field index '", index, "'")
     offset <- field_info[field_index, "offset"]
     field_type_name <- as.character(field_info[field_index, "type"])
     field_type_info <- get_typeinfo(field_type_name)
+    array_len <- field_array_len(field_info, field_index)
     if (field_type_info$type %in% c("base", "pointer")) {
-        pack(x, offset, field_type_info$signature, value)
+        pack_array_field(x, offset, field_type_info, array_len, value)
     } else if (!is.null(field_type_info$fields)) {
         # substructure
-        size <- field_type_info$size
-        x[(offset + 1):(offset + 1 + size - 1)] <- as.raw(value)
+        pack_aggregate_array_field(x, offset, field_type_info, array_len, value)
     } else {
         stop("invalid field type '", field_type_name, "' at field '", index)
     }
@@ -503,7 +671,7 @@ cdata <- function(type) {
 #' @export
 print.struct <- function(x, indent = 0, ...) {
     struct_name <- attr(x, "struct")
-    struct_info <- get_typeinfo(struct_name)
+    struct_info <- struct_typeinfo(x, parent.frame())
     field_info <- struct_info$fields
     field_names <- field_info$name
 

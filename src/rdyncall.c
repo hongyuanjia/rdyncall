@@ -156,6 +156,7 @@ static DCaggr* rdyncall_new_aggr(SEXP layout, DCaggr **aggrs, int *aggr_count)
   SEXP field_layouts = rdyncall_get_list_element(layout, "field_layouts");
   SEXP types = rdyncall_get_list_element(fields, "type");
   SEXP offsets = rdyncall_get_list_element(fields, "offset");
+  SEXP array_lens = rdyncall_get_list_element(fields, "array_len");
 
   if (TYPEOF(fields) != VECSXP || TYPEOF(types) != STRSXP || TYPEOF(offsets) != INTSXP ||
       TYPEOF(field_layouts) != VECSXP) {
@@ -165,6 +166,9 @@ static DCaggr* rdyncall_new_aggr(SEXP layout, DCaggr **aggrs, int *aggr_count)
   R_xlen_t nfields = XLENGTH(types);
   if (XLENGTH(field_layouts) < nfields) {
     Rf_error("internal error: invalid nested aggregate field layout");
+  }
+  if (array_lens != R_NilValue && (TYPEOF(array_lens) != INTSXP || XLENGTH(array_lens) < nfields)) {
+    Rf_error("internal error: invalid aggregate field array lengths");
   }
   if (*aggr_count >= RDYNCALL_MAX_AGGRS) {
     Rf_error("too many aggregate by-value descriptors");
@@ -176,15 +180,19 @@ static DCaggr* rdyncall_new_aggr(SEXP layout, DCaggr **aggrs, int *aggr_count)
 
   for (R_xlen_t i = 0; i < nfields; i++) {
     const char *type = CHAR(STRING_ELT(types, i));
+    int array_len = array_lens == R_NilValue ? 1 : INTEGER(array_lens)[i];
+    if (array_len < 1) {
+      Rf_error("internal error: invalid aggregate field array length");
+    }
     if (type[0] == '<') {
       SEXP sub_layout = VECTOR_ELT(field_layouts, i);
       if (sub_layout == R_NilValue) {
         Rf_error("internal error: missing nested aggregate field layout");
       }
       DCaggr *sub_ag = rdyncall_new_aggr(sub_layout, aggrs, aggr_count);
-      dcAggrField(ag, DC_SIGCHAR_AGGREGATE, INTEGER(offsets)[i], 1, sub_ag);
+      dcAggrField(ag, DC_SIGCHAR_AGGREGATE, INTEGER(offsets)[i], (DCsize) array_len, sub_ag);
     } else {
-      dcAggrField(ag, rdyncall_aggregate_field_sigchar(type), INTEGER(offsets)[i], 1);
+      dcAggrField(ag, rdyncall_aggregate_field_sigchar(type), INTEGER(offsets)[i], (DCsize) array_len);
     }
   }
   dcCloseAggr(ag);
