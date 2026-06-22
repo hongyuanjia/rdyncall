@@ -149,6 +149,12 @@ make_field_info <- function(field_names, types, offsets) {
     data.frame(type = I(types), offset = offsets, row.names = field_names)
 }
 
+parse_field_names <- function(x) {
+    x <- trimws(x)
+    if (!nzchar(x)) return(NULL)
+    strsplit(x, "[ \n\t]+")[[1L]]
+}
+
 # ----------------------------------------------------------------------------
 # parse structure signature
 
@@ -336,7 +342,7 @@ cstruct <- function(sigs, envir = parent.frame()) {
             tail <- unlist(strsplit(sigs[[i]][[2]], "[}]"))
             sig <- tail[[1]]
             if (length(tail) == 2) {
-                fields <- unlist(strsplit(tail[[2]], "[ \n\t]+"))
+                fields <- parse_field_names(tail[[2]])
             } else {
                 fields <- NULL
             }
@@ -400,7 +406,7 @@ cunion <- function(sigs, envir = parent.frame()) {
             tail <- unlist(strsplit(sigs[[i]][[2]], "[}]"))
             sig <- tail[[1]]
             if (length(tail) == 2) {
-                fields <- unlist(strsplit(tail[[2]], "[ \n\t]+"))
+                fields <- parse_field_names(tail[[2]])
             } else {
                 fields <- NULL
             }

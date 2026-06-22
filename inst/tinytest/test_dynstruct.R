@@ -27,6 +27,8 @@ expect_equal(rdyncall:::align(4, 8), 8L)
 
 env <- new.env()
 expect_null(cstruct("Rect{ssSS}x y w h ;", env))
+expect_null(cstruct("RectWithSpace{ssSS} x y w h ;", env))
+expect_null(cunion("NumberWithSpace|id} i d ;", env))
 expect_equal(
     env$Rect,
     structure(
@@ -41,3 +43,5 @@ expect_equal(
         ), class = "typeinfo"
     )
 )
+expect_equal(rownames(env$RectWithSpace$fields), c("x", "y", "w", "h"))
+expect_equal(rownames(env$NumberWithSpace$fields), c("i", "d"))
