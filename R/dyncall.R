@@ -1,13 +1,24 @@
 # ----------------------------------------------------------------------------
 # call vm alloc/free (internal)
 
+callvm.default.size <- 4096L
+
+callvm_size <- function(size = getOption("rdyncall.callvm.size", callvm.default.size)) {
+    if (!is.numeric(size) || length(size) != 1L || is.na(size) ||
+        !is.finite(size) || size < 1L || size > .Machine$integer.max ||
+        size != floor(size)) {
+        stop("option 'rdyncall.callvm.size' must be a single positive integer", call. = FALSE)
+    }
+    as.integer(size)
+}
+
 callvm_new <- function(
     callmode = c("cdecl", "stdcall", "thiscall", "thiscall.gcc", "thiscall.msvc",
                  "fastcall", "fastcall.gcc", "fastcall.msvc"),
-    size = 4096)
+    size = callvm_size())
 {
     callmode <- match.arg(callmode)
-    x <- .Call("C_callvm_new", callmode, as.integer(size), PACKAGE = "rdyncall")
+    x <- .Call("C_callvm_new", callmode, callvm_size(size), PACKAGE = "rdyncall")
     reg.finalizer(x, callvm_free)
     return(x)
 }
@@ -69,6 +80,11 @@ callvm.fastcall.msvc <- NULL
 #' The calling convention is specified _explicitly_ via function [dyncall()]
 #' using the `callmode` argument or _implicitly_ by using `dyncall.*` functions.
 #' See details below.
+#'
+#' The package option `rdyncall.callvm.size` controls the byte size of the
+#' internal dyncall CallVM argument stack. The default is `4096`. Set this
+#' option before loading \pkg{rdyncall}; changing it after package load does not
+#' resize already-created CallVM objects.
 #'
 #' Arguments passed via `...` are converted to C according to `signature`; see
 #' below for details.
@@ -311,13 +327,14 @@ dyncall.fastcall      <- dyncall.fastcall.gcc
 # initialize callvm's on load
 
 .onLoad <- function(libname, pkgname) {
-    callvm.cdecl         <<- callvm_new("cdecl")
+    size <- callvm_size()
+    callvm.cdecl         <<- callvm_new("cdecl", size)
     callvm.default       <<- callvm.cdecl
-    callvm.stdcall       <<- callvm_new("stdcall")
-    callvm.thiscall      <<- callvm_new("thiscall")
-    callvm.thiscall.gcc  <<- callvm_new("thiscall.gcc")
-    callvm.thiscall.msvc <<- callvm_new("thiscall.msvc")
-    callvm.fastcall      <<- callvm_new("fastcall")
-    callvm.fastcall.gcc  <<- callvm_new("fastcall.gcc")
-    callvm.fastcall.msvc <<- callvm_new("fastcall.msvc")
+    callvm.stdcall       <<- callvm_new("stdcall", size)
+    callvm.thiscall      <<- callvm_new("thiscall", size)
+    callvm.thiscall.gcc  <<- callvm_new("thiscall.gcc", size)
+    callvm.thiscall.msvc <<- callvm_new("thiscall.msvc", size)
+    callvm.fastcall      <<- callvm_new("fastcall", size)
+    callvm.fastcall.gcc  <<- callvm_new("fastcall.gcc", size)
+    callvm.fastcall.msvc <<- callvm_new("fastcall.msvc", size)
 }
