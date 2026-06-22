@@ -78,7 +78,9 @@ The formats for both types are described next:
 data types.
 Type Signatures are used within the \code{field-types}.
 \code{field-names} consists of space separated identifier names and should match
-the number of fields.
+the number of fields. Integer bitfields are written as \code{name:width} in the
+field name list. Unnamed padding bitfields use \verb{:width}; zero-width alignment
+bitfields use \verb{:0}.
 
 \if{html}{\out{<div class="sourceCode">}}\preformatted{struct-name \{ field-types \} field-names ;
 }\if{html}{\out{</div>}}
@@ -94,6 +96,12 @@ Here is an example of a C \code{struct} type:
 The corresponding structure type signature string is:
 
 \if{html}{\out{<div class="sourceCode">}}\preformatted{"Rect\{ssSS\}x y w h;"
+}\if{html}{\out{</div>}}
+
+Bitfields keep the ordinary type signature in \code{field-types} and put the bit
+width next to the field name:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{"Flags\{IIII\}a:1 b:3 :4 c:8;"
 }\if{html}{\out{</div>}}
 
 \strong{Union type signatures} describe the components of the \code{union} C

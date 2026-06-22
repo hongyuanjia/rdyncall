@@ -53,6 +53,38 @@ dyncall_aggregate_field_type_name <- function(type) {
     substr(type, 2L, nchar(type) - 1L)
 }
 
+dyncall_aggregate_field_layout <- function(fields) {
+    if (!"bit_width" %in% names(fields)) {
+        return(data.frame(
+            type = as.character(fields$type),
+            offset = as.integer(fields$offset),
+            stringsAsFactors = FALSE
+        ))
+    }
+
+    out_type <- character()
+    out_offset <- integer()
+    seen_storage <- character()
+
+    for (i in seq_len(nrow(fields))) {
+        field <- fields[i, , drop = FALSE]
+        bit_width <- field$bit_width
+        if (!is.na(bit_width)) {
+            if (bit_width == 0L) next
+            key <- paste(field$storage_offset, field$storage_size, as.character(field$type), sep = ":")
+            if (key %in% seen_storage) next
+            seen_storage <- c(seen_storage, key)
+            out_type <- c(out_type, as.character(field$type))
+            out_offset <- c(out_offset, as.integer(field$storage_offset))
+        } else {
+            out_type <- c(out_type, as.character(field$type))
+            out_offset <- c(out_offset, as.integer(field$offset))
+        }
+    }
+
+    data.frame(type = out_type, offset = out_offset, stringsAsFactors = FALSE)
+}
+
 dyncall_aggregate_layout <- function(name, envir = parent.frame(), seen = character()) {
     info <- get_typeinfo(name, envir = envir)
     if (is.null(info)) {
@@ -71,12 +103,13 @@ dyncall_aggregate_layout <- function(name, envir = parent.frame(), seen = charac
     }
 
     size <- as.integer(info$size)
-    offsets <- as.integer(fields$offset)
+    layout_fields <- dyncall_aggregate_field_layout(fields)
+    offsets <- as.integer(layout_fields$offset)
     if (is.na(size) || size < 1L || anyNA(offsets)) {
         stop("aggregate type '", name, "' does not contain a complete memory layout", call. = FALSE)
     }
 
-    field_types <- as.character(fields$type)
+    field_types <- as.character(layout_fields$type)
     supported <- vapply(field_types, dyncall_aggregate_field_is_supported, logical(1L))
     if (any(!supported)) {
         stop("unsupported aggregate field type '", field_types[which(!supported)[[1L]]], "'", call. = FALSE)
@@ -268,7 +301,8 @@ dyncall_call <- function(callvm, address, signature, ..., envir = parent.frame()
 #' Aggregate by-value signatures support `struct` and `union` type
 #' information registered with [cstruct()] or [cunion()]. Aggregate arguments and
 #' returns are passed through dyncall aggregate descriptors, including nested
-#' aggregate fields that are already represented in the registered typeinfo.
+#' aggregate fields and bitfield storage units that are already represented in
+#' the registered typeinfo.
 #'
 #' The last typed pointer rows of the table above refer to _typed pointer_ signatures.
 #' If they appear as a return type signature, the external pointer returned is a

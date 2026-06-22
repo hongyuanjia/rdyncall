@@ -54,6 +54,9 @@ expect_dynport_portfile_error("Struct: {}", "name")
 expect_dynport_portfile_error("Struct: test{ab}", "type name")
 expect_dynport_portfile_error("Struct: test{ii}a", "number")
 expect_dynport_portfile_error("Struct: test{i} a b", "number")
+expect_dynport_portfile_error("Struct: test{d} a:1", "integer")
+expect_dynport_portfile_error("Struct: test{I} a:33", "exceeds")
+expect_dynport_portfile_error("Struct: test{I} a:0", "zero-width")
 expect_dynport_portfile_error("Struct: test{ii} a b", "unexpected")
 
 # union
@@ -67,7 +70,13 @@ expect_dynport_portfile_error("Union: {}", "name")
 expect_dynport_portfile_error("Union: test{ab}", "type name")
 expect_dynport_portfile_error("Union: test{ii}a", "number")
 expect_dynport_portfile_error("Union: test{i} a b", "number")
+expect_dynport_portfile_error("Union: test{d} a:1", "integer")
 expect_dynport_portfile_error("Union: test{ii} a b", "unexpected")
+
+parsed_bits <- rdyncall:::dynport_parse_struct("Flags{IIII} a:1 b:3 :4 c:8;")
+expect_equal(parsed_bits$Flags$size, 4L)
+expect_equal(parsed_bits$Flags$fields$name, c("a", "b", "", "c"))
+expect_equal(parsed_bits$Flags$fields$bit_width, c(1L, 3L, 4L, 8L))
 
 # function
 expect_dynport_portfile_error(c("Function:", "  "), "unexpected")

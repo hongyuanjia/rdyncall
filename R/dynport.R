@@ -532,6 +532,9 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
 
         # parse field types
         parsed <- dynport_parse_types(kind, tail[[1L]], envir)
+        if (is.null(parsed)) {
+            parsed <- list(size = 0L, align = 1L, type = character(), offset = integer())
+        }
 
         # error if failed to parse field types
         if (!is.null(parsed) && !length(parsed)) {
@@ -556,10 +559,9 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
 
         lnum <- lnum + lncnt[[i]]
 
-        out[[i]] <- typeinfo(
-            name = name, type = kind,
-            size = parsed$size, align = parsed$align,
-            fields = make_field_info(fields, parsed$type, parsed$offset)
+        out[[i]] <- tryCatch(
+            make_aggregate_info(name, kind, tail[[1L]], fields, envir = envir),
+            error = function(e) issue_error(name, conditionMessage(e))
         )
     }
 

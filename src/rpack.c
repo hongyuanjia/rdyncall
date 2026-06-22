@@ -2,12 +2,11 @@
  ** R-Package: rdyncall
  ** File: src/rpack.c
  ** Description: (un-)packing of C structure data
- ** TODO
- ** - support for bitfields
  **/
 
 // #define USE_RINTERNALS
 #include <Rinternals.h>
+#include <stdint.h>
 #include <string.h>
 #include <stddef.h>
 #include "rdyncall_signature.h"
@@ -18,11 +17,10 @@
  **
  **/
 
-static char* C_dataptr(SEXP x, SEXP off, size_t element_size)
+static char* C_dataptr_offset(SEXP x, ptrdiff_t o, size_t element_size)
 {
-  if ( LENGTH(off) == 0 ) error("missing offset");
   char* p = NULL;
-  ptrdiff_t o = INTEGER(off)[0], s = 0;
+  ptrdiff_t s = 0;
   
   switch(TYPEOF(x))
   {
@@ -33,12 +31,157 @@ static char* C_dataptr(SEXP x, SEXP off, size_t element_size)
     case CPLXSXP:   p = (char*) COMPLEX(x); s = LENGTH(x)*sizeof(Rcomplex); break; 
     case STRSXP:    p = (char*) CHAR( STRING_ELT(x,0) ); s = strlen(p)*sizeof(char); break;
     case RAWSXP:    p = (char*) RAW(x); s = LENGTH(x)*sizeof(char); break;
-    case EXTPTRSXP: return (char*) R_ExternalPtrAddr(x) + o; break;
+    case EXTPTRSXP:
+      p = (char*) R_ExternalPtrAddr(x);
+      if (p == NULL) error("NULL address pointer");
+      return p + o;
     default: error("invalid object type"); break;
   }
   if (p == NULL) error("NULL address pointer");
   if (o < 0 || o+element_size > s) error("offset %td is out-of-bounds of the R object (max size %td)", o, s);
   return p + o; 
+}
+
+static char* C_dataptr(SEXP x, SEXP off, size_t element_size)
+{
+  if ( LENGTH(off) == 0 ) error("missing offset");
+  return C_dataptr_offset(x, INTEGER(off)[0], element_size);
+}
+
+static int C_bit_index_in_byte(int bit)
+{
+#if defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+  return 7 - bit;
+#else
+  return bit;
+#endif
+}
+
+static uint64_t C_bitfield_mask(int width)
+{
+  if (width >= 64) return UINT64_MAX;
+  return (UINT64_C(1) << width) - UINT64_C(1);
+}
+
+static uint64_t C_read_bitfield_bits(const unsigned char* ptr, int bit_offset, int width)
+{
+  uint64_t value = 0;
+  for (int i = 0; i < width; ++i) {
+    int absolute_bit = bit_offset + i;
+    int byte_index = absolute_bit / 8;
+    int bit_index = C_bit_index_in_byte(absolute_bit % 8);
+    if (ptr[byte_index] & (1u << bit_index)) {
+      value |= (UINT64_C(1) << i);
+    }
+  }
+  return value;
+}
+
+static void C_write_bitfield_bits(unsigned char* ptr, int bit_offset, int width, uint64_t value)
+{
+  for (int i = 0; i < width; ++i) {
+    int absolute_bit = bit_offset + i;
+    int byte_index = absolute_bit / 8;
+    int bit_index = C_bit_index_in_byte(absolute_bit % 8);
+    unsigned char mask = (unsigned char) (1u << bit_index);
+    if (value & (UINT64_C(1) << i)) {
+      ptr[byte_index] = (unsigned char) (ptr[byte_index] | mask);
+    } else {
+      ptr[byte_index] = (unsigned char) (ptr[byte_index] & ~mask);
+    }
+  }
+}
+
+static int C_bitfield_sig_is_signed(char sig)
+{
+  return sig == DC_SIGCHAR_CHAR ||
+         sig == DC_SIGCHAR_SHORT ||
+         sig == DC_SIGCHAR_INT ||
+         sig == DC_SIGCHAR_LONG ||
+         sig == DC_SIGCHAR_LONGLONG;
+}
+
+static uint64_t C_bitfield_value(SEXP value_x, int is_signed)
+{
+  switch(TYPEOF(value_x))
+  {
+    case LGLSXP:
+      return (uint64_t) LOGICAL(value_x)[0];
+    case INTSXP:
+      return is_signed ? (uint64_t) ((int64_t) INTEGER(value_x)[0]) :
+                         (uint64_t) ((uint32_t) INTEGER(value_x)[0]);
+    case REALSXP:
+      return is_signed ? (uint64_t) ((int64_t) REAL(value_x)[0]) :
+                         (uint64_t) REAL(value_x)[0];
+    case RAWSXP:
+      return (uint64_t) RAW(value_x)[0];
+    default:
+      error("value mismatch with bitfield pack type");
+  }
+  return 0;
+}
+
+SEXP C_unpack_bitfield(SEXP ptr_x, SEXP bit_offset_x, SEXP bit_width_x, SEXP sig_x)
+{
+  int bit_offset = INTEGER(bit_offset_x)[0];
+  int width = INTEGER(bit_width_x)[0];
+  const char sig = CHAR(STRING_ELT(sig_x, 0))[0];
+  int byte_offset = bit_offset / 8;
+  int intra_bit_offset = bit_offset % 8;
+  size_t byte_count = (size_t) ((intra_bit_offset + width + 7) / 8);
+  unsigned char* ptr = (unsigned char*) C_dataptr_offset(ptr_x, byte_offset, byte_count);
+  uint64_t raw = C_read_bitfield_bits(ptr, intra_bit_offset, width);
+
+  if (sig == DC_SIGCHAR_BOOL) {
+    return ScalarLogical(raw != 0);
+  }
+
+  if (C_bitfield_sig_is_signed(sig)) {
+    int64_t value;
+    if (width < 64 && (raw & (UINT64_C(1) << (width - 1)))) {
+      value = (int64_t) (raw | ~C_bitfield_mask(width));
+    } else {
+      value = (int64_t) raw;
+    }
+    switch(sig) {
+      case DC_SIGCHAR_CHAR:
+      case DC_SIGCHAR_SHORT:
+      case DC_SIGCHAR_INT:
+        return ScalarInteger((int) value);
+      case DC_SIGCHAR_LONG:
+      case DC_SIGCHAR_LONGLONG:
+        return ScalarReal((double) value);
+    }
+  }
+
+  switch(sig) {
+    case DC_SIGCHAR_UCHAR:
+    case DC_SIGCHAR_USHORT:
+      return ScalarInteger((int) raw);
+    case DC_SIGCHAR_UINT:
+    case DC_SIGCHAR_ULONG:
+    case DC_SIGCHAR_ULONGLONG:
+      return ScalarReal((double) raw);
+    default:
+      error("invalid bitfield signature");
+  }
+
+  return R_NilValue;
+}
+
+SEXP C_pack_bitfield(SEXP ptr_x, SEXP bit_offset_x, SEXP bit_width_x, SEXP sig_x, SEXP value_x)
+{
+  int bit_offset = INTEGER(bit_offset_x)[0];
+  int width = INTEGER(bit_width_x)[0];
+  const char sig = CHAR(STRING_ELT(sig_x, 0))[0];
+  int byte_offset = bit_offset / 8;
+  int intra_bit_offset = bit_offset % 8;
+  size_t byte_count = (size_t) ((intra_bit_offset + width + 7) / 8);
+  unsigned char* ptr = (unsigned char*) C_dataptr_offset(ptr_x, byte_offset, byte_count);
+  uint64_t value = C_bitfield_value(value_x, C_bitfield_sig_is_signed(sig));
+
+  C_write_bitfield_bits(ptr, intra_bit_offset, width, value & C_bitfield_mask(width));
+  return R_NilValue;
 }
 
 
