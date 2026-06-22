@@ -27,7 +27,7 @@ export(
 # --- utils_float.R ----------------------------------------------------------
   floatraw, as.floatraw, floatraw2numeric,
 # --- dynport.R --------------------------------------------------------------
-  dynport
+  dynport, dynport_install_package, dynport_load_into, dynport_lib
 )
 # --- dynstruct.R ------------------------------------------------------------
 S3method("$<-", struct)

@@ -61,8 +61,7 @@ The intended audience for this package are developers experienced with C, that
 Brief Tour 1/2: Dynamic R Bindings to C Libraries
 -------------------------------------------------
 
-The dynamic binding interface consists of a single function, similar to
-'library' or 'require':
+The dynamic binding interface consists of a single function:
 
 ```r
 dynport(portname)
@@ -70,32 +69,18 @@ dynport(portname)
 
 portname refers to a 'DynPort' file name that represents an R binding to a
 common C interface and library.
-The function the above has the side effect of attaching a newly created R name
-space, populated with thin R helper objects to C entities of the underlying
-C library:
+The function above generates, installs, and loads a small R package populated
+with thin R helper objects to C entities of the underlying C library:
 
   - call wrapper to C functions
   - symbolic constants of C macros and enums,
   - type information objects for C struct and union data types.
 
-The package contains a repository of the following DynPort files:
+The package currently contains the following DCF DynPort file:
 
   | Port Name   | Description of C Shared Library/API              |
   | ------------|------------------------------------------------- |
-  | expat       | Expat XML Parser Library                         |
-  | GL          | OpenGL 1.1 API                                   |
-  | GLU         | OpenGL Utility Library                           |
-  | SDL         | Simple DirectMedia Layer library                 |
-  | SDL_image   | Loading of image files (png,jpeg..)              |
-  | SDL_mixer   | Loading/Playing of ogg/mp3/mod music files.      |
-  | SDL_ttf     | Loading/Rendering of True Type Fonts.            |
-  | glew        | OpenGL Extension Wrangler (includes OpenGL 3.0)  |
-  | gl3         | strict OpenGL 3 (untested)                       |
-  | R           | R shared library                                 |
-  | ode         | Open Dynamics (Physics-) Engine (untested)       |
-  | cuda        | NVIDIA Cuda (untested)                           |
-  | opencl      | OpenCL (untested)                                |
-  | stdio       | C Standard Library I/O Functions                 |
+  | SDL2        | Simple DirectMedia Layer 2                       |
 
 In order to use a DynPort on a host system, the shared C libraries
 need to be installed first.
@@ -107,32 +92,12 @@ collected for a large range of operating-systems and OS distributions.
 Since the rdyncall package is alredy ported across major R platforms, code
 that uses a DynPort can run cross-platform without compilation.
 
-Here is a small example for using the SDL and OpenGL for multimedia/3D:
+Here is a small SDL2 example:
 
 ```r
-# load SDL and OpenGL bindings
-dynport(SDL)
-dynport(GL)
-
-# initialize video sub-system
-SDL_Init(SDL_INIT_VIDEO)
-
-# open double-buffered OpenGL window surface
-surface <- SDL_SetVideoMode(640,480,32,SDL_OPENGL+SDL_DOUBLEBUF)
-
-# print dimension by accessing fields external C pointer to struct SDL_Surface
-print( paste("dimenstion:", surface$w, "x", surface$h ))
-
-# clear buffer
-glClearColor(0.3,0.6,0.8,0)
-glClear(GL_COLOR_BUFFER_BIT)
-
-# update display
-SDL_GL_SwapBuffers()
+dynport(SDL2)
+dyn.SDL2::SDL_GetPlatform()
 ```
-
-A more detailed version including user-interface handling is available
-in `demo(SDL)`.
 
 ## Brief Tour 2/2: Alternative FFI via 'dyncall'
 

@@ -4,6 +4,7 @@
 - Update the bundled dyncall source and stop tracking generated static libraries.
 - Replace deprecated/internal R C API usage with public accessors where possible.
 - Support `dynlist()` for macOS dyld shared cache libraries.
+- Generate real on-disk R packages from DCF DynPort files via `dynport()`.
 - Fix `cstruct()` and `cunion()` field parsing when whitespace follows the type signature.
 - Store aggregate field names in the explicit `typeinfo$fields$name` column.
 - Add `struct` and `union` bitfield layout, access, DynPort parsing, and by-value aggregate support.

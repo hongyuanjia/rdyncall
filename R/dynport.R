@@ -1,9 +1,8 @@
 #' Dynamic R Bindings to standard and common C libraries
 #'
 #' @description
-#' Function to bind APIs of standard and common C libraries to R via dynamically
-#' created interface environment objects comprising R wrappers for C functions,
-#' object-like macros, enums and data types.
+#' Functions to turn DCF DynPort files into generated R packages that provide
+#' wrappers for C functions, object-like macros, enums and data types.
 #'
 #' @details
 #' `dynport()` offers a convenient method for binding entire C libraries to R.
@@ -15,57 +14,24 @@
 #' See [rdyncall-demos] for OS-specific installation notes for several C
 #' libraries.
 #'
-#' The binding method is data-driven using platform-portable specifications
-#' named _DynPort_ files.
-#' _DynPort_ files are stored in a repository that is installed as part of the
-#' package installation. They are generated using the \pkg{porter} package.
-#' When `dynport()` processes a _DynPort_ file given by `portname`, an
-#' environment object is created, populated with R wrapper and helper objects
-#' that make up the interface to the C library, and attached to the search path
-#' with the name `dynport:<PORTNAME>`.
-#' Unloading of previously loaded dynport environments is achieved via
-#' `detach(dynport:<PORTNAME>)`.
+#' The binding method is data-driven using platform-portable specifications named
+#' _DynPort_ files. The current implementation supports DCF (Debian Control File)
+#' `.dynport` files.
 #'
-#' Up to \pkg{rdyncall} version 0.7.4, R name space objects were used as
-#' containers as described in the article _Foreign Library Interface_, thus
-#' dynport \sQuote{packages} appeared as `"package:<PORTNAME>"` on the
-#' search path.
-#' The mechanism to create synthesized R packages at run-time required the use
-#' of `.Internal` calls.
-#' But since the use of internal R functions is not permitted for packages
-#' distributed on CRAN we downgraded the package to use ordinary environment
-#' objects starting with version 0.7.5 until a public interface for the creation
-#' of R namespace objects is available.
+#' When `dynport()` processes a _DynPort_ file, it generates and installs a real
+#' R package whose namespace is populated at load time from the DynPort metadata.
+#' By default, generated package names use the prefix given by option
+#' `rdyncall.dynport.package.prefix`, which defaults to `"dyn."`. For example,
+#' a DynPort with `Package: SDL2` is installed as `dyn.SDL2` unless a package
+#' name is explicitly supplied.
 #'
-#' The following gives a list of currently available _DynPorts_:
+#' The following gives a list of currently supported DCF _DynPorts_:
 #'
 #' | **DynPort name/C library** | **Description**                                 |
 #' |:---------------------------|:------------------------------------------------|
-#' | `expat`                    | Expat XML Parser Library                        |
-#' | `GL`                       | OpenGL 1.1 API                                  |
-#' | `GLU`                      | OpenGL Utility Library                          |
-#' | `GLUT`                     | OpenGL Utility Toolkit Library                  |
-#' | `SDL`                      | Simple DirectMedia Layer Library                |
-#' | `SDL_image`                | Loading of image files (png, jpeg, ...)         |
-#' | `SDL_mixer`                | Loading/Playing of ogg/mp3/mod music files.     |
-#' | `SDL_ttf`                  | Loading/Rendering of True Type Fonts.           |
-#' | `SDL_net`                  | Networking library.                             |
-#' | `glew`                     | OpenGL Extension Wrangler (includes OpenGL 3.0) |
-#' | `glfw`                     | OpenGL Windowing/Setup Library                  |
-#' | `gl3`                      | strict OpenGL 3 (untested)                      |
-#' | `R`                        | R shared library                                |
-#' | `ode`                      | Open Dynamics (Physics-) Engine (untested)      |
-#' | `cuda`                     | NVIDIA Cuda (untested)                          |
-#' | `csound`                   | Sound programming language and library          |
-#' | `opencl`                   | OpenCL (untested)                               |
-#' | `stdio`                    | C Standard Library I/O Functions                |
-#' | `glpk`                     | GNU Linear Programming Kit                      |
-#' | `EGL`                      | Embedded Systems Graphics Library               |
+#' | `SDL2`                     | Simple DirectMedia Layer 2                      |
 #'
-#' As of the current implementation _DynPort_ files are DCF (Debian Control File)
-#' files which follow the same rules for R package `DESCRIPTION` files.
-#'
-#' The format records the following binding metadata:
+#' The DCF format records the following binding metadata:
 #'
 #' - Functions (and pointer-to-function variables) are mapped via [dynbind()]
 #'   and a description of the C library using a _library signatures_.
@@ -78,23 +44,51 @@
 #' This would refer to `"<repo>/<portname>.dynport"` where `repo` usually refers
 #' to the initial _DynPort_ repository located at the sub-folder `"dynports/"`
 #' of the package.
-#' If `portfile` is given, then this value is taken as file path (usually for
-#' testing purpose).
+#' If `portfile` is given, then this value is taken as file path.
 #'
 #' A tool suite, comprising AWK (was boost wave), GCC Preprocessor, GCC-XML and
 #' XSLT, was used to generate the available _DynPort_ files automatically
 #' by extracting type information from C library header files.
 #'
-#' In a future release, the DynPort format will be changed to
-#' a language-neutral text file document.
-#'
 #' @param portname the name of a dynport, given as a literal or character
-#'        string. It will be used as the namespace name.
+#'        string.
 #'
-#' @param portfile `NULL` or character string giving a script file to parse.
+#' @param portfile `NULL` or character string giving a DCF `.dynport` file to
+#'        parse.
 #'
 #' @param repo character string giving the path to the root of the `dynport`
 #'        repository.
+#'
+#' @param package `NULL` or character string giving the generated R package name.
+#'        When `NULL`, the `Package` field from the DynPort file is prefixed by
+#'        option `rdyncall.dynport.package.prefix`.
+#'
+#' @param lib character string giving the R library path where the generated
+#'        package is installed. Defaults to `dynport_lib()`.
+#'
+#' @param rebuild logical. If `TRUE`, reinstall an existing generated package
+#'        when the DynPort file contents have changed.
+#'
+#' @param load logical. If `TRUE`, load and attach the generated package in the
+#'        current R session after installation.
+#'
+#' @param quiet logical. If `TRUE`, suppress installation and loading output
+#'        where possible.
+#'
+#' @param create logical. If `TRUE`, create the default DynPort package library
+#'        when it does not exist.
+#'
+#' @param add logical. If `TRUE`, prepend the DynPort package library to
+#'        `.libPaths()`.
+#'
+#' @param envir environment to populate from a DynPort file.
+#'
+#' @return
+#' `dynport()` invisibly returns the generated package name.
+#' `dynport_install_package()` invisibly returns the installed package path with
+#' the generated package name stored in attribute `"package"`.
+#' `dynport_load_into()` invisibly returns `envir`.
+#' `dynport_lib()` returns the DynPort package library path.
 #'
 #' @references
 #'
@@ -121,32 +115,28 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Using SDL and OpenGL in R
-#' dynport(SDL)
-#' dynport(GL)
-#' # Initialize Video Sub-system
-#' SDL_Init(SDL_INIT_VIDEO)
-#' # Initialize Screen with OpenGL Context and Double Buffering
-#' SDL_SetVideoMode(320, 256, 32, SDL_OPENGL+SDL_DOUBLEBUF)
-#' # Clear Color and Clear Screen
-#' glClearColor(0, 0, 1, 0) # blue
-#' glClear(GL_COLOR_BUFFER_BIT)
-#' # Flip Double-Buffer
-#' SDL_GL_SwapBuffers()
+#' dynport(SDL2)
+#' dyn.SDL2::SDL_GetPlatform()
 #' }
-#' @aliases loadDynportNamespace
+#' @aliases dynport_install_package dynport_load_into dynport_lib
 #' @keywords programming interface
 #' @author Daniel Adler <dadler@uni-goettingen.de>
 #' @export
-dynport <- function(portname, portfile = NULL, repo = system.file("dynports", package = "rdyncall")) {
+dynport <- function(portname, portfile = NULL, repo = system.file("dynports", package = "rdyncall"),
+                    package = NULL, lib = dynport_lib(), rebuild = FALSE,
+                    load = TRUE, quiet = FALSE) {
     # literate portname string
     portname <- as.character(substitute(portname))
-    if (missing(portfile)) {
+    if (is.null(portfile)) {
         # search for portfile
         portfile <- file.path(repo, paste(portname, ".dynport", sep = ""))
         if (!file.exists(portfile)) stop("dynport '", portname, "' not found.")
     }
-    loadDynportNamespace(portname, portfile)
+    installed <- dynport_install_package_impl(
+        portname, portfile = portfile, repo = repo, package = package, lib = lib,
+        rebuild = rebuild, load = load, quiet = quiet
+    )
+    invisible(attr(installed, "package"))
 }
 
 # ref: {r-lib/desc:::read_dcf()}
@@ -208,7 +198,7 @@ dynport_read <- function(file) {
     })
 
     # check both 'Enum' and 'Enum/...'
-    if ("Enum" %in% keys && grepl("^Enum", keys)) {
+    if ("Enum" %in% keys && any(grepl("^Enum/.+", keys))) {
         stop("Both 'Enum' and 'Enum/...' found. Should have either one.", call. = FALSE)
     }
 
@@ -513,7 +503,6 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
             }
         }
 
-        # parse field types
         parsed <- dynport_parse_types(kind, tail[[1L]], envir, layout = field_layout$layout)
         dynport_issue_type_error(parsed, tail[[1L]], issue_error, name)
 
@@ -632,58 +621,431 @@ dynport_issue_error <- function(type, name, lnums, values, reason) {
     ), call. = FALSE)
 }
 
-loadDynportNamespace <- function(name, portfile, do.attach = TRUE) {
-    name <- as.character(name)
-    portfile <- as.character(portfile)
+#' @rdname dynport
+#' @export
+dynport_install_package <- function(portname, portfile = NULL,
+                                    repo = system.file("dynports", package = "rdyncall"),
+                                    package = NULL, lib = dynport_lib(), rebuild = FALSE,
+                                    load = FALSE, quiet = FALSE) {
+    dynport_install_package_impl(
+        as.character(substitute(portname)), portfile = portfile, repo = repo,
+        package = package, lib = lib, rebuild = rebuild, load = load,
+        quiet = quiet
+    )
+}
+
+dynport_install_package_impl <- function(portname, portfile = NULL, repo, package = NULL,
+                                         lib = dynport_lib(), rebuild = FALSE,
+                                         load = FALSE, quiet = FALSE) {
+    portfile <- dynport_resolve_portfile(portname, portfile, repo)
     port <- dynport_read(portfile)
-    if (do.attach) {
-        envname <- paste("dynport", name, sep = ":")
-        if (envname %in% search()) {
-            return()
-        }
-        env <- new.env()
-        sys.source(portfile, envir = env)
-
-        # directly use base::attach will cause a CRAN check NOTE
-        getExportedValue(.BaseNamespaceEnv, "attach")(env, name = envname)
-    } else {
-        env <- new.env()
-        sys.source(portfile, envir = env)
-        return(env)
+    if (is.null(port)) {
+        stop("Empty 'dynport' file.", call. = FALSE)
     }
+
+    package <- dynport_package_name(port, package)
+    md5 <- dynport_md5(portfile)
+    lib <- dynport_lib_path(lib, create = TRUE)
+
+    skip_install <- dynport_prepare_install(package, lib, md5, rebuild)
+    if (!skip_install) {
+        src <- dynport_create_package_source(port, portfile, portname, package, md5)
+        on.exit(unlink(src, recursive = TRUE, force = TRUE), add = TRUE)
+        dynport_install_source(src, lib, quiet = quiet)
+    }
+
+    path <- normalizePath(file.path(lib, package), "/", mustWork = FALSE)
+    if (load) {
+        dynport_load_package(package, lib, quiet = quiet)
+    }
+
+    attr(path, "package") <- package
+    invisible(path)
 }
 
-makeNamespace <- function(name, version = NULL, lib = NULL) {
-    impenv <- new.env(parent = .BaseNamespaceEnv, hash = TRUE)
-    attr(impenv, "name") <- paste("imports", name, sep = ":")
-    env <- new.env(parent = impenv, hash = TRUE)
-    name <- as.character(as.name(name))
-    version <- as.character(version)
-    info <- new.env(hash = TRUE, parent = baseenv())
-    assign(".__NAMESPACE__.", info, envir = env)
-    assign("spec", c(name = name, version = version), envir = info)
-    setNamespaceInfo(env, "exports", new.env(hash = TRUE, parent = baseenv()))
-    dimpenv <- new.env(parent = baseenv(), hash = TRUE)
-    attr(dimpenv, "name") <- paste("lazydata", name, sep = ":")
-    setNamespaceInfo(env, "lazydata", dimpenv)
-    setNamespaceInfo(env, "imports", list(base = TRUE))
-    setNamespaceInfo(env, "path", normalizePath(file.path(lib, name), "/", TRUE))
-    setNamespaceInfo(env, "dynlibs", NULL)
-    setNamespaceInfo(env, "S3methods", matrix(NA_character_, 0L, 3L))
-    assign(".__S3MethodsTable__.", new.env(hash = TRUE, parent = baseenv()), envir = env)
-    eval(as.call(list(quote(.Internal), quote(registerNamespace(name, env)))))
-    env
+#' @rdname dynport
+#' @export
+dynport_load_into <- function(portfile, envir) {
+    if (!is.environment(envir)) {
+        stop("'envir' must be an environment.", call. = FALSE)
+    }
+
+    port <- dynport_read(portfile)
+    if (is.null(port)) {
+        stop("Empty 'dynport' file.", call. = FALSE)
+    }
+
+    dynport_validate_export_names(dynport_export_names(port))
+    dynport_assign_typeinfos(port[["Struct"]], envir)
+    dynport_assign_typeinfos(port[["Union"]], envir)
+    dynport_assign_enums(port[["Enum"]], envir)
+    dynport_assign_functions(port, "Function", envir, funcptr = FALSE)
+    dynport_assign_functions(port, "FuncPtr", envir, funcptr = TRUE)
+
+    invisible(envir)
 }
 
-env2namespace <- function(name, version, env, lib = NULL) {
-    env <- force(env)
-    ns <- makeNamespace(name, version, lib)
-    exports <- getNamespaceInfo(ns, "exports")
-    objects <- ls(env, all.names = TRUE)
-    lapply(objects, function(nm) {
-        assign(nm, get(nm, env, inherits = FALSE), ns)
-        assign(nm, nm, exports)
-    })
+#' @rdname dynport
+#' @export
+dynport_lib <- function(create = TRUE, add = FALSE) {
+    lib <- getOption("rdyncall.dynport.lib", NULL)
+    if (is.null(lib)) {
+        cache <- if (exists("R_user_dir", envir = asNamespace("tools"), mode = "function")) {
+            tools::R_user_dir("rdyncall", "cache")
+        } else {
+            file.path(path.expand("~"), ".cache", "R", "rdyncall")
+        }
+        lib <- file.path(cache, "dynports", paste0("R-", as.character(getRversion())))
+    }
+
+    lib <- dynport_lib_path(lib, create = create)
+    if (add) {
+        .libPaths(unique(c(lib, normalizePath(.libPaths(), "/", mustWork = FALSE))))
+    }
+    lib
+}
+
+dynport_resolve_portfile <- function(portname, portfile = NULL, repo) {
+    if (is.null(portfile)) {
+        portfile <- file.path(repo, paste0(portname, ".dynport"))
+    }
+    portfile <- path.expand(as.character(portfile))
+    if (length(portfile) != 1L || is.na(portfile) || !nzchar(portfile)) {
+        stop("'portfile' must be a single non-empty path.", call. = FALSE)
+    }
+    if (!file.exists(portfile)) {
+        stop("dynport '", portname, "' not found.", call. = FALSE)
+    }
+    normalizePath(portfile, "/", mustWork = TRUE)
+}
+
+dynport_lib_path <- function(lib, create = TRUE) {
+    lib <- path.expand(as.character(lib))
+    if (length(lib) != 1L || is.na(lib) || !nzchar(lib)) {
+        stop("'lib' must be a single non-empty path.", call. = FALSE)
+    }
+    if (create && !dir.exists(lib)) {
+        dir.create(lib, recursive = TRUE, showWarnings = FALSE)
+    }
+    if (create && !dir.exists(lib)) {
+        stop("Failed to create dynport package library '", lib, "'.", call. = FALSE)
+    }
+    normalizePath(lib, "/", mustWork = create)
+}
+
+dynport_package_name <- function(port, package = NULL) {
+    base <- if (!is.null(port[["Package"]])) {
+        as.character(port[["Package"]])
+    } else {
+        NULL
+    }
+    if (is.null(base) || !nzchar(base)) {
+        stop("The 'dynport' file must define a non-empty 'Package' field.", call. = FALSE)
+    }
+
+    if (is.null(package)) {
+        prefix <- getOption("rdyncall.dynport.package.prefix", "dyn.")
+        package <- paste0(prefix, base)
+    }
+    dynport_validate_package_name(package)
+    package
+}
+
+dynport_validate_package_name <- function(package) {
+    package <- as.character(package)
+    if (length(package) != 1L || is.na(package) || !nzchar(package)) {
+        stop("'package' must be a single non-empty string.", call. = FALSE)
+    }
+    if (!grepl("^[A-Za-z][A-Za-z0-9.]*$", package) || grepl("\\.$", package)) {
+        stop("Invalid package name '", package, "'.", call. = FALSE)
+    }
+    invisible(package)
+}
+
+dynport_export_names <- function(port) {
+    exports <- character()
+    exports <- c(exports, names(port[["Function"]]))
+    exports <- c(exports, names(port[["FuncPtr"]]))
+    exports <- c(exports, names(port[["Struct"]]))
+    exports <- c(exports, names(port[["Union"]]))
+
+    enums <- port[["Enum"]]
+    if (!is.null(enums)) {
+        exports <- c(exports, names(enums))
+        exports <- c(exports, unlist(lapply(enums, base::names), use.names = FALSE))
+    }
+
+    dynport_validate_export_names(exports)
+}
+
+dynport_validate_export_names <- function(names) {
+    names <- names[nzchar(names)]
+    invalid <- names != make.names(names)
+    if (any(invalid)) {
+        stop("Invalid export names found in 'dynport' file: ",
+            paste(sQuote(names[invalid]), collapse = ", "),
+            call. = FALSE
+        )
+    }
+    duplicates <- unique(names[duplicated(names)])
+    if (length(duplicates)) {
+        stop("Duplicate export names found in 'dynport' file: ",
+            paste(sQuote(duplicates), collapse = ", "),
+            call. = FALSE
+        )
+    }
+    names
+}
+
+dynport_assign_typeinfos <- function(objects, envir) {
+    if (!length(objects)) return(invisible())
+    for (nm in names(objects)) {
+        assign(nm, objects[[nm]], envir = envir)
+    }
+    invisible()
+}
+
+dynport_assign_enums <- function(enums, envir) {
+    if (!length(enums)) return(invisible())
+    for (nm in names(enums)) {
+        vals <- enums[[nm]]
+        assign(nm, vals, envir = envir)
+        if (length(vals)) {
+            list2env(as.list(vals), envir = envir)
+        }
+    }
+    invisible()
+}
+
+dynport_assign_functions <- function(port, field, envir, funcptr = FALSE) {
+    functions <- port[[field]]
+    if (!length(functions)) return(invisible())
+
+    libraries <- port[["Library"]]
+    if (!length(libraries)) {
+        stop("The 'dynport' file must define 'Library' before binding functions.", call. = FALSE)
+    }
+
+    report <- dynbind(
+        libraries, dynport_compact_signature(functions),
+        envir = envir, funcptr = funcptr
+    )
+    dynport_assign_unresolved(report$unresolved.symbols, envir)
+    invisible(report)
+}
+
+dynport_compact_signature <- function(functions) {
+    paste0(vapply(functions, function(x) {
+        paste0(x$name, "(", x$argument$sig, ")", x$return, ";")
+    }, character(1L)), collapse = "\n")
+}
+
+dynport_assign_unresolved <- function(symbols, envir) {
+    for (symbol in symbols) {
+        f <- local({
+            unresolved <- symbol
+            function(...) {
+                stop("Unresolved DynPort symbol '", unresolved, "'.", call. = FALSE)
+            }
+        })
+        environment(f) <- envir
+        assign(symbol, f, envir = envir)
+    }
+    invisible()
+}
+
+dynport_md5 <- function(file) {
+    unname(tools::md5sum(file))
+}
+
+dynport_prepare_install <- function(package, lib, md5, rebuild = FALSE) {
+    loaded <- package %in% loadedNamespaces()
+    if (loaded) {
+        loaded_info <- dynport_package_description(getNamespaceInfo(getNamespace(package), "path"))
+        if (!dynport_is_generated_package(loaded_info)) {
+            stop("Package '", package, "' is already loaded and was not generated by rdyncall.",
+                call. = FALSE
+            )
+        }
+        if (!identical(dynport_description_value(loaded_info, "Config/rdyncall/dynport-md5"), md5)) {
+            if (!rebuild) {
+                stop("Generated dynport package '", package,
+                    "' is already loaded with different contents; use rebuild = TRUE.",
+                    call. = FALSE
+                )
+            }
+            dynport_unload_package(package)
+        }
+    }
+
+    installed <- dynport_package_description(file.path(lib, package))
+    if (is.null(installed)) {
+        return(FALSE)
+    }
+    if (!dynport_is_generated_package(installed)) {
+        stop("Package '", package, "' is already installed in '", lib,
+            "' and was not generated by rdyncall.", call. = FALSE
+        )
+    }
+
+    installed_md5 <- dynport_description_value(installed, "Config/rdyncall/dynport-md5")
+    if (identical(installed_md5, md5)) {
+        return(TRUE)
+    }
+    if (!rebuild) {
+        stop("Generated dynport package '", package,
+            "' is already installed with different contents; use rebuild = TRUE.",
+            call. = FALSE
+        )
+    }
+
+    if (package %in% loadedNamespaces()) {
+        dynport_unload_package(package)
+    }
+    unlink(file.path(lib, package), recursive = TRUE, force = TRUE)
+    FALSE
+}
+
+dynport_unload_package <- function(package) {
+    search_name <- paste0("package:", package)
+    if (search_name %in% search()) {
+        detach(search_name, character.only = TRUE)
+    }
+    if (package %in% loadedNamespaces()) {
+        tryCatch(
+            unloadNamespace(package),
+            error = function(e) {
+                stop("Failed to unload generated dynport package '", package,
+                    "'. Restart R and try again. Details: ", conditionMessage(e),
+                    call. = FALSE
+                )
+            }
+        )
+    }
+    invisible()
+}
+
+dynport_package_description <- function(path) {
+    desc <- file.path(path, "DESCRIPTION")
+    if (!file.exists(desc)) return(NULL)
+    as.list(read.dcf(desc)[1L, ])
+}
+
+dynport_description_value <- function(desc, field) {
+    if (is.null(desc)) return(NULL)
+    value <- desc[[field]]
+    if (is.null(value) || is.na(value)) NULL else value
+}
+
+dynport_is_generated_package <- function(desc) {
+    isTRUE(identical(dynport_description_value(desc, "Config/rdyncall/generated"), "true"))
+}
+
+dynport_create_package_source <- function(port, portfile, portname, package, md5) {
+    src <- tempfile(paste0(package, "-"))
+    dir.create(src, recursive = TRUE, showWarnings = FALSE)
+    dir.create(file.path(src, "R"), recursive = TRUE)
+    dir.create(file.path(src, "inst", "dynports"), recursive = TRUE)
+
+    dynport_basename <- basename(portfile)
+    file.copy(portfile, file.path(src, "inst", "dynports", dynport_basename), overwrite = TRUE)
+    dynport_write_description(src, port, portname, package, dynport_basename, md5)
+    dynport_write_namespace(src, dynport_export_names(port))
+    dynport_write_loader(src, dynport_basename)
+    dynport_write_license(src)
+    src
+}
+
+dynport_write_description <- function(src, port, portname, package, dynport_file, md5) {
+    dynport_package <- as.character(port[["Package"]])
+    dynport_version <- if (is.null(port[["Version"]])) "0.0.0" else as.character(port[["Version"]])
+    rdyncall_version <- tryCatch(
+        as.character(utils::packageVersion("rdyncall")),
+        error = function(e) "0.0.0"
+    )
+    desc <- data.frame(
+        check.names = FALSE,
+        Package = package,
+        Type = "Package",
+        Title = paste("DynPort Bindings for", dynport_package),
+        Version = dynport_version,
+        Author = "Generated by rdyncall",
+        Maintainer = "rdyncall DynPort generator <noreply@example.com>",
+        Description = paste("Generated rdyncall DynPort wrapper package for", dynport_package, "bindings."),
+        License = "file LICENSE",
+        Encoding = "UTF-8",
+        Imports = "rdyncall",
+        `Config/rdyncall/generated` = "true",
+        `Config/rdyncall/dynport-portname` = portname,
+        `Config/rdyncall/dynport-package` = dynport_package,
+        `Config/rdyncall/dynport-version` = dynport_version,
+        `Config/rdyncall/dynport-file` = dynport_file,
+        `Config/rdyncall/dynport-md5` = md5,
+        `Config/rdyncall/rdyncall-version` = rdyncall_version
+    )
+    write.dcf(desc, file = file.path(src, "DESCRIPTION"))
+}
+
+dynport_write_namespace <- function(src, exports) {
+    lines <- if (length(exports)) paste0("export(", exports, ")") else character()
+    writeLines(lines, file.path(src, "NAMESPACE"), useBytes = TRUE)
+}
+
+dynport_write_loader <- function(src, dynport_file) {
+    lines <- c(
+        ".onLoad <- function(libname, pkgname) {",
+        sprintf("    portfile <- system.file(\"dynports\", %s, package = pkgname, mustWork = TRUE)", deparse(dynport_file)),
+        "    rdyncall::dynport_load_into(portfile, envir = parent.env(environment()))",
+        "}"
+    )
+    writeLines(lines, file.path(src, "R", "zzz.R"), useBytes = TRUE)
+}
+
+dynport_write_license <- function(src) {
+    writeLines(c(
+        "This package was generated by rdyncall from a DynPort specification.",
+        "",
+        "Permission to use, copy, modify, and/or distribute this generated package",
+        "for any purpose with or without fee is hereby granted, provided that this",
+        "permission notice appears in all copies.",
+        "",
+        "THE GENERATED PACKAGE IS PROVIDED \"AS IS\" AND WITHOUT ANY WARRANTY."
+    ), file.path(src, "LICENSE"), useBytes = TRUE)
+}
+
+dynport_install_source <- function(src, lib, quiet = FALSE) {
+    args <- c("CMD", "INSTALL", "--no-test-load", "-l", shQuote(lib), shQuote(src))
+    env <- paste0("R_LIBS=", paste(unique(c(lib, .libPaths())), collapse = .Platform$path.sep))
+    if (quiet) {
+        out <- system2(file.path(R.home("bin"), "R"), args, stdout = TRUE, stderr = TRUE, env = env)
+        status <- attr(out, "status")
+        if (is.null(status)) status <- 0L
+        if (status != 0L) {
+            stop("Failed to install generated dynport package:\n",
+                paste(out, collapse = "\n"), call. = FALSE
+            )
+        }
+    } else {
+        status <- system2(file.path(R.home("bin"), "R"), args, env = env)
+        if (status != 0L) {
+            stop("Failed to install generated dynport package.", call. = FALSE)
+        }
+    }
+    invisible()
+}
+
+dynport_load_package <- function(package, lib, quiet = FALSE) {
+    lib <- dynport_lib_path(lib, create = TRUE)
+    if (!lib %in% normalizePath(.libPaths(), "/", mustWork = FALSE)) {
+        .libPaths(unique(c(lib, normalizePath(.libPaths(), "/", mustWork = FALSE))))
+    }
+    if (paste0("package:", package) %in% search()) {
+        return(invisible(TRUE))
+    }
+    library(package = package, character.only = TRUE, lib.loc = lib,
+        quietly = quiet, warn.conflicts = !quiet
+    )
+    invisible(TRUE)
 }
 
 split_lines <- function(x, trim = TRUE) {
