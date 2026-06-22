@@ -571,10 +571,10 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
 
         lnum <- lnum + lncnt[[i]]
 
-        out[[i]] <- typeinfo(
-            name = name, type = kind,
-            size = parsed$size, align = parsed$align,
-            fields = make_field_info(field_layout$fields, parsed$type, parsed$offset, parsed$array_len)
+        out[[i]] <- tryCatch(
+            make_aggregate_info(name, kind, tail[[1L]], field_layout$fields,
+                envir = envir, layout = field_layout$layout),
+            error = function(e) issue_error(name, conditionMessage(e))
         )
     }
 

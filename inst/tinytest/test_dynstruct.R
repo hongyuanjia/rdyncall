@@ -38,7 +38,11 @@ expect_equal(
                 name = c("x", "y", "w", "h"),
                 type = I(c("s", "s", "S", "S")),
                 offset = c(0L, 2L, 4L, 6L),
-                array_len = c(1L, 1L, 1L, 1L)
+                array_len = c(1L, 1L, 1L, 1L),
+                bit_offset = rep(NA_integer_, 4L),
+                bit_width = rep(NA_integer_, 4L),
+                storage_offset = rep(NA_integer_, 4L),
+                storage_size = rep(NA_integer_, 4L)
             ),
             signature = NA
         ), class = "typeinfo"
@@ -64,7 +68,11 @@ expect_equal(
         name = c("bytes", "tag", "values"),
         type = I(c("C", "i", "d")),
         offset = c(0L, 4L, 8L),
-        array_len = c(4L, 1L, 2L)
+        array_len = c(4L, 1L, 2L),
+        bit_offset = rep(NA_integer_, 3L),
+        bit_width = rep(NA_integer_, 3L),
+        storage_offset = rep(NA_integer_, 3L),
+        storage_size = rep(NA_integer_, 3L)
     )
 )
 expect_equal(env$FixedArray$size, 24L)
@@ -136,3 +144,99 @@ expect_equal(parsed_packed$PackedCharDouble$fields, env$PackedCharDouble$fields)
 expect_error(cstruct("BadPacked{C} c @pack(3);", env), "power-of-two")
 expect_error(cstruct("BadPacked{C} c @packed @pack(1);", env), "duplicate")
 expect_error(cstruct("BadPacked{C} c @bytepack;", env), "unknown")
+
+local({
+    cstruct("Flags{IIII}a:1 b:3 :4 c:8;")
+    expect_equal(Flags$size, 4L)
+    expect_equal(Flags$align, 4)
+    expect_equal(Flags$fields$name, c("a", "b", "", "c"))
+    expect_equal(Flags$fields$offset, c(0L, 0L, 0L, 1L))
+    expect_equal(Flags$fields$array_len, rep(1L, 4L))
+    expect_equal(Flags$fields$bit_offset, c(0L, 1L, 4L, 8L))
+    expect_equal(Flags$fields$bit_width, c(1L, 3L, 4L, 8L))
+    expect_equal(Flags$fields$storage_offset, c(0L, 0L, 0L, 0L))
+
+    flags <- cdata(Flags)
+    flags$a <- 1
+    flags$b <- 5
+    flags$c <- 171
+    expect_equal(flags$a, 1)
+    expect_equal(flags$b, 5)
+    expect_equal(flags$c, 171)
+    expect_equal(unclass(flags)[1:2], as.raw(c(0x0b, 0xab)))
+})
+
+local({
+    cstruct("SignedBits{iI}s:3 u:5;")
+    bits <- cdata(SignedBits)
+    bits$s <- -1L
+    bits$u <- 17
+    expect_equal(bits$s, -1L)
+    expect_equal(bits$u, 17)
+    expect_equal(unclass(bits)[1], as.raw(0x8f))
+})
+
+local({
+    cstruct("AlignedBits{iiic}a:3 :0 b:5 c;")
+    expect_equal(AlignedBits$size, 8L)
+    expect_equal(AlignedBits$fields$offset, c(0L, 4L, 4L, 5L))
+    expect_equal(AlignedBits$fields$bit_offset, c(0L, NA_integer_, 32L, NA_integer_))
+
+    bits <- cdata(AlignedBits)
+    bits$a <- 7
+    bits$b <- 31
+    bits$c <- 102L
+    expect_equal(unpack(bits, 5L, "c"), 102L)
+    expect_equal(bits$a, -1L)
+    expect_equal(bits$b, -1L)
+})
+
+local({
+    cstruct("CrossBits{CCIC}x a:7 b:3 y;")
+    expect_equal(CrossBits$size, 4L)
+    expect_equal(CrossBits$fields$offset, c(0L, 1L, 1L, 3L))
+
+    bits <- cdata(CrossBits)
+    bits$x <- 0x55
+    bits$a <- 0x7f
+    bits$b <- 5
+    bits$y <- 0x66
+    expect_equal(bits$a, 0x7f)
+    expect_equal(bits$b, 5)
+    bytes <- unclass(bits)
+    attributes(bytes) <- NULL
+    expect_equal(bytes, as.raw(c(0x55, 0xff, 0x02, 0x66)))
+})
+
+local({
+    cstruct("PackedBits{CCC}x a:3 y @packed;")
+    expect_equal(PackedBits$size, 3L)
+    expect_equal(PackedBits$align, 1L)
+    expect_equal(PackedBits$fields$offset, c(0L, 1L, 2L))
+
+    bits <- cdata(PackedBits)
+    bits$x <- 0x12
+    bits$a <- 7
+    bits$y <- 0x34
+    expect_equal(bits$a, 7L)
+    bytes <- unclass(bits)
+    attributes(bytes) <- NULL
+    expect_equal(bytes, as.raw(c(0x12, 0x07, 0x34)))
+})
+
+local({
+    cunion("BitUnion|IC}a:3 b:5;")
+    expect_equal(BitUnion$size, 4L)
+    expect_equal(BitUnion$align, 4)
+
+    bits <- cdata(BitUnion)
+    bits$a <- 5
+    expect_equal(bits$a, 5)
+    bits$b <- 17L
+    expect_equal(bits$b, 17L)
+})
+
+expect_error(cstruct("BadFloatBits{d}x:1;"), "integer")
+expect_error(cstruct("TooWideBits{I}x:33;"), "exceeds")
+expect_error(cstruct("NamedZeroBits{I}x:0;"), "zero-width")
+expect_error(cstruct("ArrayBits{I[2]}x:1;"), "fixed array field cannot be a bitfield")

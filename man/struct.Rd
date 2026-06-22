@@ -81,7 +81,9 @@ Fixed-size array fields are written as a type signature followed by \verb{[N]},
 for example \code{C[4]} for \verb{unsigned char[4]} or \verb{<Point>[2]} for two nested
 aggregate values.
 \code{field-names} consists of space separated identifier names and should match
-the number of fields.
+the number of fields. Integer bitfields are written as \code{name:width} in the
+field name list. Unnamed padding bitfields use \verb{:width}; zero-width alignment
+bitfields use \verb{:0}.
 Optional layout directives can follow the field names before the final
 semicolon.
 
@@ -99,6 +101,12 @@ Here is an example of a C \code{struct} type:
 The corresponding structure type signature string is:
 
 \if{html}{\out{<div class="sourceCode">}}\preformatted{"Rect\{ssSS\}x y w h;"
+}\if{html}{\out{</div>}}
+
+Bitfields keep the ordinary type signature in \code{field-types} and put the bit
+width next to the field name:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{"Flags\{IIII\}a:1 b:3 :4 c:8;"
 }\if{html}{\out{</div>}}
 
 Packed or manually aligned aggregate layouts can be registered with

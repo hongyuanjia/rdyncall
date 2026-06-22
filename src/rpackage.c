@@ -27,6 +27,8 @@ SEXP C_dynunload(SEXP libobj);
 /* rpack.c */
 SEXP C_pack(SEXP ptr, SEXP offset, SEXP sig, SEXP value);
 SEXP C_unpack(SEXP ptr, SEXP offset, SEXP sig);
+SEXP C_pack_bitfield(SEXP ptr, SEXP bit_offset, SEXP bit_width, SEXP sig, SEXP value);
+SEXP C_unpack_bitfield(SEXP ptr, SEXP bit_offset, SEXP bit_width, SEXP sig);
 
 /* rcallback.c */
 SEXP C_callback(SEXP sig, SEXP fun, SEXP rho);
@@ -78,6 +80,8 @@ R_CallMethodDef callMethods[] =
   /* --- rpack.c ----------------------------------------------------------- */
   {"C_pack"                     , (DL_FUNC) &C_pack             , 4},
   {"C_unpack"                   , (DL_FUNC) &C_unpack           , 3},
+  {"C_pack_bitfield"            , (DL_FUNC) &C_pack_bitfield    , 5},
+  {"C_unpack_bitfield"          , (DL_FUNC) &C_unpack_bitfield  , 4},
   /* --- rutils.c ---------------------------------------------------------- */
   {"C_asexternalptr"            , (DL_FUNC) &C_asexternalptr    , 1},
   {"C_isnullptr"                , (DL_FUNC) &C_isnullptr        , 1},

@@ -21,6 +21,8 @@
     v = 0
 )
 
+.BITFIELD_TYPES <- c("B", "c", "C", "s", "S", "i", "I", "j", "J", "l", "L")
+
 # ----------------------------------------------------------------------------
 # dynport type information
 #
@@ -52,8 +54,9 @@
 #'
 #' @param envir the environment to look for type object.
 #'
-#' @param fields data frame with name, type and offset information that
-#'        specifies aggregate struct and union types.
+#' @param fields data frame with name, type, offset and optional array or
+#'        bitfield layout information that specifies aggregate struct and union
+#'        types.
 #'
 #' @return
 #' List object tagged as S3 class `typeinfo` with the following named entries
@@ -66,6 +69,10 @@
 #'         \code{type} \tab type name\cr
 #'         \code{offset} \tab byte offset (starts counted from 0)\cr
 #'         \code{array_len} \tab fixed array length, or 1 for scalar fields\cr
+#'         \code{bit_offset} \tab bitfield offset, or \code{NA} for ordinary fields\cr
+#'         \code{bit_width} \tab bitfield width, or \code{NA} for ordinary fields\cr
+#'         \code{storage_offset} \tab bitfield storage-unit byte offset\cr
+#'         \code{storage_size} \tab bitfield storage-unit size in bytes\cr
 #'     }
 #' }
 #'
@@ -144,21 +151,80 @@ align <- function(offset, alignment) {
     as.integer(as.integer((offset + alignment - 1) / alignment) * alignment)
 }
 
+align_bits <- function(offset, alignment) {
+    if (is.na(alignment) || alignment <= 0L) return(offset)
+    as.integer(as.integer((offset + alignment - 1L) / alignment) * alignment)
+}
+
+bits_to_bytes <- function(bits) {
+    as.integer(as.integer((bits + 7L) / 8L))
+}
+
 # ----------------------------------------------------------------------------
 # field information (structures and unions)
 
-make_field_info <- function(field_names, types, offsets, array_len = rep.int(1L, length(types))) {
+make_field_info <- function(field_names, types, offsets,
+                            array_len = rep.int(1L, length(types)),
+                            bit_offsets = NULL, bit_widths = NULL,
+                            storage_offsets = NULL, storage_sizes = NULL) {
     if (is.null(field_names)) field_names <- character()
+    if (is.null(types)) types <- character()
+    if (is.null(offsets)) offsets <- integer()
     if (length(types) != length(field_names)) {
         stop("number of field types and names does not match")
     }
-    data.frame(name = field_names, type = I(types), offset = offsets, array_len = array_len)
+    n <- length(types)
+    if (is.null(bit_offsets)) bit_offsets <- rep(NA_integer_, n)
+    if (is.null(bit_widths)) bit_widths <- rep(NA_integer_, n)
+    if (is.null(storage_offsets)) storage_offsets <- rep(NA_integer_, n)
+    if (is.null(storage_sizes)) storage_sizes <- rep(NA_integer_, n)
+    data.frame(
+        name = field_names,
+        type = I(types),
+        offset = offsets,
+        array_len = array_len,
+        bit_offset = bit_offsets,
+        bit_width = bit_widths,
+        storage_offset = storage_offsets,
+        storage_size = storage_sizes
+    )
 }
 
 parse_field_names <- function(x) {
     x <- trimws(x)
     if (!nzchar(x)) return(NULL)
     strsplit(x, "[ \n\t]+")[[1L]]
+}
+
+parse_field_specs <- function(field_names) {
+    if (is.null(field_names)) field_names <- character()
+    names <- character(length(field_names))
+    bit_widths <- rep(NA_integer_, length(field_names))
+
+    for (i in seq_along(field_names)) {
+        field <- field_names[[i]]
+        if (!grepl(":", field, fixed = TRUE)) {
+            names[[i]] <- field
+            next
+        }
+
+        parts <- strsplit(field, ":", fixed = TRUE)[[1L]]
+        if (length(parts) != 2L) {
+            stop("invalid bitfield specification '", field, "'", call. = FALSE)
+        }
+        width <- suppressWarnings(as.integer(parts[[2L]]))
+        if (is.na(width) || !identical(as.character(width), parts[[2L]]) || width < 0L) {
+            stop("invalid bitfield width in field '", field, "'", call. = FALSE)
+        }
+        if (width == 0L && nzchar(parts[[1L]])) {
+            stop("zero-width bitfield must be unnamed", call. = FALSE)
+        }
+
+        names[[i]] <- parts[[1L]]
+        bit_widths[[i]] <- width
+    }
+
+    data.frame(name = names, bit_width = bit_widths)
 }
 
 aggregate_layout <- function(pack = NA_integer_, align = NA_integer_) {
@@ -397,14 +463,134 @@ parse_aggregate_types <- function(kind = c("struct", "union"), signature,
     list(size = size, align = max_align, type = types, offset = offsets, array_len = array_lens)
 }
 
+validate_bitfield_type <- function(type, width, info) {
+    if (!type %in% .BITFIELD_TYPES) {
+        stop("bitfield type '", type, "' is not an integer type", call. = FALSE)
+    }
+    type_bits <- as.integer(info$size * 8L)
+    if (width > type_bits) {
+        stop("bitfield width ", width, " exceeds width of type '", type, "'", call. = FALSE)
+    }
+    if (type == "B" && width > 1L) {
+        stop("bool bitfield width must not exceed 1", call. = FALSE)
+    }
+}
+
+make_aggregate_info <- function(name, kind = c("struct", "union"), signature,
+                                field_names, envir = parent.frame(),
+                                layout = aggregate_layout()) {
+    kind <- match.arg(kind)
+    parsed <- parse_aggregate_types(kind, signature, envir = envir, layout = layout)
+    fields <- parse_field_specs(field_names)
+    if (length(parsed$type) != nrow(fields)) {
+        stop("number of field types and names does not match", call. = FALSE)
+    }
+
+    if (!any(!is.na(fields$bit_width))) {
+        field_info <- make_field_info(
+            fields$name, parsed$type, parsed$offset, parsed$array_len
+        )
+        return(typeinfo(
+            name = name, type = kind, size = parsed$size, align = parsed$align,
+            fields = field_info
+        ))
+    }
+
+    types <- parsed$type
+    array_lens <- parsed$array_len
+    offsets <- integer(length(types))
+    bit_offsets <- rep(NA_integer_, length(types))
+    bit_widths <- fields$bit_width
+    storage_offsets <- rep(NA_integer_, length(types))
+    storage_sizes <- rep(NA_integer_, length(types))
+
+    max_align <- 1L
+    max_size <- 0L
+    bitpos <- 0L
+
+    for (i in seq_along(types)) {
+        type <- types[[i]]
+        info <- get_typeinfo(type, envir = envir)
+        width <- bit_widths[[i]]
+        member_align <- aggregate_member_alignment(info$align, layout)
+
+        if (is.na(width)) {
+            field_size <- info$size * array_lens[[i]]
+            max_align <- max(max_align, member_align)
+            if (kind == "struct") {
+                offset <- align(bits_to_bytes(bitpos), member_align)
+                offsets[[i]] <- offset
+                bitpos <- as.integer((offset + field_size) * 8L)
+            } else {
+                offsets[[i]] <- 0L
+                max_size <- max(max_size, field_size)
+            }
+            next
+        }
+
+        if (array_lens[[i]] != 1L) {
+            stop("fixed array field cannot be a bitfield", call. = FALSE)
+        }
+        validate_bitfield_type(type, width, info)
+        max_align <- max(max_align, member_align)
+        unit_bits <- as.integer(info$size * 8L)
+
+        if (width == 0L) {
+            if (kind == "struct") {
+                bitpos <- align_bits(bitpos, unit_bits)
+                offsets[[i]] <- bits_to_bytes(bitpos)
+            } else {
+                offsets[[i]] <- 0L
+            }
+            next
+        }
+
+        if (kind == "struct") {
+            if ((bitpos %% unit_bits) + width > unit_bits) {
+                bitpos <- align_bits(bitpos, unit_bits)
+            }
+            bit_offsets[[i]] <- bitpos
+            offsets[[i]] <- bitpos %/% 8L
+            storage_offsets[[i]] <- (bitpos %/% unit_bits) * info$size
+            storage_sizes[[i]] <- info$size
+            bitpos <- bitpos + width
+        } else {
+            bit_offsets[[i]] <- 0L
+            offsets[[i]] <- 0L
+            storage_offsets[[i]] <- 0L
+            storage_sizes[[i]] <- info$size
+            max_size <- max(max_size, info$size)
+        }
+    }
+
+    max_align <- aggregate_final_alignment(max_align, layout)
+    size <- if (kind == "struct") {
+        align(bits_to_bytes(bitpos), max_align)
+    } else {
+        align(max_size, max_align)
+    }
+
+    field_info <- make_field_info(
+        fields$name, types, offsets,
+        array_len = array_lens,
+        bit_offsets = bit_offsets,
+        bit_widths = bit_widths,
+        storage_offsets = storage_offsets,
+        storage_sizes = storage_sizes
+    )
+    typeinfo(name = name, type = kind, size = size, align = max_align, fields = field_info)
+}
+
+is_bitfield <- function(field_info) {
+    "bit_width" %in% names(field_info) && !is.na(field_info[["bit_width"]])
+}
+
 # ----------------------------------------------------------------------------
 # parse structure signature
 
 make_struct_info <- function(name, signature, field_names, envir = parent.frame(),
                              layout = aggregate_layout()) {
-    parsed <- parse_aggregate_types("struct", signature, envir = envir, layout = layout)
-    fields <- make_field_info(field_names, parsed$type, parsed$offset, parsed$array_len)
-    typeinfo(name = name, type = "struct", size = parsed$size, align = parsed$align, fields = fields)
+    make_aggregate_info(name, "struct", signature, field_names, envir = envir, layout = layout)
 }
 
 #' Allocation and handling of foreign C aggregate data types
@@ -446,7 +632,9 @@ make_struct_info <- function(name, signature, field_names, envir = parent.frame(
 #' for example `C[4]` for `unsigned char[4]` or `<Point>[2]` for two nested
 #' aggregate values.
 #' `field-names` consists of space separated identifier names and should match
-#' the number of fields.
+#' the number of fields. Integer bitfields are written as `name:width` in the
+#' field name list. Unnamed padding bitfields use `:width`; zero-width alignment
+#' bitfields use `:0`.
 #' Optional layout directives can follow the field names before the final
 #' semicolon.
 #'
@@ -465,6 +653,11 @@ make_struct_info <- function(name, signature, field_names, envir = parent.frame(
 #' The corresponding structure type signature string is:
 #' ```
 #' "Rect{ssSS}x y w h;"
+#' ```
+#' Bitfields keep the ordinary type signature in `field-types` and put the bit
+#' width next to the field name:
+#' ```
+#' "Flags{IIII}a:1 b:3 :4 c:8;"
 #' ```
 #' Packed or manually aligned aggregate layouts can be registered with
 #' `@packed`, `@pack(n)` and `@align(n)` directives, where `n` must be a
@@ -580,9 +773,7 @@ cstruct <- function(sigs, envir = parent.frame()) {
 
 make_union_info <- function(name, signature, field_names, envir = parent.frame(),
                             layout = aggregate_layout()) {
-    parsed <- parse_aggregate_types("union", signature, envir = envir, layout = layout)
-    fields <- make_field_info(field_names, parsed$type, parsed$offset, parsed$array_len)
-    typeinfo(name = name, type = "union", fields = fields, size = parsed$size, align = parsed$align)
+    make_aggregate_info(name, "union", signature, field_names, envir = envir, layout = layout)
 }
 
 #' @rdname struct
@@ -736,6 +927,14 @@ pack_aggregate_array_field <- function(x, offset, field_type_info, array_len, va
     field_info <- struct_info$fields
     field_index <- match(index, field_info$name)
     if (is.na(field_index)) stop("unknown field index '", index, "'")
+    field <- field_info[field_index, , drop = FALSE]
+    if (is_bitfield(field)) {
+        return(.Call(
+            "C_unpack_bitfield", x, as.integer(field$bit_offset),
+            as.integer(field$bit_width), as.character(field$type),
+            PACKAGE = "rdyncall"
+        ))
+    }
     offset <- field_info[field_index, "offset"]
     field_type_name <- as.character(field_info[[field_index, "type"]])
     field_type_info <- get_typeinfo(field_type_name)
@@ -756,6 +955,15 @@ pack_aggregate_array_field <- function(x, offset, field_type_info, array_len, va
     field_info <- struct_info$fields
     field_index <- match(index, field_info$name)
     if (is.na(field_index)) stop("unknown field index '", index, "'")
+    field <- field_info[field_index, , drop = FALSE]
+    if (is_bitfield(field)) {
+        .Call(
+            "C_pack_bitfield", x, as.integer(field$bit_offset),
+            as.integer(field$bit_width), as.character(field$type), value,
+            PACKAGE = "rdyncall"
+        )
+        return(x)
+    }
     offset <- field_info[field_index, "offset"]
     field_type_name <- as.character(field_info[field_index, "type"])
     field_type_info <- get_typeinfo(field_type_name)
@@ -778,6 +986,7 @@ print.struct <- function(x, indent = 0, ...) {
     struct_info <- struct_typeinfo(x, parent.frame())
     field_info <- struct_info$fields
     field_names <- field_info$name
+    field_names <- field_names[nzchar(field_names)]
 
     cat("struct ", struct_name, " ")
     if (typeof(x) == "externalptr") {

@@ -136,6 +136,13 @@ typedef struct rdyncall_test_ptr_box_ {
   int tag;
 } rdyncall_test_ptr_box;
 
+typedef struct rdyncall_test_bits_ {
+  unsigned int a:1;
+  unsigned int b:3;
+  unsigned int :4;
+  unsigned int c:8;
+} rdyncall_test_bits;
+
 RDYNCALL_TEST_EXPORT int rdyncall_test_color_sum(rdyncall_test_color x)
 {
   return (int) x.r + 10 * (int) x.g + 100 * (int) x.b + 1000 * (int) x.a;
@@ -459,4 +466,18 @@ RDYNCALL_TEST_EXPORT rdyncall_test_value_union rdyncall_test_make_value_union_in
 RDYNCALL_TEST_EXPORT int rdyncall_test_ptr_box_sum(rdyncall_test_ptr_box x)
 {
   return (x.p ? *x.p : 0) + x.tag;
+}
+
+RDYNCALL_TEST_EXPORT int rdyncall_test_bits_sum(rdyncall_test_bits x)
+{
+  return (int) x.a + 10 * (int) x.b + 100 * (int) x.c;
+}
+
+RDYNCALL_TEST_EXPORT rdyncall_test_bits rdyncall_test_make_bits(unsigned int a, unsigned int b, unsigned int c)
+{
+  rdyncall_test_bits out;
+  out.a = a;
+  out.b = b;
+  out.c = c;
+  return out;
 }

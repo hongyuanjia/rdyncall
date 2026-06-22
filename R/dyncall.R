@@ -53,6 +53,53 @@ dyncall_aggregate_field_type_name <- function(type) {
     substr(type, 2L, nchar(type) - 1L)
 }
 
+dyncall_aggregate_field_layout <- function(fields) {
+    array_lens <- if ("array_len" %in% names(fields)) {
+        as.integer(fields$array_len)
+    } else {
+        rep.int(1L, nrow(fields))
+    }
+
+    if (!"bit_width" %in% names(fields)) {
+        return(data.frame(
+            type = as.character(fields$type),
+            offset = as.integer(fields$offset),
+            array_len = array_lens,
+            stringsAsFactors = FALSE
+        ))
+    }
+
+    out_type <- character()
+    out_offset <- integer()
+    out_array_len <- integer()
+    seen_storage <- character()
+
+    for (i in seq_len(nrow(fields))) {
+        field <- fields[i, , drop = FALSE]
+        bit_width <- field$bit_width
+        if (!is.na(bit_width)) {
+            if (bit_width == 0L) next
+            key <- paste(field$storage_offset, field$storage_size, as.character(field$type), sep = ":")
+            if (key %in% seen_storage) next
+            seen_storage <- c(seen_storage, key)
+            out_type <- c(out_type, as.character(field$type))
+            out_offset <- c(out_offset, as.integer(field$storage_offset))
+            out_array_len <- c(out_array_len, 1L)
+        } else {
+            out_type <- c(out_type, as.character(field$type))
+            out_offset <- c(out_offset, as.integer(field$offset))
+            out_array_len <- c(out_array_len, array_lens[[i]])
+        }
+    }
+
+    data.frame(
+        type = out_type,
+        offset = out_offset,
+        array_len = out_array_len,
+        stringsAsFactors = FALSE
+    )
+}
+
 dyncall_aggregate_layout <- function(name, envir = parent.frame(), seen = character()) {
     info <- get_typeinfo(name, envir = envir)
     if (is.null(info)) {
@@ -72,17 +119,14 @@ dyncall_aggregate_layout <- function(name, envir = parent.frame(), seen = charac
 
     size <- as.integer(info$size)
     alignment <- as.integer(info$align)
-    offsets <- as.integer(fields$offset)
+    layout_fields <- dyncall_aggregate_field_layout(fields)
+    offsets <- as.integer(layout_fields$offset)
     if (is.na(size) || size < 1L || is.na(alignment) || alignment < 1L || anyNA(offsets)) {
         stop("aggregate type '", name, "' does not contain a complete memory layout", call. = FALSE)
     }
 
-    field_types <- as.character(fields$type)
-    array_lens <- if ("array_len" %in% names(fields)) {
-        as.integer(fields$array_len)
-    } else {
-        rep.int(1L, length(field_types))
-    }
+    field_types <- as.character(layout_fields$type)
+    array_lens <- as.integer(layout_fields$array_len)
     if (length(array_lens) != length(field_types) || anyNA(array_lens) || any(array_lens < 1L)) {
         stop("aggregate type '", name, "' contains invalid fixed array lengths", call. = FALSE)
     }

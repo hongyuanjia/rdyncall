@@ -372,6 +372,23 @@ pack(ptr_box, field_offset(PtrBox, "tag"), "i", 23L)
 ptr_box_sum <- dynsym(aggregate_fixture, "rdyncall_test_ptr_box_sum")
 expect_equal(dyncall(ptr_box_sum, "<PtrBox>)i", ptr_box), 123L)
 
+# Bitfield aggregate storage is passed and returned by value using the
+# registered storage-unit layout.
+cstruct("Bits{IIII}a:1 b:3 :4 c:8;")
+bits <- cdata(Bits)
+bits$a <- 1
+bits$b <- 5
+bits$c <- 171
+bits_sum <- dynsym(aggregate_fixture, "rdyncall_test_bits_sum")
+expect_equal(dyncall(bits_sum, "<Bits>)i", bits), 17151L)
+
+make_bits <- dynsym(aggregate_fixture, "rdyncall_test_make_bits")
+bits_ret <- dyncall(make_bits, "III)<Bits>", 1, 2, 3)
+expect_struct_raw(bits_ret, "Bits")
+expect_equal(bits_ret$a, 1)
+expect_equal(bits_ret$b, 2)
+expect_equal(bits_ret$c, 3)
+
 # Aggregate errors remain explicit.
 wrong_color <- color
 attr(wrong_color, "struct") <- "Vec2"
