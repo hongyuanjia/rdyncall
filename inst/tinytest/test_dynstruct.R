@@ -35,13 +35,19 @@ expect_equal(
         list(name = "Rect", type = "struct", size = .Machine$sizeof.pointer,
             align = 2, basetype = NA,
             fields = data.frame(
+                name = c("x", "y", "w", "h"),
                 type = I(c("s", "s", "S", "S")),
-                offset = c(0L, 2L, 4L, 6L),
-                row.names = c("x", "y", "w", "h")
+                offset = c(0L, 2L, 4L, 6L)
             ),
             signature = NA
         ), class = "typeinfo"
     )
 )
-expect_equal(rownames(env$RectWithSpace$fields), c("x", "y", "w", "h"))
-expect_equal(rownames(env$NumberWithSpace$fields), c("i", "d"))
+expect_equal(env$RectWithSpace$fields$name, c("x", "y", "w", "h"))
+expect_equal(env$NumberWithSpace$fields$name, c("i", "d"))
+
+parsed_struct <- rdyncall:::dynport_parse_struct("Rect{ssSS} x y w h;")
+expect_equal(parsed_struct$Rect$fields, env$RectWithSpace$fields)
+
+parsed_union <- rdyncall:::dynport_parse_union("Number{id} i d;")
+expect_equal(parsed_union$Number$fields, env$NumberWithSpace$fields)

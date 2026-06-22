@@ -52,8 +52,8 @@
 #'
 #' @param envir the environment to look for type object.
 #'
-#' @param fields data frame with type and offset information that specifies
-#'        aggregate struct and union types.
+#' @param fields data frame with name, type and offset information that
+#'        specifies aggregate struct and union types.
 #'
 #' @return
 #' List object tagged as S3 class `typeinfo` with the following named entries
@@ -62,6 +62,7 @@
 #' \item{align}{Alignment in bytes.}
 #' \item{fields}{Data frame for field information with the following columns:
 #'     \tabular{ll}{
+#'         \code{name} \tab field name\cr
 #'         \code{type} \tab type name\cr
 #'         \code{offset} \tab byte offset (starts counted from 0)\cr
 #'     }
@@ -146,7 +147,11 @@ align <- function(offset, alignment) {
 # field information (structures and unions)
 
 make_field_info <- function(field_names, types, offsets) {
-    data.frame(type = I(types), offset = offsets, row.names = field_names)
+    if (is.null(field_names)) field_names <- character()
+    if (length(types) != length(field_names)) {
+        stop("number of field types and names does not match")
+    }
+    data.frame(name = field_names, type = I(types), offset = offsets)
 }
 
 parse_field_names <- function(x) {
@@ -452,9 +457,10 @@ cdata <- function(type) {
     struct_name <- attr(x, "struct")
     struct_info <- get_typeinfo(struct_name)
     field_info <- struct_info$fields
-    offset <- field_info[index, "offset"]
-    if (is.na(offset)) stop("unknown field index '", index, "'")
-    field_type_name <- as.character(field_info[[index, "type"]])
+    field_index <- match(index, field_info$name)
+    if (is.na(field_index)) stop("unknown field index '", index, "'")
+    offset <- field_info[field_index, "offset"]
+    field_type_name <- as.character(field_info[[field_index, "type"]])
     field_type_info <- get_typeinfo(field_type_name)
     if (field_type_info$type %in% c("base", "pointer")) {
         unpack(x, offset, field_type_info$signature)
@@ -476,9 +482,10 @@ cdata <- function(type) {
     struct_name <- attr(x, "struct")
     struct_info <- get_typeinfo(struct_name)
     field_info <- struct_info$fields
-    offset <- field_info[index, "offset"]
-    if (is.na(offset)) stop("unknown field index '", index, "'")
-    field_type_name <- as.character(field_info[index, "type"])
+    field_index <- match(index, field_info$name)
+    if (is.na(field_index)) stop("unknown field index '", index, "'")
+    offset <- field_info[field_index, "offset"]
+    field_type_name <- as.character(field_info[field_index, "type"])
     field_type_info <- get_typeinfo(field_type_name)
     if (field_type_info$type %in% c("base", "pointer")) {
         pack(x, offset, field_type_info$signature, value)
@@ -498,7 +505,7 @@ print.struct <- function(x, indent = 0, ...) {
     struct_name <- attr(x, "struct")
     struct_info <- get_typeinfo(struct_name)
     field_info <- struct_info$fields
-    field_names <- rownames(field_info)
+    field_names <- field_info$name
 
     cat("struct ", struct_name, " ")
     if (typeof(x) == "externalptr") {
