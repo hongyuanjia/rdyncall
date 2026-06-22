@@ -1,53 +1,82 @@
-# Example from GLPK Reference Manual.. rewritten to R.
+# Package: rdyncall
+# File: demo/glpk.R
+# Description: Solve a small linear program through the GLPK C API.
 
-dynport(glpk)
-lp = glp_create_prob();
-glp_set_prob_name(lp, "sample");
-glp_set_obj_dir(lp, GLP_MAX);
-glp_add_rows(lp, 3);
-glp_set_row_name(lp, 1, "p");
-glp_set_row_bnds(lp, 1, GLP_UP, 0.0, 100.0);
-glp_set_row_name(lp, 2, "q");
-glp_set_row_bnds(lp, 2, GLP_UP, 0.0, 600.0);
-glp_set_row_name(lp, 3, "r");
-glp_set_row_bnds(lp, 3, GLP_UP, 0.0, 300.0);
-glp_add_cols(lp, 3);
-glp_set_col_name(lp, 1, "x1");
-glp_set_col_bnds(lp, 1, GLP_LO, 0.0, 0.0);
-glp_set_obj_coef(lp, 1, 10.0);
-glp_set_col_name(lp, 2, "x2");
-glp_set_col_bnds(lp, 2, GLP_LO, 0.0, 0.0);
-glp_set_obj_coef(lp, 2, 6.0);
-glp_set_col_name(lp, 3, "x3");
-glp_set_col_bnds(lp, 3, GLP_LO, 0.0, 0.0);
-glp_set_obj_coef(lp, 3, 4.0);
+library(rdyncall)
 
-ia = integer(1+1000)
-ja = integer(1+1000)
-ar = double(1+1000)
+glpk <- new.env(parent = globalenv())
+binding <- tryCatch(
+    dynbind(c("glpk", "glpk40", "glpk_4_65"), paste(
+        "glp_create_prob()p",
+        "glp_delete_prob(p)v",
+        "glp_set_prob_name(pZ)v",
+        "glp_set_obj_dir(pi)v",
+        "glp_add_rows(pi)i",
+        "glp_set_row_name(piZ)v",
+        "glp_set_row_bnds(piidd)v",
+        "glp_add_cols(pi)i",
+        "glp_set_col_name(piZ)v",
+        "glp_set_col_bnds(piidd)v",
+        "glp_set_obj_coef(pid)v",
+        "glp_load_matrix(pi*i*i*d)v",
+        "glp_simplex(pp)i",
+        "glp_get_obj_val(p)d",
+        "glp_get_col_prim(pi)d",
+        sep = ";"
+    ), envir = glpk),
+    error = function(e) {
+        stop("unable to load the GLPK shared library: ", conditionMessage(e), call. = FALSE)
+    }
+)
+stopifnot(!length(binding$unresolved.symbols))
 
-#we index at 1 in C (second position).. but in R we start at initial position..
-ia[1]=1;ja[1]=1;ar[1]= 1.0; 
-ia[2]=1;ja[2]=2;ar[2]= 1.0;
-ia[3]=1;ja[3]=3;ar[3]= 1.0;
-ia[4]=2;ja[4]=1;ar[4]= 10.0; 
-ia[5]=3;ja[5]=1;ar[5]= 2.0;
-ia[6]=2;ja[6]=2;ar[6]= 4.0;
-ia[7]=3;ja[7]=2;ar[7]= 2.0;
-ia[8]=2;ja[8]=3;ar[8]= 5.0;
-ia[9]=3;ja[9]=3;ar[9]= 6.0;
+GLP_LO <- 2L
+GLP_MAX <- 2L
+GLP_UP <- 3L
 
-#now we prefix with '0' .. so that our values the above start at 1 in C.
+run_glpk_demo <- function() {
+    lp <- glpk$glp_create_prob()
+    on.exit(glpk$glp_delete_prob(lp), add = TRUE)
 
-ia <- as.integer(c(0,ia))
-ja <- as.integer(c(0,ja))
+    glpk$glp_set_prob_name(lp, "sample")
+    glpk$glp_set_obj_dir(lp, GLP_MAX)
 
-glp_load_matrix(lp, 9, ia, ja, ar);
-glp_simplex(lp, NULL);
-z = glp_get_obj_val(lp);
-x1 = glp_get_col_prim(lp, 1);
-x2 = glp_get_col_prim(lp, 2);
-x3 = glp_get_col_prim(lp, 3);
+    glpk$glp_add_rows(lp, 3L)
+    glpk$glp_set_row_name(lp, 1L, "p")
+    glpk$glp_set_row_bnds(lp, 1L, GLP_UP, 0, 100)
+    glpk$glp_set_row_name(lp, 2L, "q")
+    glpk$glp_set_row_bnds(lp, 2L, GLP_UP, 0, 600)
+    glpk$glp_set_row_name(lp, 3L, "r")
+    glpk$glp_set_row_bnds(lp, 3L, GLP_UP, 0, 300)
 
-print(list(z=z,x1=x1,x2=x2,x3=x3))
-glp_delete_prob(lp);
+    glpk$glp_add_cols(lp, 3L)
+    glpk$glp_set_col_name(lp, 1L, "x1")
+    glpk$glp_set_col_bnds(lp, 1L, GLP_LO, 0, 0)
+    glpk$glp_set_obj_coef(lp, 1L, 10)
+    glpk$glp_set_col_name(lp, 2L, "x2")
+    glpk$glp_set_col_bnds(lp, 2L, GLP_LO, 0, 0)
+    glpk$glp_set_obj_coef(lp, 2L, 6)
+    glpk$glp_set_col_name(lp, 3L, "x3")
+    glpk$glp_set_col_bnds(lp, 3L, GLP_LO, 0, 0)
+    glpk$glp_set_obj_coef(lp, 3L, 4)
+
+    ia <- c(0L, 1L, 1L, 1L, 2L, 3L, 2L, 3L, 3L, 3L)
+    ja <- c(0L, 1L, 2L, 3L, 1L, 1L, 2L, 2L, 1L, 3L)
+    ar <- c(0, 1, 1, 1, 10, 2, 4, 2, 5, 6)
+
+    glpk$glp_load_matrix(lp, 9L, ia, ja, ar)
+    glpk$glp_simplex(lp, NULL)
+
+    result <- c(
+        z = glpk$glp_get_obj_val(lp),
+        x1 = glpk$glp_get_col_prim(lp, 1L),
+        x2 = glpk$glp_get_col_prim(lp, 2L),
+        x3 = glpk$glp_get_col_prim(lp, 3L)
+    )
+    print(result)
+    expected <- c(z = 733.333333333333, x1 = 33.3333333333333,
+        x2 = 66.6666666666667, x3 = 0)
+    stopifnot(isTRUE(all.equal(result, expected, tolerance = 1e-8)))
+}
+
+run_glpk_demo()

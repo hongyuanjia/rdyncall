@@ -1,7 +1,11 @@
-# Package: rdyncall 
+# Package: rdyncall
 # File: demo/R_ShowMessage.R
-# Description: Show R Dialog Message (dynbind demo)
+# Description: Show an R dialog message through R's C API.
 
-dynbind("R","R_ShowMessage(Z)v;")
-R_ShowMessage("hello")
+library(rdyncall)
 
+r_api <- new.env(parent = globalenv())
+binding <- dynbind("R", "R_ShowMessage(Z)v;", envir = r_api)
+stopifnot(!length(binding$unresolved.symbols))
+
+r_api$R_ShowMessage("hello from rdyncall")
