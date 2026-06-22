@@ -523,7 +523,7 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
             fields <- NULL
         } else {
             # TODO: invalid field names?
-            fields <- strsplit(trimws(tail[[2L]]), "[ \r\n\t]+")[[1L]]
+            fields <- parse_field_names(tail[[2L]])
             # this is the case when there are extra '}'
             if (!length(fields)) {
                 issue_error(name, "Extra '}' in specification")
@@ -559,7 +559,7 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
         out[[i]] <- typeinfo(
             name = name, type = kind,
             size = parsed$size, align = parsed$align,
-            fields = data.frame(name = fields, type = parsed$type, offset = parsed$offset)
+            fields = make_field_info(fields, parsed$type, parsed$offset)
         )
     }
 
