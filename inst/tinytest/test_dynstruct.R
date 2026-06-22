@@ -25,6 +25,39 @@ expect_error(rdyncall:::get_typeinfo(1))
 
 expect_equal(rdyncall:::align(4, 8), 8L)
 
+tokens <- rdyncall:::scan_signature_tokens("C[2][3]i*<Rect>[2]")
+expect_true(tokens$ok)
+expect_equal(tokens$type, c("C", "i", "*<Rect>"))
+expect_equal(tokens$array_len, c(6L, 1L, 2L))
+expect_equal(tokens$start, c(1L, 8L, 9L))
+expect_equal(tokens$end, c(7L, 8L, 18L))
+
+empty_tokens <- rdyncall:::scan_signature_tokens("")
+expect_true(empty_tokens$ok)
+expect_equal(empty_tokens$type, character())
+
+bad_aggregate <- rdyncall:::scan_signature_tokens("<Bad")
+expect_false(bad_aggregate$ok)
+expect_equal(bad_aggregate$error_reason, "aggregate")
+expect_equal(c(bad_aggregate$error_start, bad_aggregate$error_end), c(1L, 5L))
+
+bad_array <- rdyncall:::scan_signature_tokens("C[0]")
+expect_false(bad_array$ok)
+expect_equal(bad_array$error_reason, "array")
+expect_equal(c(bad_array$error_start, bad_array$error_end), c(2L, 4L))
+
+bad_array_close <- rdyncall:::scan_signature_tokens("C[12x]")
+expect_false(bad_array_close$ok)
+expect_equal(c(bad_array_close$error_start, bad_array_close$error_end), c(2L, 6L))
+
+bad_array_open <- rdyncall:::scan_signature_tokens("C[")
+expect_false(bad_array_open$ok)
+expect_equal(c(bad_array_open$error_start, bad_array_open$error_end), c(1L, 2L))
+
+parsed_bad_array <- rdyncall:::parse_aggregate_types("struct", "C[0]", on_error = "return")
+expect_equal(attr(parsed_bad_array, "reason"), "array")
+expect_equal(attr(parsed_bad_array, "pos"), c(2L, 4L))
+
 env <- new.env()
 expect_null(cstruct("Rect{ssSS}x y w h ;", env))
 expect_null(cstruct("RectWithSpace{ssSS} x y w h ;", env))

@@ -316,64 +316,8 @@ parse_type_error <- function(pos, type = NULL, reason = NULL) {
     res
 }
 
-parse_array_suffix <- function(signature, i, token_start) {
-    n <- nchar(signature)
-    array_len <- 1
-
-    while (i <= n && substr(signature, i, i) == "[") {
-        close <- regexpr("]", substr(signature, i + 1L, n), fixed = TRUE)[[1L]]
-        if (close < 0L) {
-            return(parse_type_error(c(token_start, n), reason = "array"))
-        }
-
-        close <- i + close
-        len <- substr(signature, i + 1L, close - 1L)
-        if (!grepl("^[1-9][0-9]*$", len)) {
-            return(parse_type_error(c(i, close), reason = "array"))
-        }
-
-        len <- suppressWarnings(as.integer(len))
-        if (is.na(len) || len < 1L || array_len * len > .Machine$integer.max) {
-            return(parse_type_error(c(i, close), reason = "array"))
-        }
-
-        array_len <- array_len * len
-        i <- close + 1L
-    }
-
-    list(array_len = as.integer(array_len), next_index = i)
-}
-
-parse_type_token <- function(signature, start) {
-    n <- nchar(signature)
-    i <- start
-
-    while (i <= n && substr(signature, i, i) == "*") {
-        i <- i + 1L
-    }
-
-    if (i > n) {
-        type_end <- n
-        i <- n + 1L
-    } else if (substr(signature, i, i) == "<") {
-        i <- i + 1L
-        while (i <= n && substr(signature, i, i) != ">") {
-            i <- i + 1L
-        }
-        if (i > n) {
-            return(parse_type_error(c(start, i)))
-        }
-        type_end <- i
-        i <- i + 1L
-    } else {
-        type_end <- i
-        i <- i + 1L
-    }
-
-    array <- parse_array_suffix(signature, i, start)
-    if (!is.null(attr(array, "pos"))) return(array)
-
-    list(type = substr(signature, start, type_end), array_len = array$array_len, next_index = array$next_index)
+scan_signature_tokens <- function(signature) {
+    .Call("C_scan_signature_tokens", signature, PACKAGE = "rdyncall")
 }
 
 parse_aggregate_types <- function(kind = c("struct", "union"), signature,
@@ -416,26 +360,32 @@ parse_aggregate_types <- function(kind = c("struct", "union"), signature,
         ))
     }
 
-    i <- 1L
-    while (i <= n) {
-        token <- parse_type_token(signature, i)
-        if (!is.null(attr(token, "pos"))) {
-            return(fail(attr(token, "pos"), reason = attr(token, "reason")))
-        }
+    tokens <- scan_signature_tokens(signature)
+    if (!isTRUE(tokens$ok)) {
+        return(fail(
+            c(tokens$error_start, tokens$error_end),
+            reason = tokens$error_reason
+        ))
+    }
 
-        type <- token$type
-        if (!allow_arrays && token$array_len != 1L) {
-            return(fail(c(i, token$next_index - 1L), reason = "array"))
+    for (i in seq_along(tokens$type)) {
+        type <- tokens$type[[i]]
+        array_len <- tokens$array_len[[i]]
+        start <- tokens$start[[i]]
+        end <- tokens$end[[i]]
+
+        if (!allow_arrays && array_len != 1L) {
+            return(fail(c(start, end), reason = "array"))
         }
 
         info <- get_typeinfo(type, envir = envir)
         if (is.null(info)) {
-            return(fail(c(i, token$next_index - 1L), type = type))
+            return(fail(c(start, end), type = type))
         }
 
         types <- c(types, type)
-        array_lens <- c(array_lens, token$array_len)
-        field_size <- info$size * token$array_len
+        array_lens <- c(array_lens, array_len)
+        field_size <- info$size * array_len
 
         if (kind == "struct") {
             alignment <- aggregate_member_alignment(info$align, layout)
@@ -447,8 +397,6 @@ parse_aggregate_types <- function(kind = c("struct", "union"), signature,
             max_align <- max(max_align, aggregate_member_alignment(info$align, layout))
             max_size <- max(max_size, field_size)
         }
-
-        i <- token$next_index
     }
 
     if (kind == "struct") {

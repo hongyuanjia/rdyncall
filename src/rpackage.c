@@ -30,6 +30,9 @@ SEXP C_unpack(SEXP ptr, SEXP offset, SEXP sig);
 SEXP C_pack_bitfield(SEXP ptr, SEXP bit_offset, SEXP bit_width, SEXP sig, SEXP value);
 SEXP C_unpack_bitfield(SEXP ptr, SEXP bit_offset, SEXP bit_width, SEXP sig);
 
+/* rsignature.c */
+SEXP C_scan_signature_tokens(SEXP signature);
+
 /* rcallback.c */
 SEXP C_callback(SEXP sig, SEXP fun, SEXP rho);
 
@@ -82,6 +85,8 @@ R_CallMethodDef callMethods[] =
   {"C_unpack"                   , (DL_FUNC) &C_unpack           , 3},
   {"C_pack_bitfield"            , (DL_FUNC) &C_pack_bitfield    , 5},
   {"C_unpack_bitfield"          , (DL_FUNC) &C_unpack_bitfield  , 4},
+  /* --- rsignature.c ------------------------------------------------------ */
+  {"C_scan_signature_tokens"     , (DL_FUNC) &C_scan_signature_tokens, 1},
   /* --- rutils.c ---------------------------------------------------------- */
   {"C_asexternalptr"            , (DL_FUNC) &C_asexternalptr    , 1},
   {"C_isnullptr"                , (DL_FUNC) &C_isnullptr        , 1},

@@ -397,21 +397,7 @@ dynport_parse_function <- function(value, lnum = 1L, envir = parent.frame()) {
         }
 
         arg <- dynport_parse_types("struct", tail[[1L]], envir, allow_arrays = FALSE)
-        # error if failed to parse argument types
-        if (!is.null(arg) && !length(arg)) {
-            type <- attr(arg, "type")
-            if (!is.null(type)) {
-                issue_error(name, sprintf("Invalid base type name %s found in argument", sQuote(type)))
-            } else if (identical(attr(arg, "reason"), "array")) {
-                pos <- attr(arg, "pos")
-                str <- substr(sig, pos[1], pos[2])
-                issue_error(name, sprintf("Invalid fixed array member %s found in argument", sQuote(str)))
-            } else {
-                pos <- attr(arg, "pos")
-                str <- substr(sig, pos[1], pos[2])
-                issue_error(name, sprintf("Missing '>' in struct member %s found in argument", sQuote(str)))
-            }
-        }
+        dynport_issue_type_error(arg, tail[[1L]], issue_error, name, "argument")
 
         nm <- ret_nm[-1L]
         if (length(nm)) {
@@ -438,21 +424,7 @@ dynport_parse_function <- function(value, lnum = 1L, envir = parent.frame()) {
         }
 
         ret <- dynport_parse_types("struct", ret_nm[[1L]], allow_arrays = FALSE)
-        # error if failed to parse field types
-        if (!is.null(ret) && !length(ret)) {
-            type <- attr(ret, "type")
-            if (!is.null(type)) {
-                issue_error(name, sprintf("Invalid base type name %s found in return", sQuote(type)))
-            } else if (identical(attr(ret, "reason"), "array")) {
-                pos <- attr(ret, "pos")
-                str <- substr(sig, pos[1], pos[2])
-                issue_error(name, sprintf("Invalid fixed array member %s found in return", sQuote(str)))
-            } else {
-                pos <- attr(ret, "pos")
-                str <- substr(sig, pos[1], pos[2])
-                issue_error(name, sprintf("Missing '>' in struct member %s found in return", sQuote(str)))
-            }
-        }
+        dynport_issue_type_error(ret, ret_nm[[1L]], issue_error, name, "return")
 
         lnum <- lnum + lncnt[[i]]
 
@@ -543,22 +515,7 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
 
         # parse field types
         parsed <- dynport_parse_types(kind, tail[[1L]], envir, layout = field_layout$layout)
-
-        # error if failed to parse field types
-        if (!is.null(parsed) && !length(parsed)) {
-            type <- attr(parsed, "type")
-            if (!is.null(type)) {
-                issue_error(name, sprintf("Invalid base type name %s found", sQuote(type)))
-            } else if (identical(attr(parsed, "reason"), "array")) {
-                pos <- attr(parsed, "pos")
-                str <- substr(sig, pos[1], pos[2])
-                issue_error(name, sprintf("Invalid fixed array member %s found", sQuote(str)))
-            } else {
-                pos <- attr(parsed, "pos")
-                str <- substr(sig, pos[1], pos[2])
-                issue_error(name, sprintf("Missing '>' in struct member %s found", sQuote(str)))
-            }
-        }
+        dynport_issue_type_error(parsed, tail[[1L]], issue_error, name)
 
         # check imbalance between signatures and field names
         if (length(parsed$type) != length(field_layout$fields)) {
@@ -586,6 +543,28 @@ dynport_parse_types <- function(kind = c("struct", "union"), signature, envir = 
                                 allow_arrays = TRUE, layout = aggregate_layout()) {
     parse_aggregate_types(kind, signature, envir = envir, allow_arrays = allow_arrays,
         layout = layout, on_error = "return")
+}
+
+dynport_type_error_message <- function(parsed, signature, context = NULL) {
+    found <- if (is.null(context)) "found" else paste("found in", context)
+    type <- attr(parsed, "type")
+    if (!is.null(type)) {
+        return(sprintf("Invalid base type name %s %s", sQuote(type), found))
+    }
+
+    pos <- attr(parsed, "pos")
+    str <- if (is.null(pos)) signature else substr(signature, pos[1L], pos[2L])
+    if (identical(attr(parsed, "reason"), "array")) {
+        return(sprintf("Invalid fixed array member %s %s", sQuote(str), found))
+    }
+
+    sprintf("Missing '>' in struct member %s %s", sQuote(str), found)
+}
+
+dynport_issue_type_error <- function(parsed, signature, issue_error, name = NULL, context = NULL) {
+    if (!is.null(parsed) && !length(parsed)) {
+        issue_error(name, dynport_type_error_message(parsed, signature, context))
+    }
 }
 
 dynport_parse_enum <- function(value, lnum, key) {
