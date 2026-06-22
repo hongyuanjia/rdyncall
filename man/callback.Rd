@@ -42,6 +42,7 @@ specified. See \code{\link[=dyncall]{dyncall()}} for details on the format.
 Finally, the handler evaluates the R call expression within the environment
 given by \code{envir}. On return, the R return value of \code{fun} is coerced to the C
 value, according to the return type signature specified in \code{signature} .
+Aggregate by-value callback arguments and returns are currently unsupported.
 If an error occurs during the evaluation, the callback will be disabled for
 further invocations. (This behaviour might change in the future.)
 }

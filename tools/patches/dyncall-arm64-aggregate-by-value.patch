@@ -1,0 +1,567 @@
+diff --git a/src/dyncall/CMakeLists.txt b/src/dyncall/CMakeLists.txt
+index 2bc7790..843277d 100644
+--- a/src/dyncall/CMakeLists.txt
++++ b/src/dyncall/CMakeLists.txt
+@@ -22 +22,4 @@
+-cmake_minimum_required (VERSION 2.6)
++cmake_minimum_required(VERSION 3.10)
++if(POLICY CMP0194)
++  cmake_policy(SET CMP0194 NEW)
++endif()
+@@ -73,3 +76,4 @@ function(compile_asm)
+-                        COMMAND "${CMAKE_ASM_COMPILER}" ${ASM_INCLUDE_DIRECTORIES} -o ${OBJ_FILE} ${ASM_FILE}
+-                        DEPENDS ${ASM_FILE}
+-                        COMMENT "Assembling ${ASM_FILE} ---> \"${CMAKE_ASM_COMPILER}\" ${ASM_INCLUDE_DIRECTORIES} -o ${OBJ_FILE} ${ASM_FILE}"+                        COMMENT "Assembling ${ASM_FILE} ---> \"${CMAKE_ASM_COMPILER}\" ${ASM_INCLUDE_DIRECTORIES} -o ${OBJ_FILE} ${ASM_FILE}")
++                        COMMAND "${CMAKE_ASM_COMPILER}" ${ASM_INCLUDE_DIRECTORIES} -o "${OBJ_FILE}" "${ASM_FILE}"
++                        DEPENDS "${ASM_FILE}"
++                        COMMENT "Assembling ${ASM_FILE}"
++                        VERBATIM)
+@@ -90,3 +94,26 @@ if(MSVC)
+-    # Explicitly specify the assembler to be used for Arm64 compile
+-    file(TO_CMAKE_PATH "$ENV{VCToolsInstallDir}\\bin\\HostX64\\arm64\\armasm64.exe" CMAKE_ASM_COMPILER)
+-    # file(TO_CMAKE_PATH "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\VC\\Tools\\MSVC\\14.28.29333\\bin\\HostX64\\arm64\\armasm64.exe" CMAKE_ASM_COMPILER)
++    # Explicitly specify the assembler to be used for Arm64 compile.
++    set(_dyncall_armasm64_candidates)
++    get_filename_component(_dyncall_msvc_bin "${CMAKE_C_COMPILER}" DIRECTORY)
++    if(_dyncall_msvc_bin)
++      list(APPEND _dyncall_armasm64_candidates "${_dyncall_msvc_bin}/armasm64.exe")
++    endif()
++    set(_dyncall_vctools "$ENV{VCToolsInstallDir}")
++    if(_dyncall_vctools)
++      list(APPEND _dyncall_armasm64_candidates
++        "${_dyncall_vctools}/bin/Hostarm64/arm64/armasm64.exe"
++        "${_dyncall_vctools}/bin/HostARM64/arm64/armasm64.exe"
++        "${_dyncall_vctools}/bin/HostX64/arm64/armasm64.exe")
++    endif()
++    foreach(_dyncall_armasm64_candidate ${_dyncall_armasm64_candidates})
++      file(TO_CMAKE_PATH "${_dyncall_armasm64_candidate}" _dyncall_armasm64_candidate)
++      if(EXISTS "${_dyncall_armasm64_candidate}")
++        set(CMAKE_ASM_COMPILER "${_dyncall_armasm64_candidate}" CACHE FILEPATH "ARM64 assembler" FORCE)
++        break()
++      endif()
++    endforeach()
++    if(NOT CMAKE_ASM_COMPILER)
++      find_program(CMAKE_ASM_COMPILER NAMES armasm64.exe)
++    endif()
++    if(NOT CMAKE_ASM_COMPILER)
++      message(FATAL_ERROR "Could not find armasm64.exe for Windows ARM64 assembly")
++    endif()
+@@ -158 +184,0 @@ endif(INSTALL_CMAKE_MODULES)
+-
+diff --git a/src/dyncall/dyncall/dyncall_call_arm64.S b/src/dyncall/dyncall/dyncall_call_arm64.S
+index d150658..cf5925d 100644
+--- a/src/dyncall/dyncall/dyncall_call_arm64.S
++++ b/src/dyncall/dyncall/dyncall_call_arm64.S
+@@ -125,0 +126,78 @@ LABELDEF(done)
++END_PROC
++
++
++GLOBAL_C(dcCall_arm64_aggr)
++ENTRY_C(dcCall_arm64_aggr)
++ALIGN(2)
++
++/* input:
++     x0: target   (address of target)
++     x1: data     (address of stack copy data)
++     x2: size     (number of bytes, rounded to 16)
++     x3: regdata  (address of register data)
++     x4: ret_regs (address of return register scratch, or NULL)
++     x5: ret_ptr  (hidden aggregate return pointer for x8, or NULL)
++*/
++
++	stp  x29, x30, [sp, #-16]!
++	mov  x29,  sp
++	sub  sp, sp, #16
++	str  x4, [sp, #0]
++	str  x5, [sp, #8]
++
++	ldr  d0,  [x3,#0 ]
++	ldr  d1,  [x3,#8 ]
++	ldr  d2,  [x3,#16]
++	ldr  d3,  [x3,#24]
++	ldr  d4,  [x3,#32]
++	ldr  d5,  [x3,#40]
++	ldr  d6,  [x3,#48]
++	ldr  d7,  [x3,#56]
++
++	sub  sp, sp, x2
++
++	eor  x4, x4, x4
++	mov  x5, x1
++	mov  x6, sp
++
++LABELDEF(aggr_next)
++	cmp  x4, x2
++	b.ge  LABELUSE(aggr_done)
++
++	ldp  x7, x9, [x5], #16
++	stp  x7, x9, [x6], #16
++	add  x4, x4, 16
++
++	b   LABELUSE(aggr_next)
++
++LABELDEF(aggr_done)
++	mov  x9 , x0
++	add  x10, x3, 64
++	ldr  x8, [x29, #-8]
++
++	ldr  x0, [x10, #0]
++	ldr  x1, [x10, #8]
++	ldr  x2, [x10, #16]
++	ldr  x3, [x10, #24]
++	ldr  x4, [x10, #32]
++	ldr  x5, [x10, #40]
++	ldr  x6, [x10, #48]
++	ldr  x7, [x10, #56]
++
++	blr  x9
++
++	ldr  x10, [x29, #-16]
++	cbz  x10, LABELUSE(aggr_no_ret)
++	str  x0, [x10, #0]
++	str  x1, [x10, #8]
++	str  d0, [x10, #16]
++	str  d1, [x10, #24]
++	str  d2, [x10, #32]
++	str  d3, [x10, #40]
++
++LABELDEF(aggr_no_ret)
++	mov  sp,  x29
++	ldp  x29, x30, [sp], 16
++	ret
++
++
+diff --git a/src/dyncall/dyncall/dyncall_call_arm64_masm.asm b/src/dyncall/dyncall/dyncall_call_arm64_masm.asm
+index 16d59e1..f81e717 100644
+--- a/src/dyncall/dyncall/dyncall_call_arm64_masm.asm
++++ b/src/dyncall/dyncall/dyncall_call_arm64_masm.asm
+@@ -3,0 +4 @@
++ EXPORT dcCall_arm64_aggr
+@@ -41,0 +43,52 @@ dcCall_arm64_done
++
++dcCall_arm64_aggr PROC
++ stp x29, x30, [sp, #-16]!
++ mov x29, sp
++ sub sp, sp, #16
++ str x4, [sp, #0]
++ str x5, [sp, #8]
++ ldr d0, [x3,#0 ]
++ ldr d1, [x3,#8 ]
++ ldr d2, [x3,#16]
++ ldr d3, [x3,#24]
++ ldr d4, [x3,#32]
++ ldr d5, [x3,#40]
++ ldr d6, [x3,#48]
++ ldr d7, [x3,#56]
++ sub sp, sp, x2
++ eor x4, x4, x4
++ mov x5, x1
++ mov x6, sp
++dcCall_arm64_aggr_next
++ cmp x4, x2
++ b.ge dcCall_arm64_aggr_done
++ ldp x7, x9, [x5], #16
++ stp x7, x9, [x6], #16
++ add x4, x4, 16
++ b dcCall_arm64_aggr_next
++dcCall_arm64_aggr_done
++ mov x9 , x0
++ add x10, x3, 64
++ ldr x8, [x29, #-8]
++ ldr x0, [x10, #0]
++ ldr x1, [x10, #8]
++ ldr x2, [x10, #16]
++ ldr x3, [x10, #24]
++ ldr x4, [x10, #32]
++ ldr x5, [x10, #40]
++ ldr x6, [x10, #48]
++ ldr x7, [x10, #56]
++ blr x9
++ ldr x10, [x29, #-16]
++ cbz x10, dcCall_arm64_aggr_no_ret
++ str x0, [x10, #0]
++ str x1, [x10, #8]
++ str d0, [x10, #16]
++ str d1, [x10, #24]
++ str d2, [x10, #32]
++ str d3, [x10, #40]
++dcCall_arm64_aggr_no_ret
++ mov sp, x29
++ ldp x29, x30, [sp], 16
++ ret
++ ENDP
+diff --git a/src/dyncall/dyncall/dyncall_callvm_arm64.c b/src/dyncall/dyncall/dyncall_callvm_arm64.c
+index 1a0c7fe..3fb3806 100644
+--- a/src/dyncall/dyncall/dyncall_callvm_arm64.c
++++ b/src/dyncall/dyncall/dyncall_callvm_arm64.c
+@@ -29,0 +30 @@
++#include "dyncall_aggregate.h"
+@@ -40,0 +42 @@ static void reset(DCCallVM* in_p)
++  p->mpAggrVecCopies = ((DCchar*)dcVecData(&p->mVecHead)) + p->mVecHead.mTotal;
+@@ -103,0 +106,2 @@ void call(DCCallVM* in_p, DCpointer target)
++#include "dyncall_callvm_arm64_aggr.c"
++
+@@ -120 +124 @@ DCCallVM_vt vt_arm64 =
+-, NULL /* argAggr */
++, &dc_callvm_argAggr_arm64
+@@ -131,2 +135,2 @@ DCCallVM_vt vt_arm64 =
+-, NULL /* callAggr */
+-, NULL /* beginAggr */
++, (DCaggrvmfunc*)     &dc_callvm_callAggr_arm64
++, (DCbeginaggrvmfunc*)&dc_callvm_beginAggr_arm64
+@@ -157 +161 @@ DCCallVM_vt vt_arm64_win_varargs =
+-, NULL /* argAggr */
++, &dc_callvm_argAggr_arm64_vararg
+@@ -168,2 +172,2 @@ DCCallVM_vt vt_arm64_win_varargs =
+-, NULL /* callAggr */
+-, NULL /* beginAggr */
++, (DCaggrvmfunc*)     &dc_callvm_callAggr_arm64
++, (DCbeginaggrvmfunc*)&dc_callvm_beginAggr_arm64
+diff --git a/src/dyncall/dyncall/dyncall_callvm_arm64.h b/src/dyncall/dyncall/dyncall_callvm_arm64.h
+index 8c3dd5b..395b249 100644
+--- a/src/dyncall/dyncall/dyncall_callvm_arm64.h
++++ b/src/dyncall/dyncall/dyncall_callvm_arm64.h
+@@ -41,0 +42 @@ typedef struct
++  DCpointer mpAggrVecCopies; /* ptr to copies of aggrs passed via hidden ptr */
+diff --git a/src/dyncall/dyncall/dyncall_callvm_arm64_aggr.c b/src/dyncall/dyncall/dyncall_callvm_arm64_aggr.c
+new file mode 100644
+index 0000000..d500890
+--- /dev/null
++++ b/src/dyncall/dyncall/dyncall_callvm_arm64_aggr.c
+@@ -0,0 +1,278 @@
++/*
++
++ Package: dyncall
++ Library: dyncall
++ File: dyncall/dyncall_callvm_arm64_aggr.c
++ Description: ARM 64-bit aggregate by-value helpers
++ License:
++
++   Copyright (c) 2026 Hongyuan Jia <hongyuanjia@cqust.edu.cn>
++
++   Permission to use, copy, modify, and distribute this software for any
++   purpose with or without fee is hereby granted, provided that the above
++   copyright notice and this permission notice appear in all copies.
++
++   THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
++   WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
++   MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
++   ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
++   WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
++   ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
++   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++
++*/
++
++#include "dyncall_aggregate.h"
++#include <stdint.h>
++#include <string.h>
++
++void dcCall_arm64_aggr(DCpointer target, DCpointer data, DCsize size, DCpointer regdata, DCpointer ret_regs, DCpointer ret_ptr);
++
++#define DC_ARM64_NUM_REGS 8
++#define DC_ARM64_MAX_HFA_FIELDS 4
++#define DC_ARM64_RET_INT_OFFSET 0
++#define DC_ARM64_RET_FP_OFFSET 16
++
++static DCsize dc_arm64_align_up(DCsize x, DCsize align)
++{
++  DCsize rem;
++  if(align <= 1)
++    return x;
++  rem = x % align;
++  return rem ? x + align - rem : x;
++}
++
++static DCsize dc_arm64_stack_align(const DCaggr* ag)
++{
++  DCsize align = ag && ag->alignment ? ag->alignment : 1;
++  return align > 8 ? 8 : align;
++}
++
++static void dc_arm64_append_stack(DCCallVM_arm64* self, const void* x, DCsize size, DCsize align, int pad_to_8)
++{
++  if(align > 1)
++    dcVecResize(&self->mVecHead, dc_arm64_align_up(dcVecSize(&self->mVecHead), align));
++  dcVecAppend(&self->mVecHead, x, size);
++  if(pad_to_8) {
++    DCsize aligned = dc_arm64_align_up(size, 8);
++    if(aligned > size)
++      dcVecSkip(&self->mVecHead, aligned - size);
++  }
++}
++
++static int dc_arm64_hfa_scan(const DCaggr* ag, const DCchar* base, DCsigchar* type, DCint* count)
++{
++  DCsize i;
++
++  for(i = 0; i < ag->n_fields; ++i) {
++    const DCfield* f = ag->fields + i;
++    DCsize j;
++
++    for(j = 0; j < f->array_len; ++j) {
++      if(f->type == DC_SIGCHAR_AGGREGATE) {
++        if(!dc_arm64_hfa_scan(f->sub_aggr, base ? base + f->offset + j * f->size : NULL, type, count))
++          return 0;
++      } else if(f->type == DC_SIGCHAR_FLOAT || f->type == DC_SIGCHAR_DOUBLE) {
++        if(*type == '\0')
++          *type = f->type;
++        else if(*type != f->type)
++          return 0;
++        if(++(*count) > DC_ARM64_MAX_HFA_FIELDS)
++          return 0;
++      } else {
++        return 0;
++      }
++    }
++  }
++
++  return 1;
++}
++
++static int dc_arm64_is_hfa(const DCaggr* ag, DCsigchar* type, DCint* count)
++{
++  *type = '\0';
++  *count = 0;
++  return ag && dc_arm64_hfa_scan(ag, NULL, type, count) && *count > 0;
++}
++
++static void dc_arm64_copy_hfa_to_regs(DCCallVM_arm64* self, const DCaggr* ag, const DCchar* base, DCsigchar type)
++{
++  DCsize i;
++
++  for(i = 0; i < ag->n_fields; ++i) {
++    const DCfield* f = ag->fields + i;
++    DCsize j;
++
++    for(j = 0; j < f->array_len; ++j) {
++      const DCchar* src = base + f->offset + j * f->size;
++      if(f->type == DC_SIGCHAR_AGGREGATE) {
++        dc_arm64_copy_hfa_to_regs(self, f->sub_aggr, src, type);
++      } else if(type == DC_SIGCHAR_FLOAT) {
++        DCfloat x;
++        memcpy(&x, src, sizeof(x));
++        self->u.S[self->f << 1] = x;
++        ++self->f;
++      } else {
++        DCdouble x;
++        memcpy(&x, src, sizeof(x));
++        self->u.D[self->f] = x;
++        ++self->f;
++      }
++    }
++  }
++}
++
++static void dc_arm64_copy_hfa_from_regs(const DCaggr* ag, DCchar* base, const DCchar* fp_regs, DCsigchar type, DCint* index)
++{
++  DCsize i;
++
++  for(i = 0; i < ag->n_fields; ++i) {
++    const DCfield* f = ag->fields + i;
++    DCsize j;
++
++    for(j = 0; j < f->array_len; ++j) {
++      DCchar* dst = base + f->offset + j * f->size;
++      if(f->type == DC_SIGCHAR_AGGREGATE) {
++        dc_arm64_copy_hfa_from_regs(f->sub_aggr, dst, fp_regs, type, index);
++      } else if(type == DC_SIGCHAR_FLOAT) {
++        memcpy(dst, fp_regs + (*index * 8), sizeof(DCfloat));
++        ++(*index);
++      } else {
++        memcpy(dst, fp_regs + (*index * 8), sizeof(DCdouble));
++        ++(*index);
++      }
++    }
++  }
++}
++
++static void dc_arm64_arg_i64(DCCallVM* in_self, DClonglong x)
++{
++  DCCallVM_arm64* self = (DCCallVM_arm64*)in_self;
++  if(self->i < DC_ARM64_NUM_REGS)
++    self->I[self->i++] = x;
++  else
++    dc_arm64_append_stack(self, &x, sizeof(x), sizeof(x), 1);
++}
++
++static void dc_arm64_arg_pointer(DCCallVM* in_self, DCpointer x)
++{
++  dc_arm64_arg_i64(in_self, (DClonglong)x);
++}
++
++static void dc_arm64_arg_small_int_regs(DCCallVM_arm64* self, const void* x, DCsize size)
++{
++  DCsize chunk_count = dc_arm64_align_up(size, 8) >> 3;
++  DCsize i;
++  const DCchar* src = (const DCchar*)x;
++
++  if(self->i + chunk_count <= DC_ARM64_NUM_REGS) {
++    for(i = 0; i < chunk_count; ++i) {
++      DClonglong chunk = 0;
++      DCsize remaining = size > i * 8 ? size - i * 8 : 0;
++      DCsize n = remaining > 8 ? 8 : remaining;
++      if(n)
++        memcpy(&chunk, src + i * 8, n);
++      self->I[self->i++] = chunk;
++    }
++  } else {
++    dc_arm64_append_stack(self, x, size, 8, 1);
++  }
++}
++
++static void dc_arm64_arg_large_by_pointer(DCCallVM* in_self, const DCaggr* ag, const void* x)
++{
++  DCCallVM_arm64* self = (DCCallVM_arm64*)in_self;
++  self->mpAggrVecCopies = (void*)((intptr_t)((DCchar*)self->mpAggrVecCopies - ag->size) & -16);
++  x = memcpy(self->mpAggrVecCopies, x, ag->size);
++  dc_arm64_arg_pointer(in_self, (DCpointer)x);
++}
++
++static void dc_callvm_argAggr_arm64(DCCallVM* in_self, const DCaggr* ag, const void* x)
++{
++  DCCallVM_arm64* self = (DCCallVM_arm64*)in_self;
++  DCsigchar hfa_type;
++  DCint hfa_count;
++
++  if(!ag) {
++    dc_arm64_arg_pointer(in_self, (DCpointer)x);
++    return;
++  }
++
++  if(dc_arm64_is_hfa(ag, &hfa_type, &hfa_count)) {
++    if(self->f + hfa_count <= DC_ARM64_NUM_REGS)
++      dc_arm64_copy_hfa_to_regs(self, ag, (const DCchar*)x, hfa_type);
++    else
++      dc_arm64_append_stack(self, x, ag->size, dc_arm64_stack_align(ag), 1);
++    return;
++  }
++
++  if(ag->size <= 16) {
++    DCsize chunk_count = dc_arm64_align_up(ag->size, 8) >> 3;
++    if(self->i + chunk_count <= DC_ARM64_NUM_REGS) {
++      dc_arm64_arg_small_int_regs(self, x, ag->size);
++      return;
++    }
++  } else {
++    dc_arm64_arg_large_by_pointer(in_self, ag, x);
++    return;
++  }
++
++  dc_arm64_append_stack(self, x, ag->size, dc_arm64_stack_align(ag), 1);
++}
++
++static void dc_callvm_argAggr_arm64_vararg(DCCallVM* in_self, const DCaggr* ag, const void* x)
++{
++#if defined(DC__OS_Darwin)
++  DCCallVM_arm64* self = (DCCallVM_arm64*)in_self;
++  if(!ag) {
++    var_pointer(in_self, (DCpointer)x);
++    return;
++  }
++  dc_arm64_append_stack(self, x, ag->size, dc_arm64_stack_align(ag), 1);
++#elif defined(DC__OS_Win64)
++  DCCallVM_arm64* self = (DCCallVM_arm64*)in_self;
++  if(!ag) {
++    dc_arm64_arg_pointer(in_self, (DCpointer)x);
++    return;
++  }
++  if(ag->size > 16) {
++    dc_arm64_arg_large_by_pointer(in_self, ag, x);
++    return;
++  }
++  dc_arm64_arg_small_int_regs(self, x, ag->size);
++#else
++  dc_callvm_argAggr_arm64(in_self, ag, x);
++#endif
++}
++
++static void dc_callvm_beginAggr_arm64(DCCallVM* in_self, const DCaggr* ag)
++{
++  (void)in_self;
++  (void)ag;
++}
++
++static void dc_callvm_callAggr_arm64(DCCallVM* in_self, DCpointer target, const DCaggr* ag, DCpointer ret)
++{
++  DCCallVM_arm64* self = (DCCallVM_arm64*)in_self;
++  DCchar ret_regs[48];
++  DCsigchar hfa_type;
++  DCint hfa_count;
++  DCpointer ret_ptr = NULL;
++  int is_hfa = dc_arm64_is_hfa(ag, &hfa_type, &hfa_count);
++
++  if(!ag || (!is_hfa && ag->size > 16))
++    ret_ptr = ret;
++
++  memset(ret_regs, 0, sizeof(ret_regs));
++  dcCall_arm64_aggr(target, dcVecData(&self->mVecHead), (dcVecSize(&self->mVecHead) + 15) & -16, &self->u.S[0], ret_regs, ret_ptr);
++
++  if(ret_ptr)
++    return;
++
++  if(is_hfa) {
++    DCint index = 0;
++    dc_arm64_copy_hfa_from_regs(ag, (DCchar*)ret, ret_regs + DC_ARM64_RET_FP_OFFSET, hfa_type, &index);
++  } else {
++    memcpy(ret, ret_regs + DC_ARM64_RET_INT_OFFSET, ag->size);
++  }
++}
+diff --git a/src/dyncall/dyncall/dyncall_callvm_arm64_apple.c b/src/dyncall/dyncall/dyncall_callvm_arm64_apple.c
+index cf629f3..eefe2db 100644
+--- a/src/dyncall/dyncall/dyncall_callvm_arm64_apple.c
++++ b/src/dyncall/dyncall/dyncall_callvm_arm64_apple.c
+@@ -28,0 +29 @@
++#include "dyncall_aggregate.h"
+@@ -39,0 +41 @@ static void reset(DCCallVM* in_p)
++  p->mpAggrVecCopies = ((DCchar*)dcVecData(&p->mVecHead)) + p->mVecHead.mTotal;
+@@ -176,0 +179,2 @@ void call(DCCallVM* in_p, DCpointer target)
++#include "dyncall_callvm_arm64_aggr.c"
++
+@@ -193 +197 @@ DCCallVM_vt vt_arm64 =
+-, NULL /* argAggr */
++, &dc_callvm_argAggr_arm64
+@@ -204,2 +208,2 @@ DCCallVM_vt vt_arm64 =
+-, NULL /* callAggr */
+-, NULL /* beginAggr */
++, (DCaggrvmfunc*)     &dc_callvm_callAggr_arm64
++, (DCbeginaggrvmfunc*)&dc_callvm_beginAggr_arm64
+@@ -222 +226 @@ DCCallVM_vt vt_arm64_variadic =
+-, NULL /* argAggr */
++, &dc_callvm_argAggr_arm64_vararg
+@@ -233,2 +237,2 @@ DCCallVM_vt vt_arm64_variadic =
+-, NULL /* callAggr */
+-, NULL /* beginAggr */
++, (DCaggrvmfunc*)     &dc_callvm_callAggr_arm64
++, (DCbeginaggrvmfunc*)&dc_callvm_beginAggr_arm64
+diff --git a/src/dyncall/dyncall/dyncall_macros.h b/src/dyncall/dyncall/dyncall_macros.h
+index e8c4082..a2341a9 100644
+--- a/src/dyncall/dyncall/dyncall_macros.h
++++ b/src/dyncall/dyncall/dyncall_macros.h
+@@ -362 +362 @@ DC__Arch_SuperH
+-#if defined(DC__Arch_AMD64)
++#if defined(DC__Arch_AMD64) || defined(DC__Arch_ARM64)
+diff --git a/src/dyncall/test/dynload_plain/CMakeLists.txt b/src/dyncall/test/dynload_plain/CMakeLists.txt
+index ab879a9..e3d61a7 100644
+--- a/src/dyncall/test/dynload_plain/CMakeLists.txt
++++ b/src/dyncall/test/dynload_plain/CMakeLists.txt
+@@ -8,2 +8,6 @@ set_target_properties(x PROPERTIES SUFFIX "")
+-if(${UNIX})
+-exec_program("((ldd `which ls` | grep -o '/.*/libc.so[^ ]*' || ls /lib*/libc.so* || ls /usr/lib/libc.so*) | grep -v '\\.a\$' | (sort -V -r || sort -t . -n -k 2)) 2>/dev/null | head -1" OUTPUT_VARIABLE DEF_C_DYLIB)
++if(UNIX)
++execute_process(
++  COMMAND sh -c [[((ldd $(command -v ls) | grep -o '/.*/libc.so[^ ]*' || ls /lib*/libc.so* || ls /usr/lib/libc.so*) | grep -v '\.a$' | (sort -V -r || sort -t . -n -k 2)) 2>/dev/null | head -1]]
++  OUTPUT_VARIABLE DEF_C_DYLIB
++  OUTPUT_STRIP_TRAILING_WHITESPACE
++  ERROR_QUIET)
+@@ -12 +15,0 @@ endif()
+-
+diff --git a/src/dyncall/test/plain/test_aggrs.c b/src/dyncall/test/plain/test_aggrs.c
+index abe7d90..968e4ed 100644
+--- a/src/dyncall/test/plain/test_aggrs.c
++++ b/src/dyncall/test/plain/test_aggrs.c
+@@ -572 +572 @@ int testAggrParameters()
+-		int returned;
++		double returned;
+@@ -615 +614,0 @@ int testAggrParameters()
+-

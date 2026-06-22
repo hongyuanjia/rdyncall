@@ -359,7 +359,7 @@ DC__Arch_SuperH
 #endif
 
 /* aggregate (struct, union) by value */
-#if defined(DC__Arch_AMD64)
+#if defined(DC__Arch_AMD64) || defined(DC__Arch_ARM64)
 # define DC__Feature_AggrByVal
 #endif
 

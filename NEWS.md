@@ -7,6 +7,7 @@
 - Fix `cstruct()` and `cunion()` field parsing when whitespace follows the type signature.
 - Store aggregate field names in the explicit `typeinfo$fields$name` column.
 - Add the `rdyncall.callvm.size` option to configure CallVM argument stack size at package load.
+- Add by-value aggregate argument and return support to `dyncall()` for registered `struct` and `union` types on supported dyncall backends, including ARM64 aggregate ABI handling.
 - Refresh roxygen-generated documentation and package metadata for renewed development.
 - Modernize GitHub Actions checks across Linux, macOS, and Windows, with an optional R-hub workflow for extended platform checks.
 

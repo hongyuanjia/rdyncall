@@ -138,10 +138,16 @@ types.\tabular{llll}{
    '\code{v}' \tab void \tab invalid \tab NULL \cr
    '\code{*}' ... \tab C type* (pointer) \tab any vector,externalptr,NULL \tab externalptr \cr
    '\verb{*<}' \emph{typename} '\code{>}' \tab typename* (pointer) \tab raw,externalptr \tab externalptr \cr
+   '\code{<}' \emph{typename} '\code{>}' \tab typename (by value) \tab raw \code{struct} from \code{\link[=cdata]{cdata()}} \tab raw \code{struct} \cr
 }
 
 
-The last two rows of the table the above refer to \emph{typed pointer} signatures.
+Aggregate by-value signatures support \code{struct} and \code{union} type
+information registered with \code{\link[=cstruct]{cstruct()}} or \code{\link[=cunion]{cunion()}}. Aggregate arguments and
+returns are passed through dyncall aggregate descriptors, including nested
+aggregate fields that are already represented in the registered typeinfo.
+
+The last typed pointer rows of the table above refer to \emph{typed pointer} signatures.
 If they appear as a return type signature, the external pointer returned is a
 S3 \code{struct} object. See \code{\link[=cdata]{cdata()}} for details.
 }
@@ -168,7 +174,8 @@ Derived pointer types to aggregate \code{union} or \code{struct} types are suppo
 combination with the framework for handling foreign data types.
 See \code{\link[=cdata]{cdata()}} for details.
 Once a C type is registered, the signature \verb{*<}\emph{typename}\code{>} can be used to
-refer to a pointer to an aggregate C object \emph{type}\code{*}.
+refer to a pointer to an aggregate C object \emph{type}\code{*}, and \code{<}\emph{typename}\code{>}
+can be used to pass a raw \code{\link[=cdata]{cdata()}} aggregate object by value.
 If typed pointers to aggregate objects are used as a return type and the
 corresponding type information exists, the returned value can be printed and
 accessed symbolically.

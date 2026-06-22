@@ -41,6 +41,141 @@ callvm.fastcall.gcc  <- NULL
 callvm.fastcall.msvc <- NULL
 
 # ----------------------------------------------------------------------------
+# aggregate by-value support (internal)
+
+dyncall_aggregate_field_is_supported <- function(type) {
+    if (startsWith(type, "*")) return(TRUE)
+    if (startsWith(type, "<") && endsWith(type, ">")) return(TRUE)
+    type %in% c("B", "c", "C", "s", "S", "i", "I", "j", "J", "l", "L", "f", "d", "p", "Z", "x")
+}
+
+dyncall_aggregate_field_type_name <- function(type) {
+    substr(type, 2L, nchar(type) - 1L)
+}
+
+dyncall_aggregate_layout <- function(name, envir = parent.frame(), seen = character()) {
+    info <- get_typeinfo(name, envir = envir)
+    if (is.null(info)) {
+        stop("unknown aggregate type '", name, "'", call. = FALSE)
+    }
+    if (!is.typeinfo(info) || !info$type %in% c("struct", "union")) {
+        stop("type '", name, "' is not a C struct or union", call. = FALSE)
+    }
+    if (info$name %in% seen) {
+        stop("recursive aggregate type '", info$name, "' is not supported", call. = FALSE)
+    }
+
+    fields <- info$fields
+    if (!is.data.frame(fields) || !all(c("type", "offset") %in% names(fields))) {
+        stop("aggregate type '", name, "' does not contain field layout information", call. = FALSE)
+    }
+
+    size <- as.integer(info$size)
+    offsets <- as.integer(fields$offset)
+    if (is.na(size) || size < 1L || anyNA(offsets)) {
+        stop("aggregate type '", name, "' does not contain a complete memory layout", call. = FALSE)
+    }
+
+    field_types <- as.character(fields$type)
+    supported <- vapply(field_types, dyncall_aggregate_field_is_supported, logical(1L))
+    if (any(!supported)) {
+        stop("unsupported aggregate field type '", field_types[which(!supported)[[1L]]], "'", call. = FALSE)
+    }
+
+    field_layouts <- vector("list", length(field_types))
+    nested <- startsWith(field_types, "<")
+    for (i in which(nested)) {
+        nested_name <- dyncall_aggregate_field_type_name(field_types[[i]])
+        field_layouts[[i]] <- dyncall_aggregate_layout(nested_name, envir = envir, seen = c(seen, info$name))
+    }
+
+    list(
+        name = info$name,
+        kind = info$type,
+        size = size,
+        fields = data.frame(
+            type = field_types,
+            offset = offsets,
+            stringsAsFactors = FALSE
+        ),
+        field_layouts = field_layouts
+    )
+}
+
+dyncall_aggregate_signature_type <- function(signature, i) {
+    n <- nchar(signature)
+    tail <- substr(signature, i + 1L, n)
+    end <- regexpr(">", tail, fixed = TRUE)[[1L]]
+    if (end < 0L) {
+        stop("invalid signature '", signature, "': missing '>' marker for aggregate type", call. = FALSE)
+    }
+    list(
+        name = substr(signature, i + 1L, i + end - 1L),
+        next_index = i + end
+    )
+}
+
+dyncall_aggregate_layouts <- function(signature, envir = parent.frame()) {
+    if (!is.character(signature) || length(signature) != 1L || is.na(signature)) {
+        stop("signature must be a single character string", call. = FALSE)
+    }
+
+    n <- nchar(signature)
+    i <- 1L
+    args <- list()
+    return <- NULL
+    ptrcnt <- 0L
+
+    if (n >= 2L && substr(signature, 1L, 1L) == "_") {
+        i <- 3L
+    }
+
+    while (i <= n) {
+        ch <- substr(signature, i, i)
+        i <- i + 1L
+
+        if (ch == ")") break
+        if (ch == "*") {
+            ptrcnt <- ptrcnt + 1L
+            next
+        }
+        if (ch == "<") {
+            type <- dyncall_aggregate_signature_type(signature, i - 1L)
+            if (ptrcnt == 0L) {
+                args[[length(args) + 1L]] <- dyncall_aggregate_layout(type$name, envir = envir)
+            }
+            i <- type$next_index + 1L
+            ptrcnt <- 0L
+            next
+        }
+        ptrcnt <- 0L
+    }
+
+    if (i > n + 1L || substr(signature, i - 1L, i - 1L) != ")") {
+        stop("function-call signature '", signature, "' is invalid: missing argument terminator ')'", call. = FALSE)
+    }
+
+    ptrcnt <- 0L
+    while (i <= n && substr(signature, i, i) == "*") {
+        ptrcnt <- ptrcnt + 1L
+        i <- i + 1L
+    }
+    if (i <= n && substr(signature, i, i) == "<") {
+        type <- dyncall_aggregate_signature_type(signature, i)
+        if (ptrcnt == 0L) {
+            return <- dyncall_aggregate_layout(type$name, envir = envir)
+        }
+    }
+
+    list(args = args, return = return)
+}
+
+dyncall_call <- function(callvm, address, signature, ..., envir = parent.frame()) {
+    aggregates <- dyncall_aggregate_layouts(signature, envir = envir)
+    .External("C_dyncall", callvm, address, signature, aggregates, ..., PACKAGE = "rdyncall")
+}
+
+# ----------------------------------------------------------------------------
 # public interface
 
 #' Foreign Function Interface with support for almost all C types
@@ -128,8 +263,14 @@ callvm.fastcall.msvc <- NULL
 #' | '`v`'                    | void                | invalid                     | NULL              |
 #' | '`*`' ...                | C type* (pointer)   | any vector,externalptr,NULL | externalptr       |
 #' | '`*<`' _typename_ '`>`'  | typename* (pointer) | raw,externalptr             | externalptr       |
+#' | '`<`' _typename_ '`>`'   | typename (by value) | raw `struct` from [cdata()] | raw `struct`      |
 #'
-#' The last two rows of the table the above refer to _typed pointer_ signatures.
+#' Aggregate by-value signatures support `struct` and `union` type
+#' information registered with [cstruct()] or [cunion()]. Aggregate arguments and
+#' returns are passed through dyncall aggregate descriptors, including nested
+#' aggregate fields that are already represented in the registered typeinfo.
+#'
+#' The last typed pointer rows of the table above refer to _typed pointer_ signatures.
 #' If they appear as a return type signature, the external pointer returned is a
 #' S3 `struct` object. See [cdata()] for details.
 #'
@@ -158,7 +299,8 @@ callvm.fastcall.msvc <- NULL
 #' combination with the framework for handling foreign data types.
 #' See [cdata()] for details.
 #' Once a C type is registered, the signature `*<`_typename_`>` can be used to
-#' refer to a pointer to an aggregate C object _type_`*`.
+#' refer to a pointer to an aggregate C object _type_`*`, and `<`_typename_`>`
+#' can be used to pass a raw [cdata()] aggregate object by value.
 #' If typed pointers to aggregate objects are used as a return type and the
 #' corresponding type information exists, the returned value can be printed and
 #' accessed symbolically.
@@ -284,36 +426,36 @@ dyncall <- function(address, signature, ..., callmode = "default") {
         fastcall.gcc  = callvm.fastcall.gcc,
         fastcall.msvc = callvm.fastcall.msvc
     )
-    .External("C_dyncall", callvm, address, signature, ..., PACKAGE = "rdyncall")
+    dyncall_call(callvm, address, signature, ..., envir = parent.frame())
 }
 
 #' @rdname dyncall
 #' @export
-dyncall.cdecl         <- function(address, signature, ...) .External("C_dyncall", callvm.cdecl,         address, signature, ..., PACKAGE = "rdyncall")
+dyncall.cdecl         <- function(address, signature, ...) dyncall_call(callvm.cdecl,         address, signature, ..., envir = parent.frame())
 
 #' @rdname dyncall
 #' @export
-dyncall.default       <- function(address, signature, ...) .External("C_dyncall", callvm.default,       address, signature, ..., PACKAGE = "rdyncall")
+dyncall.default       <- function(address, signature, ...) dyncall_call(callvm.default,       address, signature, ..., envir = parent.frame())
 
 #' @rdname dyncall
 #' @export
-dyncall.stdcall       <- function(address, signature, ...) .External("C_dyncall", callvm.stdcall,       address, signature, ..., PACKAGE = "rdyncall")
+dyncall.stdcall       <- function(address, signature, ...) dyncall_call(callvm.stdcall,       address, signature, ..., envir = parent.frame())
 
 #' @rdname dyncall
 #' @export
-dyncall.thiscall.gcc  <- function(address, signature, ...) .External("C_dyncall", callvm.thiscall.gcc,  address, signature, ..., PACKAGE = "rdyncall")
+dyncall.thiscall.gcc  <- function(address, signature, ...) dyncall_call(callvm.thiscall.gcc,  address, signature, ..., envir = parent.frame())
 
 #' @rdname dyncall
 #' @export
-dyncall.thiscall.msvc <- function(address, signature, ...) .External("C_dyncall", callvm.thiscall.msvc, address, signature, ..., PACKAGE = "rdyncall")
+dyncall.thiscall.msvc <- function(address, signature, ...) dyncall_call(callvm.thiscall.msvc, address, signature, ..., envir = parent.frame())
 
 #' @rdname dyncall
 #' @export
-dyncall.fastcall.gcc  <- function(address, signature, ...) .External("C_dyncall", callvm.fastcall.gcc,  address, signature, ..., PACKAGE = "rdyncall")
+dyncall.fastcall.gcc  <- function(address, signature, ...) dyncall_call(callvm.fastcall.gcc,  address, signature, ..., envir = parent.frame())
 
 #' @rdname dyncall
 #' @export
-dyncall.fastcall.msvc <- function(address, signature, ...) .External("C_dyncall", callvm.fastcall.msvc, address, signature, ..., PACKAGE = "rdyncall")
+dyncall.fastcall.msvc <- function(address, signature, ...) dyncall_call(callvm.fastcall.msvc, address, signature, ..., envir = parent.frame())
 
 #' @rdname dyncall
 #' @export

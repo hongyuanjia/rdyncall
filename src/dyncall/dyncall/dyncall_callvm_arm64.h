@@ -39,6 +39,7 @@ typedef struct
     DCdouble D[8];
   } u;
   unsigned long long I[8]; /* int register buffer */
+  DCpointer mpAggrVecCopies; /* ptr to copies of aggrs passed via hidden ptr */
   DCVecHead mVecHead;      /* argument buffer head */
 } DCCallVM_arm64;
 

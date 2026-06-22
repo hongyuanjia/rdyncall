@@ -19,7 +19,10 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required(VERSION 3.10)
+if(POLICY CMP0194)
+  cmake_policy(SET CMP0194 NEW)
+endif()
 project(DynCall C)
 
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "dyncall enables dynamic invocation of machine-level function calls")
@@ -70,9 +73,10 @@ function(compile_asm)
 
     # Need to compile asm file using custom command as include directories are not provided to asm compiler
     add_custom_command(OUTPUT ${OBJ_FILE}
-                        COMMAND "${CMAKE_ASM_COMPILER}" ${ASM_INCLUDE_DIRECTORIES} -o ${OBJ_FILE} ${ASM_FILE}
-                        DEPENDS ${ASM_FILE}
-                        COMMENT "Assembling ${ASM_FILE} ---> \"${CMAKE_ASM_COMPILER}\" ${ASM_INCLUDE_DIRECTORIES} -o ${OBJ_FILE} ${ASM_FILE}"+                        COMMENT "Assembling ${ASM_FILE} ---> \"${CMAKE_ASM_COMPILER}\" ${ASM_INCLUDE_DIRECTORIES} -o ${OBJ_FILE} ${ASM_FILE}")
+                        COMMAND "${CMAKE_ASM_COMPILER}" ${ASM_INCLUDE_DIRECTORIES} -o "${OBJ_FILE}" "${ASM_FILE}"
+                        DEPENDS "${ASM_FILE}"
+                        COMMENT "Assembling ${ASM_FILE}"
+                        VERBATIM)
 
     # mark obj as source that does not require compile
     set_source_files_properties(${OBJ_FILE} PROPERTIES EXTERNAL_OBJECT TRUE)
@@ -87,9 +91,32 @@ endfunction()
 
 if(MSVC)
   if("${CMAKE_GENERATOR_PLATFORM}" MATCHES "ARM64")
-    # Explicitly specify the assembler to be used for Arm64 compile
-    file(TO_CMAKE_PATH "$ENV{VCToolsInstallDir}\\bin\\HostX64\\arm64\\armasm64.exe" CMAKE_ASM_COMPILER)
-    # file(TO_CMAKE_PATH "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\VC\\Tools\\MSVC\\14.28.29333\\bin\\HostX64\\arm64\\armasm64.exe" CMAKE_ASM_COMPILER)
+    # Explicitly specify the assembler to be used for Arm64 compile.
+    set(_dyncall_armasm64_candidates)
+    get_filename_component(_dyncall_msvc_bin "${CMAKE_C_COMPILER}" DIRECTORY)
+    if(_dyncall_msvc_bin)
+      list(APPEND _dyncall_armasm64_candidates "${_dyncall_msvc_bin}/armasm64.exe")
+    endif()
+    set(_dyncall_vctools "$ENV{VCToolsInstallDir}")
+    if(_dyncall_vctools)
+      list(APPEND _dyncall_armasm64_candidates
+        "${_dyncall_vctools}/bin/Hostarm64/arm64/armasm64.exe"
+        "${_dyncall_vctools}/bin/HostARM64/arm64/armasm64.exe"
+        "${_dyncall_vctools}/bin/HostX64/arm64/armasm64.exe")
+    endif()
+    foreach(_dyncall_armasm64_candidate ${_dyncall_armasm64_candidates})
+      file(TO_CMAKE_PATH "${_dyncall_armasm64_candidate}" _dyncall_armasm64_candidate)
+      if(EXISTS "${_dyncall_armasm64_candidate}")
+        set(CMAKE_ASM_COMPILER "${_dyncall_armasm64_candidate}" CACHE FILEPATH "ARM64 assembler" FORCE)
+        break()
+      endif()
+    endforeach()
+    if(NOT CMAKE_ASM_COMPILER)
+      find_program(CMAKE_ASM_COMPILER NAMES armasm64.exe)
+    endif()
+    if(NOT CMAKE_ASM_COMPILER)
+      message(FATAL_ERROR "Could not find armasm64.exe for Windows ARM64 assembly")
+    endif()
 
     set(CMAKE_ASM_MASM_COMPILER ${CMAKE_ASM_COMPILER})
     message("CMAKE_ASM_MASM_COMPILER explicitly set to: ${CMAKE_ASM_MASM_COMPILER}")
@@ -155,4 +182,3 @@ if(INSTALL_CMAKE_MODULES)
 file(GLOB INSTALL_CMAKE_MODULES_FILES buildsys/cmake/Modules/Find*.cmake)
 install(FILES ${INSTALL_CMAKE_MODULES_FILES} DESTINATION ${CMAKE_ROOT}/Modules)
 endif(INSTALL_CMAKE_MODULES)
-
