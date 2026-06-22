@@ -89,6 +89,11 @@ The calling convention is specified \emph{explicitly} via function \code{\link[=
 using the \code{callmode} argument or \emph{implicitly} by using \verb{dyncall.*} functions.
 See details below.
 
+The package option \code{rdyncall.callvm.size} controls the byte size of the
+internal dyncall CallVM argument stack. The default is \code{4096}. Set this
+option before loading \pkg{rdyncall}; changing it after package load does not
+resize already-created CallVM objects.
+
 Arguments passed via \code{...} are converted to C according to \code{signature}; see
 below for details.
 
