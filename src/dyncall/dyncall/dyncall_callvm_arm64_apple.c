@@ -26,6 +26,7 @@
 
 #include "dyncall_callvm_arm64.h"
 #include "dyncall_alloc.h"
+#include "dyncall_aggregate.h"
 
 
 void dcCall_arm64(DCpointer target, DCpointer data, DCsize size, DCpointer regdata);
@@ -37,6 +38,7 @@ static void reset(DCCallVM* in_p)
   p->i = 0;
   p->f = 0;
   dcVecReset(&p->mVecHead);
+  p->mpAggrVecCopies = ((DCchar*)dcVecData(&p->mVecHead)) + p->mVecHead.mTotal;
 }
 
 
@@ -174,6 +176,8 @@ void call(DCCallVM* in_p, DCpointer target)
   dcCall_arm64(target, dcVecData(&p->mVecHead), ( dcVecSize(&p->mVecHead) + 15 ) & -16, &p->u.S[0]);
 }
 
+#include "dyncall_callvm_arm64_aggr.c"
+
 static void mode(DCCallVM* in_p,DCint mode);
 
 DCCallVM_vt vt_arm64 =
@@ -190,7 +194,7 @@ DCCallVM_vt vt_arm64 =
 , &a_float
 , &a_double
 , &a_pointer
-, NULL /* argAggr */
+, &dc_callvm_argAggr_arm64
 , (DCvoidvmfunc*)       &call
 , (DCboolvmfunc*)       &call
 , (DCcharvmfunc*)       &call
@@ -201,8 +205,8 @@ DCCallVM_vt vt_arm64 =
 , (DCfloatvmfunc*)      &call
 , (DCdoublevmfunc*)     &call
 , (DCpointervmfunc*)    &call
-, NULL /* callAggr */
-, NULL /* beginAggr */
+, (DCaggrvmfunc*)     &dc_callvm_callAggr_arm64
+, (DCbeginaggrvmfunc*)&dc_callvm_beginAggr_arm64
 };
 
 DCCallVM_vt vt_arm64_variadic =
@@ -219,7 +223,7 @@ DCCallVM_vt vt_arm64_variadic =
 , &var_float
 , &var_double
 , &var_pointer
-, NULL /* argAggr */
+, &dc_callvm_argAggr_arm64_vararg
 , (DCvoidvmfunc*)       &call
 , (DCboolvmfunc*)       &call
 , (DCcharvmfunc*)       &call
@@ -230,8 +234,8 @@ DCCallVM_vt vt_arm64_variadic =
 , (DCfloatvmfunc*)      &call
 , (DCdoublevmfunc*)     &call
 , (DCpointervmfunc*)    &call
-, NULL /* callAggr */
-, NULL /* beginAggr */
+, (DCaggrvmfunc*)     &dc_callvm_callAggr_arm64
+, (DCbeginaggrvmfunc*)&dc_callvm_beginAggr_arm64
 };
 
 static void mode(DCCallVM* in_self, DCint mode)

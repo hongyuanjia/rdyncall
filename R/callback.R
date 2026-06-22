@@ -32,6 +32,7 @@
 #' Finally, the handler evaluates the R call expression within the environment
 #' given by `envir`. On return, the R return value of `fun` is coerced to the C
 #' value, according to the return type signature specified in `signature` .
+#' Aggregate by-value callback arguments and returns are currently unsupported.
 #' If an error occurs during the evaluation, the callback will be disabled for
 #' further invocations. (This behaviour might change in the future.)
 #'
@@ -89,6 +90,9 @@ ccallback <- function(signature, fun, envir = new.env()) {
     stopifnot(is.character(signature))
     stopifnot(is.function(fun))
     stopifnot(is.environment(envir))
+    if (grepl("<", signature, fixed = TRUE)) {
+        stop("aggregate callback signatures are not supported", call. = FALSE)
+    }
 
     .Call("C_callback", signature, fun, envir, PACKAGE = "rdyncall")
 }

@@ -14,7 +14,7 @@
 /* rdyncall.c */
 SEXP C_callvm_new(SEXP callmode, SEXP size);
 SEXP C_callvm_free(SEXP callvm);
-SEXP C_dyncall(SEXP args); /* .External() with args = callvm, address, signature, args */
+SEXP C_dyncall(SEXP args); /* .External() with args = callvm, address, signature, aggregate layouts, args */
 SEXP C_dynpath(SEXP libh);
 SEXP C_dyncount(SEXP libh);
 SEXP C_dynlist(SEXP libh);

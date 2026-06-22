@@ -569,7 +569,7 @@ int testAggrParameters()
 	{
 		Int_NestedDouble t0 = { -64, { -6.6} };
 		Int_NestedFloat t1 = { 112, { 7.5f } };
-		int returned;
+		double returned;
 		DCaggr *s0, *s0_, *s1, *s1_;
 
 		s0_ = dcNewAggr(1, sizeof(NestedDouble));
@@ -612,4 +612,3 @@ int testAggrParameters()
 }
 
 #endif
-

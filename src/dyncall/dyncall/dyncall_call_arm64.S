@@ -124,5 +124,83 @@ LABELDEF(done)
 
 
 END_PROC
+
+
+GLOBAL_C(dcCall_arm64_aggr)
+ENTRY_C(dcCall_arm64_aggr)
+ALIGN(2)
+
+/* input:
+     x0: target   (address of target)
+     x1: data     (address of stack copy data)
+     x2: size     (number of bytes, rounded to 16)
+     x3: regdata  (address of register data)
+     x4: ret_regs (address of return register scratch, or NULL)
+     x5: ret_ptr  (hidden aggregate return pointer for x8, or NULL)
+*/
+
+	stp  x29, x30, [sp, #-16]!
+	mov  x29,  sp
+	sub  sp, sp, #16
+	str  x4, [sp, #0]
+	str  x5, [sp, #8]
+
+	ldr  d0,  [x3,#0 ]
+	ldr  d1,  [x3,#8 ]
+	ldr  d2,  [x3,#16]
+	ldr  d3,  [x3,#24]
+	ldr  d4,  [x3,#32]
+	ldr  d5,  [x3,#40]
+	ldr  d6,  [x3,#48]
+	ldr  d7,  [x3,#56]
+
+	sub  sp, sp, x2
+
+	eor  x4, x4, x4
+	mov  x5, x1
+	mov  x6, sp
+
+LABELDEF(aggr_next)
+	cmp  x4, x2
+	b.ge  LABELUSE(aggr_done)
+
+	ldp  x7, x9, [x5], #16
+	stp  x7, x9, [x6], #16
+	add  x4, x4, 16
+
+	b   LABELUSE(aggr_next)
+
+LABELDEF(aggr_done)
+	mov  x9 , x0
+	add  x10, x3, 64
+	ldr  x8, [x29, #-8]
+
+	ldr  x0, [x10, #0]
+	ldr  x1, [x10, #8]
+	ldr  x2, [x10, #16]
+	ldr  x3, [x10, #24]
+	ldr  x4, [x10, #32]
+	ldr  x5, [x10, #40]
+	ldr  x6, [x10, #48]
+	ldr  x7, [x10, #56]
+
+	blr  x9
+
+	ldr  x10, [x29, #-16]
+	cbz  x10, LABELUSE(aggr_no_ret)
+	str  x0, [x10, #0]
+	str  x1, [x10, #8]
+	str  d0, [x10, #16]
+	str  d1, [x10, #24]
+	str  d2, [x10, #32]
+	str  d3, [x10, #40]
+
+LABELDEF(aggr_no_ret)
+	mov  sp,  x29
+	ldp  x29, x30, [sp], 16
+	ret
+
+
+END_PROC
 END_ASM
 

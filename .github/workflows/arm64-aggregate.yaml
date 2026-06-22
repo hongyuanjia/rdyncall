@@ -1,0 +1,88 @@
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+name: ARM64 aggregate
+
+permissions: read-all
+
+jobs:
+  dyncall-native:
+    name: dyncall native aggregate (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+          - os: ubuntu-24.04-arm
+          - os: windows-11-arm
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configure dyncall
+        if: runner.os != 'Windows'
+        run: cmake -S src/dyncall -B build/dyncall -DLANG_CXX=OFF
+
+      - name: Configure dyncall (Windows ARM64)
+        if: runner.os == 'Windows'
+        run: cmake -S src/dyncall -B build/dyncall -A ARM64 -DLANG_CXX=OFF
+
+      - name: Build dyncall plain aggregate test
+        if: runner.os != 'Windows'
+        run: cmake --build build/dyncall --target plain --config Release --parallel
+
+      - name: Build dyncall plain aggregate test (Windows ARM64)
+        if: runner.os == 'Windows'
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $msbuild = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
+          if (-not $msbuild) { throw "MSBuild not found" }
+          & $msbuild .\build\dyncall\test\plain\plain.vcxproj /p:Configuration=Release /p:Platform=ARM64 /m
+
+      - name: Run dyncall plain aggregate test
+        if: runner.os != 'Windows'
+        run: ./build/dyncall/test/plain/plain
+
+      - name: Run dyncall plain aggregate test (Windows ARM64)
+        if: runner.os == 'Windows'
+        run: .\\build\\dyncall\\test\\plain\\Release\\plain.exe
+
+  r-focused:
+    name: R focused aggregate (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+          - os: ubuntu-24.04-arm
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::tinytest
+          needs: check
+
+      - name: Configure temporary R library
+        run: echo "RDYNCALL_LIB=${RUNNER_TEMP}/rdyncall-lib" >> "$GITHUB_ENV"
+
+      - name: Install rdyncall
+        run: |
+          mkdir -p "$RDYNCALL_LIB"
+          R CMD INSTALL --preclean --no-test-load --library="$RDYNCALL_LIB" .
+
+      - name: Run focused aggregate tinytest
+        run: |
+          Rscript --vanilla -e '.libPaths(c(Sys.getenv("RDYNCALL_LIB"), .libPaths())); library(rdyncall); tinytest::run_test_file(system.file("tinytest", "test_dyncall.R", package = "rdyncall"))'
