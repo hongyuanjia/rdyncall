@@ -190,8 +190,10 @@
 #' `dynlist` returns a character vector.
 #'
 #' @note
-#' `dynlist()` does not work on macOS 11.0.1 and above, due to the introduction
-#' of the built-in dynamic linker cache of all system-provided libraries.
+#' On macOS, `dynlist()` enumerates symbols from system libraries in the dyld
+#' shared cache on a best-effort basis using Mach-O export information. For
+#' `/usr/lib/lib*.dylib` system aliases, matching `/usr/lib/system/libsystem_*`
+#' re-exports are included without expanding the entire libSystem umbrella.
 #'
 #' @seealso
 #' This facility is used by [dynfind()] and [dynbind()].

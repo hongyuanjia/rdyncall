@@ -1,6 +1,7 @@
 ^\.Rproj\.user$
 \.Rproj$
 ^\.gitignore$
+^\.git$
 ^README\.Rmd$
 ^README-.*\.png$
 ^src/dyncall/test$

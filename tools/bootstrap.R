@@ -16,6 +16,43 @@ run <- function(command, args) {
     }
 }
 
+patch_status <- function(command, args) {
+    status <- system2(command, args, stdout = FALSE, stderr = FALSE)
+    identical(status, 0L)
+}
+
+apply_dyncall_patches <- function() {
+    patch_dir <- file.path("tools", "patches")
+    if (!dir.exists(patch_dir)) return(invisible())
+
+    patches <- list.files(patch_dir, pattern = "\\.(patch|diff)$", full.names = TRUE)
+    if (!length(patches)) return(invisible())
+
+    patch <- Sys.which("patch")
+    if (patch == "") {
+        stop(
+            "Cannot apply dyncall patches because the `patch` command was not found.",
+            call. = FALSE
+        )
+    }
+
+    for (patch_file in patches) {
+        patch_file <- normalizePath(patch_file, mustWork = TRUE)
+        check_args <- c("-N", "-C", "-p1", "-i", patch_file)
+        reverse_check_args <- c("-R", "-N", "-C", "-p1", "-i", patch_file)
+        if (patch_status(patch, check_args)) {
+            message("Applying dyncall patch: ", basename(patch_file))
+            run(patch, c("-N", "-p1", "-i", patch_file))
+        } else if (patch_status(patch, reverse_check_args)) {
+            message("Dyncall patch already applied: ", basename(patch_file))
+        } else {
+            stop("Failed to apply dyncall patch: ", basename(patch_file), call. = FALSE)
+        }
+    }
+
+    invisible()
+}
+
 # Download dyncall source code
 if (VERSION == "latest") {
     hg <- Sys.which("hg")
@@ -122,3 +159,5 @@ if (VERSION == "latest") {
         stop("dyncall release did not create ", dyncall_version_header, call. = FALSE)
     }
 }
+
+apply_dyncall_patches()
