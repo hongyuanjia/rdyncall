@@ -500,7 +500,7 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
         if (!len || len > 2L) {
             issue_error(name, "Missing '}' in specification")
         } else if (len == 1L) {
-            field_layout <- list(fields = NULL, layout = aggregate_layout())
+            field_layout <- list(fields = empty_field_specs(), layout = aggregate_layout())
         } else {
             # TODO: invalid field names?
             field_layout <- tryCatch(
@@ -508,7 +508,7 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
                 error = function(e) issue_error(name, conditionMessage(e))
             )
             # this is the case when there are extra '}'
-            if (!length(field_layout$fields)) {
+            if (!nrow(field_layout$fields)) {
                 issue_error(name, "Extra '}' in specification")
             }
         }
@@ -518,10 +518,10 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
         dynport_issue_type_error(parsed, tail[[1L]], issue_error, name)
 
         # check imbalance between signatures and field names
-        if (length(parsed$type) != length(field_layout$fields)) {
+        if (length(parsed$type) != nrow(field_layout$fields)) {
             issue_error(name,
                 sprintf("Imbalance number of field types (%s) and names (%s) found",
-                    sQuote(length(parsed$type)), sQuote(length(field_layout$fields))
+                    sQuote(length(parsed$type)), sQuote(nrow(field_layout$fields))
                 )
             )
         }

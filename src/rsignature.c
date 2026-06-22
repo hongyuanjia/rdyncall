@@ -76,6 +76,103 @@ static SEXP rsignature_make_error(const char *reason, int start, int end)
   return out;
 }
 
+static SEXP rsignature_make_field_tail_success(SEXP field_names, SEXP bit_widths,
+                                               SEXP field_starts, SEXP field_ends,
+                                               int field_count, SEXP directives,
+                                               SEXP directive_starts,
+                                               SEXP directive_ends,
+                                               int directive_count)
+{
+  SEXP out, names, out_field_names, out_bit_widths, out_field_starts;
+  SEXP out_field_ends, out_directives, out_directive_starts, out_directive_ends;
+  int i;
+
+  PROTECT(out_field_names = allocVector(STRSXP, field_count));
+  PROTECT(out_bit_widths = allocVector(INTSXP, field_count));
+  PROTECT(out_field_starts = allocVector(INTSXP, field_count));
+  PROTECT(out_field_ends = allocVector(INTSXP, field_count));
+  PROTECT(out_directives = allocVector(STRSXP, directive_count));
+  PROTECT(out_directive_starts = allocVector(INTSXP, directive_count));
+  PROTECT(out_directive_ends = allocVector(INTSXP, directive_count));
+
+  for (i = 0; i < field_count; ++i) {
+    SET_STRING_ELT(out_field_names, i, STRING_ELT(field_names, i));
+    INTEGER(out_bit_widths)[i] = INTEGER(bit_widths)[i];
+    INTEGER(out_field_starts)[i] = INTEGER(field_starts)[i];
+    INTEGER(out_field_ends)[i] = INTEGER(field_ends)[i];
+  }
+
+  for (i = 0; i < directive_count; ++i) {
+    SET_STRING_ELT(out_directives, i, STRING_ELT(directives, i));
+    INTEGER(out_directive_starts)[i] = INTEGER(directive_starts)[i];
+    INTEGER(out_directive_ends)[i] = INTEGER(directive_ends)[i];
+  }
+
+  PROTECT(out = allocVector(VECSXP, 8));
+  SET_VECTOR_ELT(out, 0, ScalarLogical(1));
+  SET_VECTOR_ELT(out, 1, out_field_names);
+  SET_VECTOR_ELT(out, 2, out_bit_widths);
+  SET_VECTOR_ELT(out, 3, out_field_starts);
+  SET_VECTOR_ELT(out, 4, out_field_ends);
+  SET_VECTOR_ELT(out, 5, out_directives);
+  SET_VECTOR_ELT(out, 6, out_directive_starts);
+  SET_VECTOR_ELT(out, 7, out_directive_ends);
+
+  PROTECT(names = allocVector(STRSXP, 8));
+  SET_STRING_ELT(names, 0, mkChar("ok"));
+  SET_STRING_ELT(names, 1, mkChar("field_name"));
+  SET_STRING_ELT(names, 2, mkChar("bit_width"));
+  SET_STRING_ELT(names, 3, mkChar("field_start"));
+  SET_STRING_ELT(names, 4, mkChar("field_end"));
+  SET_STRING_ELT(names, 5, mkChar("directive"));
+  SET_STRING_ELT(names, 6, mkChar("directive_start"));
+  SET_STRING_ELT(names, 7, mkChar("directive_end"));
+  setAttrib(out, R_NamesSymbol, names);
+
+  UNPROTECT(9);
+  return out;
+}
+
+static SEXP rsignature_make_field_tail_error(const char *reason, int start, int end)
+{
+  SEXP out, names;
+
+  PROTECT(out = allocVector(VECSXP, 11));
+  SET_VECTOR_ELT(out, 0, ScalarLogical(0));
+  SET_VECTOR_ELT(out, 1, allocVector(STRSXP, 0));
+  SET_VECTOR_ELT(out, 2, allocVector(INTSXP, 0));
+  SET_VECTOR_ELT(out, 3, allocVector(INTSXP, 0));
+  SET_VECTOR_ELT(out, 4, allocVector(INTSXP, 0));
+  SET_VECTOR_ELT(out, 5, allocVector(STRSXP, 0));
+  SET_VECTOR_ELT(out, 6, allocVector(INTSXP, 0));
+  SET_VECTOR_ELT(out, 7, allocVector(INTSXP, 0));
+  SET_VECTOR_ELT(out, 8, mkString(reason));
+  SET_VECTOR_ELT(out, 9, ScalarInteger(start));
+  SET_VECTOR_ELT(out, 10, ScalarInteger(end));
+
+  PROTECT(names = allocVector(STRSXP, 11));
+  SET_STRING_ELT(names, 0, mkChar("ok"));
+  SET_STRING_ELT(names, 1, mkChar("field_name"));
+  SET_STRING_ELT(names, 2, mkChar("bit_width"));
+  SET_STRING_ELT(names, 3, mkChar("field_start"));
+  SET_STRING_ELT(names, 4, mkChar("field_end"));
+  SET_STRING_ELT(names, 5, mkChar("directive"));
+  SET_STRING_ELT(names, 6, mkChar("directive_start"));
+  SET_STRING_ELT(names, 7, mkChar("directive_end"));
+  SET_STRING_ELT(names, 8, mkChar("error_reason"));
+  SET_STRING_ELT(names, 9, mkChar("error_start"));
+  SET_STRING_ELT(names, 10, mkChar("error_end"));
+  setAttrib(out, R_NamesSymbol, names);
+
+  UNPROTECT(2);
+  return out;
+}
+
+static int rsignature_is_field_tail_space(char c)
+{
+  return c == ' ' || c == '\n' || c == '\t';
+}
+
 SEXP C_scan_signature_tokens(SEXP signature_x)
 {
   SEXP types, array_lens, starts, ends, out;
@@ -196,5 +293,128 @@ SEXP C_scan_signature_tokens(SEXP signature_x)
 
   out = rsignature_make_success(types, array_lens, starts, ends, count);
   UNPROTECT(4);
+  return out;
+}
+
+SEXP C_scan_field_tail(SEXP tail_x)
+{
+  SEXP field_names, bit_widths, field_starts, field_ends;
+  SEXP directives, directive_starts, directive_ends, out;
+  const char *tail;
+  size_t length;
+  int n, i, field_count, directive_count;
+
+  if (!isString(tail_x) || XLENGTH(tail_x) != 1 ||
+      STRING_ELT(tail_x, 0) == NA_STRING) {
+    error("field tail must be a single character string");
+  }
+
+  tail = CHAR(STRING_ELT(tail_x, 0));
+  length = strlen(tail);
+  if (length > INT_MAX) {
+    error("field tail is too long");
+  }
+  n = (int) length;
+  i = 0;
+  field_count = 0;
+  directive_count = 0;
+
+  PROTECT(field_names = allocVector(STRSXP, n));
+  PROTECT(bit_widths = allocVector(INTSXP, n));
+  PROTECT(field_starts = allocVector(INTSXP, n));
+  PROTECT(field_ends = allocVector(INTSXP, n));
+  PROTECT(directives = allocVector(STRSXP, n));
+  PROTECT(directive_starts = allocVector(INTSXP, n));
+  PROTECT(directive_ends = allocVector(INTSXP, n));
+
+  while (i < n) {
+    int token_start;
+    int token_end;
+    int colon_count = 0;
+    int colon_pos = -1;
+    int j;
+
+    while (i < n && rsignature_is_field_tail_space(tail[i])) {
+      ++i;
+    }
+    if (i >= n) {
+      break;
+    }
+
+    token_start = i;
+    while (i < n && !rsignature_is_field_tail_space(tail[i])) {
+      ++i;
+    }
+    token_end = i - 1;
+
+    if (tail[token_start] == '@') {
+      SET_STRING_ELT(directives, directive_count,
+        mkCharLenCE(tail + token_start, token_end - token_start + 1, CE_NATIVE));
+      INTEGER(directive_starts)[directive_count] = token_start + 1;
+      INTEGER(directive_ends)[directive_count] = token_end + 1;
+      ++directive_count;
+      continue;
+    }
+
+    for (j = token_start; j <= token_end; ++j) {
+      if (tail[j] == ':') {
+        ++colon_count;
+        colon_pos = j;
+      }
+    }
+
+    if (colon_count == 0) {
+      SET_STRING_ELT(field_names, field_count,
+        mkCharLenCE(tail + token_start, token_end - token_start + 1, CE_NATIVE));
+      INTEGER(bit_widths)[field_count] = NA_INTEGER;
+    } else {
+      int value_start;
+      long value = 0;
+
+      if (colon_count != 1) {
+        out = rsignature_make_field_tail_error("bitfield_spec", token_start + 1, token_end + 1);
+        UNPROTECT(7);
+        return out;
+      }
+
+      value_start = colon_pos + 1;
+      if (value_start > token_end) {
+        out = rsignature_make_field_tail_error("bitfield_width", token_start + 1, token_end + 1);
+        UNPROTECT(7);
+        return out;
+      }
+
+      for (j = value_start; j <= token_end; ++j) {
+        int digit;
+        if (tail[j] < '0' || tail[j] > '9') {
+          out = rsignature_make_field_tail_error("bitfield_width", token_start + 1, token_end + 1);
+          UNPROTECT(7);
+          return out;
+        }
+        digit = tail[j] - '0';
+        if (value > INT_MAX / 10L ||
+            (value == INT_MAX / 10L && digit > INT_MAX % 10L)) {
+          out = rsignature_make_field_tail_error("bitfield_width", token_start + 1, token_end + 1);
+          UNPROTECT(7);
+          return out;
+        }
+        value = value * 10L + digit;
+      }
+
+      SET_STRING_ELT(field_names, field_count,
+        mkCharLenCE(tail + token_start, colon_pos - token_start, CE_NATIVE));
+      INTEGER(bit_widths)[field_count] = (int) value;
+    }
+
+    INTEGER(field_starts)[field_count] = token_start + 1;
+    INTEGER(field_ends)[field_count] = token_end + 1;
+    ++field_count;
+  }
+
+  out = rsignature_make_field_tail_success(
+    field_names, bit_widths, field_starts, field_ends, field_count,
+    directives, directive_starts, directive_ends, directive_count
+  );
+  UNPROTECT(7);
   return out;
 }

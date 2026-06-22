@@ -58,6 +58,46 @@ parsed_bad_array <- rdyncall:::parse_aggregate_types("struct", "C[0]", on_error 
 expect_equal(attr(parsed_bad_array, "reason"), "array")
 expect_equal(attr(parsed_bad_array, "pos"), c(2L, 4L))
 
+tail_tokens <- rdyncall:::scan_field_tail("a b:3 :0 @packed @align(8)")
+expect_true(tail_tokens$ok)
+expect_equal(tail_tokens$field_name, c("a", "b", ""))
+expect_equal(tail_tokens$bit_width, c(NA_integer_, 3L, 0L))
+expect_equal(tail_tokens$field_start, c(1L, 3L, 7L))
+expect_equal(tail_tokens$field_end, c(1L, 5L, 8L))
+expect_equal(tail_tokens$directive, c("@packed", "@align(8)"))
+expect_equal(tail_tokens$directive_start, c(10L, 18L))
+expect_equal(tail_tokens$directive_end, c(16L, 26L))
+
+field_layout <- rdyncall:::parse_aggregate_fields("a b:3 :0 @packed @align(8)")
+expect_equal(
+    field_layout$fields,
+    data.frame(
+        name = c("a", "b", ""),
+        bit_width = c(NA_integer_, 3L, 0L),
+        stringsAsFactors = FALSE
+    )
+)
+expect_equal(field_layout$layout, rdyncall:::aggregate_layout(pack = 1L, align = 8L))
+
+bad_tail_width_empty <- rdyncall:::scan_field_tail("a:")
+expect_false(bad_tail_width_empty$ok)
+expect_equal(bad_tail_width_empty$error_reason, "bitfield_width")
+expect_equal(c(bad_tail_width_empty$error_start, bad_tail_width_empty$error_end), c(1L, 2L))
+
+bad_tail_width_text <- rdyncall:::scan_field_tail("a:b")
+expect_false(bad_tail_width_text$ok)
+expect_equal(bad_tail_width_text$error_reason, "bitfield_width")
+expect_equal(c(bad_tail_width_text$error_start, bad_tail_width_text$error_end), c(1L, 3L))
+
+bad_tail_spec <- rdyncall:::scan_field_tail("a:1:2")
+expect_false(bad_tail_spec$ok)
+expect_equal(bad_tail_spec$error_reason, "bitfield_spec")
+expect_equal(c(bad_tail_spec$error_start, bad_tail_spec$error_end), c(1L, 5L))
+
+bad_tail_width_overflow <- rdyncall:::scan_field_tail("a:2147483648")
+expect_false(bad_tail_width_overflow$ok)
+expect_equal(bad_tail_width_overflow$error_reason, "bitfield_width")
+
 env <- new.env()
 expect_null(cstruct("Rect{ssSS}x y w h ;", env))
 expect_null(cstruct("RectWithSpace{ssSS} x y w h ;", env))
@@ -87,6 +127,16 @@ expect_equal(env$NumberWithSpace$fields$name, c("i", "d"))
 expect_null(cstruct("EmptyStruct{};", env))
 expect_equal(env$EmptyStruct$size, 0L)
 expect_equal(nrow(env$EmptyStruct$fields), 0L)
+
+expect_null(cstruct("EmptyPacked{} @packed;", env))
+expect_equal(env$EmptyPacked$size, 0L)
+expect_equal(env$EmptyPacked$align, 1L)
+
+expect_null(cstruct("EmptyAligned{} @align(8);", env))
+expect_equal(env$EmptyAligned$size, 0L)
+expect_equal(env$EmptyAligned$align, 8L)
+
+expect_error(cstruct("OnlyLayout{C}@packed;", env), "number of field types")
 
 parsed_struct <- rdyncall:::dynport_parse_struct("Rect{ssSS} x y w h;")
 expect_equal(parsed_struct$Rect$fields, env$RectWithSpace$fields)

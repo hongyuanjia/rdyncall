@@ -196,8 +196,32 @@ parse_field_names <- function(x) {
     strsplit(x, "[ \n\t]+")[[1L]]
 }
 
+new_field_specs <- function(names = character(), bit_widths = rep(NA_integer_, length(names))) {
+    data.frame(
+        name = as.character(names),
+        bit_width = as.integer(bit_widths),
+        stringsAsFactors = FALSE
+    )
+}
+
+empty_field_specs <- function() {
+    new_field_specs()
+}
+
 parse_field_specs <- function(field_names) {
     if (is.null(field_names)) field_names <- character()
+
+    if (is.data.frame(field_names)) {
+        if (!all(c("name", "bit_width") %in% names(field_names))) {
+            stop("invalid field specification table", call. = FALSE)
+        }
+        fields <- new_field_specs(field_names$name, field_names$bit_width)
+        if (any(!is.na(fields$bit_width) & fields$bit_width == 0L & nzchar(fields$name))) {
+            stop("zero-width bitfield must be unnamed", call. = FALSE)
+        }
+        return(fields)
+    }
+
     names <- character(length(field_names))
     bit_widths <- rep(NA_integer_, length(field_names))
 
@@ -224,7 +248,7 @@ parse_field_specs <- function(field_names) {
         bit_widths[[i]] <- width
     }
 
-    data.frame(name = names, bit_width = bit_widths)
+    new_field_specs(names, bit_widths)
 }
 
 aggregate_layout <- function(pack = NA_integer_, align = NA_integer_) {
@@ -284,20 +308,22 @@ parse_aggregate_layout_directive <- function(token, layout) {
 parse_aggregate_fields <- function(x) {
     x <- trimws(x)
     layout <- aggregate_layout()
-    if (!nzchar(x)) return(list(fields = NULL, layout = layout))
+    if (!nzchar(x)) return(list(fields = empty_field_specs(), layout = layout))
 
-    tokens <- strsplit(x, "[ \n\t]+")[[1L]]
-    fields <- character()
-    for (token in tokens) {
-        if (startsWith(token, "@")) {
-            layout <- parse_aggregate_layout_directive(token, layout)
-        } else {
-            fields <- c(fields, token)
+    tokens <- scan_field_tail(x)
+    if (!isTRUE(tokens$ok)) {
+        token <- substr(x, tokens$error_start, tokens$error_end)
+        if (identical(tokens$error_reason, "bitfield_spec")) {
+            stop("invalid bitfield specification '", token, "'", call. = FALSE)
         }
+        stop("invalid bitfield width in field '", token, "'", call. = FALSE)
     }
 
-    if (!length(fields)) fields <- NULL
-    list(fields = fields, layout = layout)
+    for (directive in tokens$directive) {
+        layout <- parse_aggregate_layout_directive(directive, layout)
+    }
+
+    list(fields = new_field_specs(tokens$field_name, tokens$bit_width), layout = layout)
 }
 
 aggregate_member_alignment <- function(alignment, layout) {
@@ -318,6 +344,10 @@ parse_type_error <- function(pos, type = NULL, reason = NULL) {
 
 scan_signature_tokens <- function(signature) {
     .Call("C_scan_signature_tokens", signature, PACKAGE = "rdyncall")
+}
+
+scan_field_tail <- function(tail) {
+    .Call("C_scan_field_tail", tail, PACKAGE = "rdyncall")
 }
 
 parse_aggregate_types <- function(kind = c("struct", "union"), signature,
@@ -708,7 +738,7 @@ cstruct <- function(sigs, envir = parent.frame()) {
             if (length(tail) == 2) {
                 field_layout <- parse_aggregate_fields(tail[[2]])
             } else {
-                field_layout <- list(fields = NULL, layout = aggregate_layout())
+                field_layout <- list(fields = empty_field_specs(), layout = aggregate_layout())
             }
             assign(name, make_struct_info(name, sig, field_layout$fields,
                 envir = envir, layout = field_layout$layout), envir = envir)
@@ -743,7 +773,7 @@ cunion <- function(sigs, envir = parent.frame()) {
             if (length(tail) == 2) {
                 field_layout <- parse_aggregate_fields(tail[[2]])
             } else {
-                field_layout <- list(fields = NULL, layout = aggregate_layout())
+                field_layout <- list(fields = empty_field_specs(), layout = aggregate_layout())
             }
             assign(name, make_union_info(name, sig, field_layout$fields,
                 envir = envir, layout = field_layout$layout), envir = envir)
