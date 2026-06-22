@@ -83,6 +83,18 @@ expect_repeated <- function(x, info, sigchar, values) {
 
 aggregate_fixture <- build_aggregate_by_value_fixture()
 
+fixture_int <- function(name) {
+    dyncall(dynsym(aggregate_fixture, name), ")i")
+}
+
+expect_c_layout <- function(info, prefix, offset_fields) {
+    expect_equal(info$size, fixture_int(paste0(prefix, "_size")))
+    expect_equal(info$align, fixture_int(paste0(prefix, "_align")))
+    for (field in offset_fields) {
+        expect_equal(field_offset(info, field), fixture_int(paste0(prefix, "_offset_", field)))
+    }
+}
+
 # Small byte aggregate argument is passed by value.
 cstruct("Color{CCCC}r g b a;")
 color <- cdata(Color)
@@ -259,6 +271,57 @@ char_double_ret <- dyncall(make_char_double, "Cd)<CharDouble>", 18L, 19.5)
 expect_struct_raw(char_double_ret, "CharDouble")
 expect_equal(unpack(char_double_ret, field_offset(CharDouble, "c"), "C"), 18L)
 expect_equal(unpack(char_double_ret, field_offset(CharDouble, "d"), "d"), 19.5)
+
+# Packed and manually aligned aggregates use the compiler's layout.
+cstruct("PackedCharDouble{Cd}c d @packed;")
+expect_c_layout(PackedCharDouble, "rdyncall_test_packed_char_double", "d")
+packed_char_double <- cdata(PackedCharDouble)
+pack(packed_char_double, field_offset(PackedCharDouble, "c"), "C", 4L)
+pack(packed_char_double, field_offset(PackedCharDouble, "d"), "d", 5.5)
+packed_char_double_sum <- dynsym(aggregate_fixture, "rdyncall_test_packed_char_double_sum")
+expect_equal(dyncall(packed_char_double_sum, "<PackedCharDouble>)d", packed_char_double), 9.5)
+make_packed_char_double <- dynsym(aggregate_fixture, "rdyncall_test_make_packed_char_double")
+packed_char_double_ret <- dyncall(make_packed_char_double, "Cd)<PackedCharDouble>", 6L, 7.5)
+expect_struct_raw(packed_char_double_ret, "PackedCharDouble")
+expect_equal(unpack(packed_char_double_ret, field_offset(PackedCharDouble, "c"), "C"), 6L)
+expect_equal(unpack(packed_char_double_ret, field_offset(PackedCharDouble, "d"), "d"), 7.5)
+
+cstruct("Pack4CharDouble{Cd}c d @pack(4);")
+expect_c_layout(Pack4CharDouble, "rdyncall_test_pack4_char_double", "d")
+pack4_char_double <- cdata(Pack4CharDouble)
+pack(pack4_char_double, field_offset(Pack4CharDouble, "c"), "C", 8L)
+pack(pack4_char_double, field_offset(Pack4CharDouble, "d"), "d", 9.5)
+pack4_char_double_sum <- dynsym(aggregate_fixture, "rdyncall_test_pack4_char_double_sum")
+expect_equal(dyncall(pack4_char_double_sum, "<Pack4CharDouble>)d", pack4_char_double), 17.5)
+make_pack4_char_double <- dynsym(aggregate_fixture, "rdyncall_test_make_pack4_char_double")
+pack4_char_double_ret <- dyncall(make_pack4_char_double, "Cd)<Pack4CharDouble>", 10L, 11.5)
+expect_struct_raw(pack4_char_double_ret, "Pack4CharDouble")
+expect_equal(unpack(pack4_char_double_ret, field_offset(Pack4CharDouble, "c"), "C"), 10L)
+expect_equal(unpack(pack4_char_double_ret, field_offset(Pack4CharDouble, "d"), "d"), 11.5)
+
+cstruct("AlignedChar{C}c @align(8);")
+expect_c_layout(AlignedChar, "rdyncall_test_aligned_char", "c")
+aligned_char <- cdata(AlignedChar)
+pack(aligned_char, field_offset(AlignedChar, "c"), "C", 12L)
+aligned_char_value <- dynsym(aggregate_fixture, "rdyncall_test_aligned_char_value")
+expect_equal(dyncall(aligned_char_value, "<AlignedChar>)i", aligned_char), 12L)
+make_aligned_char <- dynsym(aggregate_fixture, "rdyncall_test_make_aligned_char")
+aligned_char_ret <- dyncall(make_aligned_char, "C)<AlignedChar>", 13L)
+expect_struct_raw(aligned_char_ret, "AlignedChar")
+expect_equal(unpack(aligned_char_ret, field_offset(AlignedChar, "c"), "C"), 13L)
+
+cstruct("PackedAlignedCharDouble{Cd}c d @packed @align(8);")
+expect_c_layout(PackedAlignedCharDouble, "rdyncall_test_packed_aligned_char_double", "d")
+packed_aligned_char_double <- cdata(PackedAlignedCharDouble)
+pack(packed_aligned_char_double, field_offset(PackedAlignedCharDouble, "c"), "C", 14L)
+pack(packed_aligned_char_double, field_offset(PackedAlignedCharDouble, "d"), "d", 15.5)
+packed_aligned_char_double_sum <- dynsym(aggregate_fixture, "rdyncall_test_packed_aligned_char_double_sum")
+expect_equal(dyncall(packed_aligned_char_double_sum, "<PackedAlignedCharDouble>)d", packed_aligned_char_double), 29.5)
+make_packed_aligned_char_double <- dynsym(aggregate_fixture, "rdyncall_test_make_packed_aligned_char_double")
+packed_aligned_char_double_ret <- dyncall(make_packed_aligned_char_double, "Cd)<PackedAlignedCharDouble>", 16L, 17.5)
+expect_struct_raw(packed_aligned_char_double_ret, "PackedAlignedCharDouble")
+expect_equal(unpack(packed_aligned_char_double_ret, field_offset(PackedAlignedCharDouble, "c"), "C"), 16L)
+expect_equal(unpack(packed_aligned_char_double_ret, field_offset(PackedAlignedCharDouble, "d"), "d"), 17.5)
 
 # Register exhaustion checks that stack placement still preserves aggregate values.
 exhaust_ints_color_sum <- dynsym(aggregate_fixture, "rdyncall_test_exhaust_ints_color_sum")

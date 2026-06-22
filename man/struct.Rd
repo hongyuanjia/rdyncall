@@ -79,8 +79,10 @@ data types.
 Type Signatures are used within the \code{field-types}.
 \code{field-names} consists of space separated identifier names and should match
 the number of fields.
+Optional layout directives can follow the field names before the final
+semicolon.
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{struct-name \{ field-types \} field-names ;
+\if{html}{\out{<div class="sourceCode">}}\preformatted{struct-name \{ field-types \} field-names [layout-directives] ;
 }\if{html}{\out{</div>}}
 
 Here is an example of a C \code{struct} type:
@@ -96,13 +98,25 @@ The corresponding structure type signature string is:
 \if{html}{\out{<div class="sourceCode">}}\preformatted{"Rect\{ssSS\}x y w h;"
 }\if{html}{\out{</div>}}
 
+Packed or manually aligned aggregate layouts can be registered with
+\verb{@packed}, \verb{@pack(n)} and \verb{@align(n)} directives, where \code{n} must be a
+positive power of two. \verb{@packed} is equivalent to \verb{@pack(1)}, \verb{@pack(n)}
+caps member alignment at \code{n}, and \verb{@align(n)} raises the final aggregate
+alignment to at least \code{n}.
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{"Packed\{Cd\}c d @packed;"
+"Pack4\{Cd\}c d @pack(4);"
+"PackedAligned\{Cd\}c d @packed @align(8);"
+}\if{html}{\out{</div>}}
+
 \strong{Union type signatures} describe the components of the \code{union} C
 data type.
 Type signatures are used within the \code{field-types}.
 \code{field-names} consists of space separated identifier names and should match
-the number of fields.
+the number of fields. The same layout directives can follow union field
+names.
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{union-name | field-types \} field-names ;
+\if{html}{\out{<div class="sourceCode">}}\preformatted{union-name | field-types \} field-names [layout-directives] ;
 }\if{html}{\out{</div>}}
 
 Here is an example of a C \code{union} type:

@@ -160,10 +160,92 @@ parse_field_names <- function(x) {
     strsplit(x, "[ \n\t]+")[[1L]]
 }
 
+aggregate_layout <- function(pack = NA_integer_, align = NA_integer_) {
+    list(pack = pack, align = align)
+}
+
+is_power_of_two <- function(x) {
+    if (length(x) != 1L || is.na(x) || x < 1L) return(FALSE)
+    while (x %% 2L == 0L) x <- x %/% 2L
+    x == 1L
+}
+
+parse_aggregate_layout_value <- function(value, directive) {
+    if (!grepl("^[0-9]+$", value)) {
+        stop("invalid aggregate layout directive '", directive, "'", call. = FALSE)
+    }
+    value <- suppressWarnings(as.integer(value))
+    if (!is_power_of_two(value)) {
+        stop("aggregate layout directive '", directive,
+            "' must use a positive power-of-two integer", call. = FALSE)
+    }
+    value
+}
+
+parse_aggregate_layout_directive <- function(token, layout) {
+    if (identical(token, "@packed")) {
+        if (!is.na(layout$pack)) {
+            stop("duplicate aggregate layout directive '@pack'", call. = FALSE)
+        }
+        layout$pack <- 1L
+        return(layout)
+    }
+
+    pack <- regexec("^@pack\\(([0-9]+)\\)$", token)
+    match <- regmatches(token, pack)[[1L]]
+    if (length(match)) {
+        if (!is.na(layout$pack)) {
+            stop("duplicate aggregate layout directive '@pack'", call. = FALSE)
+        }
+        layout$pack <- parse_aggregate_layout_value(match[[2L]], token)
+        return(layout)
+    }
+
+    align <- regexec("^@align\\(([0-9]+)\\)$", token)
+    match <- regmatches(token, align)[[1L]]
+    if (length(match)) {
+        if (!is.na(layout$align)) {
+            stop("duplicate aggregate layout directive '@align'", call. = FALSE)
+        }
+        layout$align <- parse_aggregate_layout_value(match[[2L]], token)
+        return(layout)
+    }
+
+    stop("unknown aggregate layout directive '", token, "'", call. = FALSE)
+}
+
+parse_aggregate_fields <- function(x) {
+    x <- trimws(x)
+    layout <- aggregate_layout()
+    if (!nzchar(x)) return(list(fields = NULL, layout = layout))
+
+    tokens <- strsplit(x, "[ \n\t]+")[[1L]]
+    fields <- character()
+    for (token in tokens) {
+        if (startsWith(token, "@")) {
+            layout <- parse_aggregate_layout_directive(token, layout)
+        } else {
+            fields <- c(fields, token)
+        }
+    }
+
+    if (!length(fields)) fields <- NULL
+    list(fields = fields, layout = layout)
+}
+
+aggregate_member_alignment <- function(alignment, layout) {
+    if (!is.na(layout$pack)) min(alignment, layout$pack) else alignment
+}
+
+aggregate_final_alignment <- function(alignment, layout) {
+    if (!is.na(layout$align)) max(alignment, layout$align) else alignment
+}
+
 # ----------------------------------------------------------------------------
 # parse structure signature
 
-make_struct_info <- function(name, signature, field_names, envir = parent.frame()) {
+make_struct_info <- function(name, signature, field_names, envir = parent.frame(),
+                             layout = aggregate_layout()) {
     # computations:
     types    <- character()
     offsets  <- integer()
@@ -188,7 +270,7 @@ make_struct_info <- function(name, signature, field_names, envir = parent.frame(
         type_name  <- substr(signature, start, i)
         types      <- c(types, type_name)
         type_info  <- get_typeinfo(type_name, envir = envir)
-        alignment  <- type_info$align
+        alignment  <- aggregate_member_alignment(type_info$align, layout)
         max_align  <- max(max_align, alignment)
         offset     <- align(offset, alignment)
         offsets    <- c(offsets, offset)
@@ -200,6 +282,7 @@ make_struct_info <- function(name, signature, field_names, envir = parent.frame(
         i <- i + 1
         start <- i
     }
+    max_align <- aggregate_final_alignment(max_align, layout)
     # align the structure size (compiler-specific?)
     size <- align(offset, max_align)
     # build field information
@@ -244,9 +327,11 @@ make_struct_info <- function(name, signature, field_names, envir = parent.frame(
 #' Type Signatures are used within the `field-types`.
 #' `field-names` consists of space separated identifier names and should match
 #' the number of fields.
+#' Optional layout directives can follow the field names before the final
+#' semicolon.
 #'
 #' ```
-#' struct-name { field-types } field-names ;
+#' struct-name { field-types } field-names [layout-directives] ;
 #' ```
 #' Here is an example of a C `struct` type:
 #'
@@ -261,15 +346,27 @@ make_struct_info <- function(name, signature, field_names, envir = parent.frame(
 #' ```
 #' "Rect{ssSS}x y w h;"
 #' ```
+#' Packed or manually aligned aggregate layouts can be registered with
+#' `@packed`, `@pack(n)` and `@align(n)` directives, where `n` must be a
+#' positive power of two. `@packed` is equivalent to `@pack(1)`, `@pack(n)`
+#' caps member alignment at `n`, and `@align(n)` raises the final aggregate
+#' alignment to at least `n`.
+#'
+#' ```
+#' "Packed{Cd}c d @packed;"
+#' "Pack4{Cd}c d @pack(4);"
+#' "PackedAligned{Cd}c d @packed @align(8);"
+#' ```
 #'
 #' **Union type signatures** describe the components of the `union` C
 #' data type.
 #' Type signatures are used within the `field-types`.
 #' `field-names` consists of space separated identifier names and should match
-#' the number of fields.
+#' the number of fields. The same layout directives can follow union field
+#' names.
 #'
 #' ```
-#' union-name | field-types } field-names ;
+#' union-name | field-types } field-names [layout-directives] ;
 #' ```
 #'
 #' Here is an example of a C \code{union} type:
@@ -347,11 +444,12 @@ cstruct <- function(sigs, envir = parent.frame()) {
             tail <- unlist(strsplit(sigs[[i]][[2]], "[}]"))
             sig <- tail[[1]]
             if (length(tail) == 2) {
-                fields <- parse_field_names(tail[[2]])
+                field_layout <- parse_aggregate_fields(tail[[2]])
             } else {
-                fields <- NULL
+                field_layout <- list(fields = NULL, layout = aggregate_layout())
             }
-            assign(name, make_struct_info(name, sig, fields, envir = envir), envir = envir)
+            assign(name, make_struct_info(name, sig, field_layout$fields,
+                envir = envir, layout = field_layout$layout), envir = envir)
         }
     }
 }
@@ -359,7 +457,8 @@ cstruct <- function(sigs, envir = parent.frame()) {
 # ----------------------------------------------------------------------------
 # parse union signature
 
-make_union_info <- function(name, signature, field_names, envir = parent.frame()) {
+make_union_info <- function(name, signature, field_names, envir = parent.frame(),
+                            layout = aggregate_layout()) {
     # computations:
     types <- character()
     max_size <- 0
@@ -384,11 +483,13 @@ make_union_info <- function(name, signature, field_names, envir = parent.frame()
         types      <- c(types, type_name)
         type_info  <- get_typeinfo(type_name, envir)
         max_size   <- max(max_size, type_info$size)
-        max_align  <- max(max_align, type_info$align)
+        max_align  <- max(max_align, aggregate_member_alignment(type_info$align, layout))
         # next token
         i <- i + 1
         start <- i
     }
+    max_align <- aggregate_final_alignment(max_align, layout)
+    max_size <- align(max_size, max_align)
     offsets <- rep(0, length(types))
     fields <- make_field_info(field_names, types, offsets)
     typeinfo(name = name, type = "union", fields = fields, size = max_size, align = max_align)
@@ -411,11 +512,12 @@ cunion <- function(sigs, envir = parent.frame()) {
             tail <- unlist(strsplit(sigs[[i]][[2]], "[}]"))
             sig <- tail[[1]]
             if (length(tail) == 2) {
-                fields <- parse_field_names(tail[[2]])
+                field_layout <- parse_aggregate_fields(tail[[2]])
             } else {
-                fields <- NULL
+                field_layout <- list(fields = NULL, layout = aggregate_layout())
             }
-            assign(name, make_union_info(name, sig, fields, envir = envir), envir = envir)
+            assign(name, make_union_info(name, sig, field_layout$fields,
+                envir = envir, layout = field_layout$layout), envir = envir)
         }
     }
 }

@@ -7,6 +7,7 @@
 #define R_NO_REMAP
 #include <Rinternals.h>
 #include "dyncall.h"
+#include "dyncall_aggregate.h"
 #include "rdyncall_signature.h"
 #include <string.h>
 #include <ctype.h>
@@ -102,6 +103,11 @@ static int rdyncall_layout_size(SEXP layout)
   return rdyncall_scalar_int(rdyncall_get_list_element(layout, "size"), "size");
 }
 
+static int rdyncall_layout_align(SEXP layout)
+{
+  return rdyncall_scalar_int(rdyncall_get_list_element(layout, "align"), "align");
+}
+
 static void rdyncall_expect_struct_arg(SEXP arg, const char *type_name, int type_len, int size, int argpos)
 {
   if (TYPEOF(arg) != RAWSXP) {
@@ -152,6 +158,7 @@ static DCsigchar rdyncall_aggregate_field_sigchar(const char *type)
 static DCaggr* rdyncall_new_aggr(SEXP layout, DCaggr **aggrs, int *aggr_count)
 {
   int size = rdyncall_layout_size(layout);
+  int alignment = rdyncall_layout_align(layout);
   SEXP fields = rdyncall_get_list_element(layout, "fields");
   SEXP field_layouts = rdyncall_get_list_element(layout, "field_layouts");
   SEXP types = rdyncall_get_list_element(fields, "type");
@@ -187,6 +194,7 @@ static DCaggr* rdyncall_new_aggr(SEXP layout, DCaggr **aggrs, int *aggr_count)
       dcAggrField(ag, rdyncall_aggregate_field_sigchar(type), INTEGER(offsets)[i], 1);
     }
   }
+  ag->alignment = (DCsize) alignment;
   dcCloseAggr(ag);
   return ag;
 }
