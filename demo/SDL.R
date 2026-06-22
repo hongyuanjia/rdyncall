@@ -1,146 +1,133 @@
-# Package: rdyncall 
+# Package: rdyncall
 # File: demo/SDL.R
-# Description: 3D Rotating Cube Demo using SDL,OpenGL and GLU. (dynport demo)
+# Description: SDL3 window lifecycle demo.
 
-dynport(SDL)
-dynport(GL)
-dynport(GLU)
-
-# Globals.
-
-surface <- NULL
-
-# Init.
-
-init <- function()
-{
-  err <- SDL_Init(SDL_INIT_VIDEO)
-  if (err != 0) error("SDL_Init failed")  
-  surface <<- SDL_SetVideoMode(512,512,32,SDL_DOUBLEBUF+SDL_OPENGL)
-}
-
-# GL Display Lists
-
-makeCubeDisplaylist <- function()
-{
-  vertices <- as.double(c(
-  -1,-1,-1,
-   1,-1,-1,
-  -1, 1,-1,
-   1, 1,-1,
-  -1,-1, 1,
-   1,-1, 1,
-  -1, 1, 1,
-   1, 1, 1
-  ))
-  
-  colors <- as.raw( col2rgb( rainbow(8) ) )
-  
-  triangleIndices <- as.integer(c(
-    0, 2, 1, 
-    2, 3, 1,
-    1, 3, 7, 
-    1, 7, 5,
-    4, 5, 7, 
-    4, 7, 6,
-    6, 2, 0, 
-    6, 0, 4,
-    2, 7, 3, 
-    2, 6, 7,
-    4, 0, 5, 
-    0, 1, 5
-  ))
-
-  glEnableClientState(GL_VERTEX_ARRAY)
-  glVertexPointer(3, GL_DOUBLE, 0, vertices )
-  
-  glEnableClientState(GL_COLOR_ARRAY)  
-  glColorPointer(3, GL_UNSIGNED_BYTE, 0, colors )
-  
-  displaylistId <- glGenLists(1)
-  glNewList( displaylistId, GL_COMPILE )    
-  glPushAttrib(GL_ENABLE_BIT)
-  glEnable(GL_DEPTH_TEST)
-  glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, triangleIndices)
-  glPopAttrib()
-  glEndList()
-  
-  glDisableClientState(GL_VERTEX_ARRAY)
-  glDisableClientState(GL_COLOR_ARRAY)
- 
-
-  return(displaylistId)
-}
-
-# Mainloop.
-
-mainloop <- function()
-{
-  displaylistId <- makeCubeDisplaylist()
-  evt <- cdata(SDL_Event)
-  blink <- 0
-  tbase <- SDL_GetTicks()
-  quit <- FALSE
-  while(!quit)
-  {
-    tnow <- SDL_GetTicks()
-    tdemo <- ( tnow - tbase ) / 1000
-    
-    glClearColor(0,0,blink,0)
-    glClear(GL_COLOR_BUFFER_BIT+GL_DEPTH_BUFFER_BIT)
-    
-    glMatrixMode(GL_PROJECTION)
-    glLoadIdentity()
-    aspect <- 512/512
-    gluPerspective(60, aspect, 3, 1000)
-    
-    glMatrixMode(GL_MODELVIEW)
-    glLoadIdentity()
-    gluLookAt(0,0,5,0,0,0,0,1,0)
-    glRotated(sin(tdemo)*60.0, 0, 1, 0);
-    glRotated(cos(tdemo)*90.0, 1, 0, 0);
-
-    glCallList(displaylistId)       
-
-    glCallList(displaylistId)       
-    
-    SDL_GL_SwapBuffers()  
-    
-    SDL_WM_SetCaption(paste("time:", tdemo),NULL)    
-    blink <- blink + 0.01
-    while (blink > 1) blink <- blink - 1
-    while( SDL_PollEvent(evt) != 0 )
-    {
-      if ( evt$type == SDL_QUIT ) quit <- TRUE
-      else if (evt$type == SDL_MOUSEBUTTONDOWN )
-      {
-        button <- evt$button
-        cat("button ",button$button," at ",button$x,",",button$y,"\n") 
-      }
+load_rdyncall <- function() {
+    if ("package:rdyncall" %in% search()) {
+        return(invisible(TRUE))
     }
-    glerr <- glGetError()
-    if (glerr != 0)
-    {
-      cat("GL Error:", gluErrorString(glerr) )
-      quit <- 1
+    lib.loc <- Sys.getenv("RDYNCALL_LIB", unset = "")
+    if (nzchar(lib.loc)) {
+        return(library("rdyncall", lib.loc = lib.loc, character.only = TRUE))
     }
-    SDL_Delay(30)
-  }
-  glDeleteLists(displaylistId, 1)
+    file <- ""
+    for (frame in rev(sys.frames())) {
+        if (!is.null(frame$ofile)) {
+            file <- normalizePath(frame$ofile, mustWork = FALSE)
+            break
+        }
+    }
+    if (nzchar(file)) {
+        lib.loc <- dirname(dirname(dirname(file)))
+        if (file.exists(file.path(lib.loc, "rdyncall"))) {
+            return(library("rdyncall", lib.loc = lib.loc, character.only = TRUE))
+        }
+    }
+    library("rdyncall", character.only = TRUE)
 }
 
-cleanup <- function()
-{
-  SDL_Quit()
+load_rdyncall()
+
+shared_library_candidates <- function(envvar, names) {
+    env_path <- Sys.getenv(envvar, unset = "")
+    if (nzchar(env_path)) {
+        return(env_path)
+    }
+
+    dirs <- c(
+        "/opt/homebrew/lib",
+        "/usr/local/lib",
+        "/opt/local/lib",
+        "/usr/lib",
+        "/usr/lib/x86_64-linux-gnu",
+        "/usr/lib/aarch64-linux-gnu",
+        "/lib/x86_64-linux-gnu",
+        "/lib/aarch64-linux-gnu"
+    )
+    unique(file.path(rep(dirs, each = length(names)), names))
 }
 
-run <- function()
-{
-  init()
-  mainloop()
-  cleanup()
+bind_library <- function(libnames, signatures, envir, envvar = NULL, path_candidates = character()) {
+    paths <- path_candidates[file.exists(path_candidates)]
+    if (length(paths)) {
+        lib <- dynload(paths[[1L]])
+        if (is.null(lib)) {
+            stop("unable to load shared library: ", paths[[1L]], call. = FALSE)
+        }
+        return(bind_symbols(lib, signatures, envir))
+    }
+
+    tryCatch(
+        dynbind(libnames, signatures, envir = envir),
+        error = function(e) {
+            hint <- if (!is.null(envvar)) paste0(" Set ", envvar, " to the shared library path.") else ""
+            stop(conditionMessage(e), hint, call. = FALSE)
+        }
+    )
 }
 
-run()
+bind_symbols <- function(lib, signatures, envir) {
+    entries <- strsplit(gsub("[ \n\t]*", "", signatures), ";", fixed = TRUE)[[1L]]
+    entries <- entries[nzchar(entries)]
+    unresolved <- character()
 
+    for (entry in entries) {
+        name <- sub("\\(.*$", "", entry)
+        signature <- sub("^[^(]+\\(", "", entry)
+        address <- dynsym(lib, name)
+        if (is.null(address)) {
+            unresolved <- c(unresolved, name)
+            next
+        }
+        f <- function(...) NULL
+        body(f) <- substitute(dyncall(address, signature, ...), list(address = address, signature = signature))
+        environment(f) <- envir
+        assign(name, f, envir = envir)
+    }
 
+    list(libhandle = lib, unresolved.symbols = unresolved)
+}
+
+SDL_INIT_VIDEO <- 0x00000020L
+
+sdl <- new.env(parent = globalenv())
+sdl_info <- bind_library(
+    c("SDL3", "SDL3-0", "SDL3-3"),
+    paste(
+        "SDL_Init(I)B",
+        "SDL_CreateWindow(ZiiL)p",
+        "SDL_Delay(I)v",
+        "SDL_DestroyWindow(p)v",
+        "SDL_Quit()v",
+        "SDL_GetError()Z",
+        sep = ";"
+    ),
+    envir = sdl,
+    envvar = "SDL3_LIB",
+    path_candidates = shared_library_candidates(
+        "SDL3_LIB",
+        c("libSDL3.dylib", "libSDL3.so", "libSDL3.so.0", "SDL3.dll")
+    )
+)
+
+if (length(sdl_info$unresolved.symbols)) {
+    stop("unresolved SDL3 symbols: ", paste(sdl_info$unresolved.symbols, collapse = ", "), call. = FALSE)
+}
+
+run_sdl_demo <- function() {
+    if (!isTRUE(sdl$SDL_Init(SDL_INIT_VIDEO))) {
+        stop("SDL_Init failed: ", sdl$SDL_GetError(), call. = FALSE)
+    }
+    on.exit(sdl$SDL_Quit(), add = TRUE)
+
+    window <- sdl$SDL_CreateWindow("rdyncall SDL3 demo", 640L, 360L, 0)
+    if (is.null(window) || is.nullptr(window)) {
+        stop("SDL_CreateWindow failed: ", sdl$SDL_GetError(), call. = FALSE)
+    }
+    on.exit(sdl$SDL_DestroyWindow(window), add = TRUE)
+
+    cat("SDL3 window created; closing in 1.5 seconds.\n")
+    sdl$SDL_Delay(1500L)
+}
+
+run_sdl_demo()
