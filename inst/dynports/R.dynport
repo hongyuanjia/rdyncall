@@ -1,0 +1,311 @@
+Package: R
+Version: 3.1.0
+Library: R
+Function:
+    R_IsNA(d)i X;
+    R_IsNaN(d)i X;
+    R_finite(d)i X;
+    UNIMPLEMENTED(Z)v X;
+    R_ShowMessage(Z)v s;
+    vmaxget()p;
+    vmaxset(p)v X;
+    R_gc()v;
+    R_alloc(Ji)*c X Y;
+    S_alloc(ji)*c X Y;
+    S_realloc(*cjji)*c X Y Z U;
+    Rvprintf(Z*c)v X Y;
+    REvprintf(Z*c)v X Y;
+    GetRNGstate()v;
+    PutRNGstate()v;
+    unif_rand()d;
+    norm_rand()d;
+    exp_rand()d;
+    user_unif_rand()*d;
+    user_unif_init(I)v X;
+    user_unif_nseed()*i;
+    user_unif_seedloc()*i;
+    user_norm_rand()*d;
+    R_isort(*ii)v X Y;
+    R_rsort(*di)v X Y;
+    R_csort(*<Rcomplex>i)v X Y;
+    rsort_with_index(*d*ii)v X Y Z;
+    Rf_revsort(*d*ii)v X Y Z;
+    Rf_iPsort(*iii)v X Y Z;
+    Rf_rPsort(*dii)v X Y Z;
+    Rf_cPsort(*<Rcomplex>ii)v X Y Z;
+    R_qsort(*dJJ)v v i j;
+    R_qsort_I(*d*iii)v v II i j;
+    R_qsort_int(*iJJ)v iv i j;
+    R_qsort_int_I(*i*iii)v iv II i j;
+    R_ExpandFileName(Z)Z X;
+    Rf_StringFalse(Z)<Rboolean> X;
+    Rf_StringTrue(Z)<Rboolean> X;
+    Rf_isBlankString(Z)<Rboolean> X;
+    R_atof(Z)d str;
+    R_strtod(Zp)d c end;
+    R_tmpnam(ZZ)*c prefix tempdir;
+    R_tmpnam2(ZZZ)*c prefix tempdir fileext;
+    R_CheckUserInterrupt()v;
+    R_CheckStack()v;
+    R_CheckStack2(J)v X;
+    findInterval(*did<Rboolean><Rboolean>i*i)i xt n x rightmost_closed all_inside ilo mflag;
+    R_max_col(*d*i*i*i*i)v matrix nr nc maxes ties_meth;
+    R_chk_calloc(JJ)p X Y;
+    R_chk_realloc(pJ)p X Y;
+    R_chk_free(p)v X;
+    R_FlushConsole()v;
+    R_ProcessEvents()v;
+    R_CHAR(*<SEXPREC>)Z x;
+    Rf_isNull(*<SEXPREC>)<Rboolean> s;
+    Rf_isSymbol(*<SEXPREC>)<Rboolean> s;
+    Rf_isLogical(*<SEXPREC>)<Rboolean> s;
+    Rf_isReal(*<SEXPREC>)<Rboolean> s;
+    Rf_isComplex(*<SEXPREC>)<Rboolean> s;
+    Rf_isExpression(*<SEXPREC>)<Rboolean> s;
+    Rf_isEnvironment(*<SEXPREC>)<Rboolean> s;
+    Rf_isString(*<SEXPREC>)<Rboolean> s;
+    Rf_isObject(*<SEXPREC>)<Rboolean> s;
+    TYPEOF(*<SEXPREC>)i x;
+    DUPLICATE_ATTRIB(*<SEXPREC>*<SEXPREC>)v to from;
+    LENGTH(*<SEXPREC>)i x;
+    XLENGTH(*<SEXPREC>)j x;
+    IS_LONG_VEC(*<SEXPREC>)i x;
+    LOGICAL(*<SEXPREC>)*i x;
+    INTEGER(*<SEXPREC>)*i x;
+    RAW(*<SEXPREC>)*C x;
+    REAL(*<SEXPREC>)*d x;
+    COMPLEX(*<SEXPREC>)*<Rcomplex> x;
+    STRING_ELT(*<SEXPREC>j)*<SEXPREC> x i;
+    VECTOR_ELT(*<SEXPREC>j)*<SEXPREC> x i;
+    SET_STRING_ELT(*<SEXPREC>j*<SEXPREC>)v x i v;
+    SET_VECTOR_ELT(*<SEXPREC>j*<SEXPREC>)*<SEXPREC> x i v;
+    TAG(*<SEXPREC>)*<SEXPREC> e;
+    CAR(*<SEXPREC>)*<SEXPREC> e;
+    CDR(*<SEXPREC>)*<SEXPREC> e;
+    CAAR(*<SEXPREC>)*<SEXPREC> e;
+    CDAR(*<SEXPREC>)*<SEXPREC> e;
+    CADR(*<SEXPREC>)*<SEXPREC> e;
+    CDDR(*<SEXPREC>)*<SEXPREC> e;
+    CADDR(*<SEXPREC>)*<SEXPREC> e;
+    CADDDR(*<SEXPREC>)*<SEXPREC> e;
+    CAD4R(*<SEXPREC>)*<SEXPREC> e;
+    SET_TAG(*<SEXPREC>*<SEXPREC>)v x y;
+    SETCAR(*<SEXPREC>*<SEXPREC>)*<SEXPREC> x y;
+    SETCDR(*<SEXPREC>*<SEXPREC>)*<SEXPREC> x y;
+    SETCADR(*<SEXPREC>*<SEXPREC>)*<SEXPREC> x y;
+    SETCADDR(*<SEXPREC>*<SEXPREC>)*<SEXPREC> x y;
+    SETCADDDR(*<SEXPREC>*<SEXPREC>)*<SEXPREC> x y;
+    SETCAD4R(*<SEXPREC>*<SEXPREC>)*<SEXPREC> e y;
+    PRINTNAME(*<SEXPREC>)*<SEXPREC> x;
+    R_GetCurrentSrcref(i)*<SEXPREC> X;
+    R_GetSrcFilename(*<SEXPREC>)*<SEXPREC> X;
+    Rf_asChar(*<SEXPREC>)*<SEXPREC> X;
+    Rf_coerceVector(*<SEXPREC>I)*<SEXPREC> X Y;
+    Rf_PairToVectorList(*<SEXPREC>)*<SEXPREC> x;
+    Rf_VectorToPairList(*<SEXPREC>)*<SEXPREC> x;
+    Rf_asCharacterFactor(*<SEXPREC>)*<SEXPREC> x;
+    Rf_asLogical(*<SEXPREC>)i x;
+    Rf_asInteger(*<SEXPREC>)i x;
+    Rf_asReal(*<SEXPREC>)d x;
+    Rf_acopy_string(Z)*c X;
+    Rf_alloc3DArray(Iiii)*<SEXPREC> X Y Z U;
+    Rf_allocArray(I*<SEXPREC>)*<SEXPREC> X Y;
+    Rf_allocMatrix(Iii)*<SEXPREC> X Y Z;
+    Rf_allocList(i)*<SEXPREC> X;
+    Rf_allocS4Object()*<SEXPREC>;
+    Rf_any_duplicated(*<SEXPREC><Rboolean>)j x from_last;
+    Rf_any_duplicated3(*<SEXPREC>*<SEXPREC><Rboolean>)j x incomp from_last;
+    Rf_classgets(*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y;
+    Rf_cons(*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y;
+    Rf_copyMatrix(*<SEXPREC>*<SEXPREC><Rboolean>)v X Y Z;
+    Rf_copyListMatrix(*<SEXPREC>*<SEXPREC><Rboolean>)v X Y Z;
+    Rf_copyMostAttrib(*<SEXPREC>*<SEXPREC>)v X Y;
+    Rf_copyVector(*<SEXPREC>*<SEXPREC>)v X Y;
+    Rf_defineVar(*<SEXPREC>*<SEXPREC>*<SEXPREC>)v X Y Z;
+    Rf_dimgets(*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y;
+    Rf_dimnamesgets(*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y;
+    Rf_duplicate(*<SEXPREC>)*<SEXPREC> X;
+    Rf_shallow_duplicate(*<SEXPREC>)*<SEXPREC> X;
+    Rf_duplicated(*<SEXPREC><Rboolean>)*<SEXPREC> X Y;
+    Rf_eval(*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y;
+    Rf_findFun(*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y;
+    Rf_getAttrib(*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y;
+    Rf_GetArrayDimnames(*<SEXPREC>)*<SEXPREC> X;
+    Rf_GetColNames(*<SEXPREC>)*<SEXPREC> X;
+    Rf_GetMatrixDimnames(*<SEXPREC>pppp)v X Y Z U V;
+    Rf_GetOption1(*<SEXPREC>)*<SEXPREC> X;
+    Rf_GetOptionWidth()i;
+    Rf_GetRowNames(*<SEXPREC>)*<SEXPREC> X;
+    Rf_install(Z)*<SEXPREC> X;
+    Rf_isOrdered(*<SEXPREC>)<Rboolean> X;
+    Rf_isUnordered(*<SEXPREC>)<Rboolean> X;
+    Rf_isUnsorted(*<SEXPREC><Rboolean>)<Rboolean> X Y;
+    Rf_lengthgets(*<SEXPREC>i)*<SEXPREC> X Y;
+    Rf_xlengthgets(*<SEXPREC>j)*<SEXPREC> X Y;
+    Rf_match(*<SEXPREC>*<SEXPREC>i)*<SEXPREC> X Y Z;
+    Rf_namesgets(*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y;
+    Rf_mkChar(Z)*<SEXPREC> X;
+    Rf_mkCharLen(Zi)*<SEXPREC> X Y;
+    Rf_ncols(*<SEXPREC>)i X;
+    Rf_nrows(*<SEXPREC>)i X;
+    Rf_nthcdr(*<SEXPREC>i)*<SEXPREC> X Y;
+    Rf_pmatch(*<SEXPREC>*<SEXPREC><Rboolean>)<Rboolean> X Y Z;
+    Rf_psmatch(ZZ<Rboolean>)<Rboolean> X Y Z;
+    Rf_PrintValue(*<SEXPREC>)v X;
+    Rf_setAttrib(*<SEXPREC>*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y Z;
+    Rf_setVar(*<SEXPREC>*<SEXPREC>*<SEXPREC>)v X Y Z;
+    Rf_str2type(Z)I X;
+    Rf_StringBlank(*<SEXPREC>)<Rboolean> X;
+    Rf_translateChar(*<SEXPREC>)Z X;
+    Rf_translateCharUTF8(*<SEXPREC>)Z X;
+    Rf_type2char(I)Z X;
+    Rf_type2str(I)*<SEXPREC> X;
+    Rf_unprotect_ptr(*<SEXPREC>)v X;
+    R_tryEval(*<SEXPREC>*<SEXPREC>*i)*<SEXPREC> X Y Z;
+    R_tryEvalSilent(*<SEXPREC>*<SEXPREC>*i)*<SEXPREC> X Y Z;
+    R_curErrorBuf()Z;
+    Rf_isS4(*<SEXPREC>)<Rboolean> X;
+    Rf_asS4(*<SEXPREC><Rboolean>i)*<SEXPREC> X Y Z;
+    Rf_getCharCE(*<SEXPREC>)<cetype_t> X;
+    Rf_mkCharCE(Z<cetype_t>)*<SEXPREC> X Y;
+    Rf_mkCharLenCE(Zi<cetype_t>)*<SEXPREC> X Y Z;
+    Rf_reEnc(Z<cetype_t><cetype_t>i)Z x ce_in ce_out subst;
+    R_MakeExternalPtr(p*<SEXPREC>*<SEXPREC>)*<SEXPREC> p tag prot;
+    R_ExternalPtrAddr(*<SEXPREC>)p s;
+    R_ExternalPtrTag(*<SEXPREC>)*<SEXPREC> s;
+    R_ExternalPtrProtected(*<SEXPREC>)*<SEXPREC> s;
+    R_ClearExternalPtr(*<SEXPREC>)v s;
+    R_SetExternalPtrAddr(*<SEXPREC>p)v s p;
+    R_SetExternalPtrTag(*<SEXPREC>*<SEXPREC>)v s tag;
+    R_SetExternalPtrProtected(*<SEXPREC>*<SEXPREC>)v s p;
+    R_RegisterFinalizer(*<SEXPREC>*<SEXPREC>)v s fun;
+    R_RegisterCFinalizer(*<SEXPREC>p)v s fun;
+    R_RegisterFinalizerEx(*<SEXPREC>*<SEXPREC><Rboolean>)v s fun onexit;
+    R_RegisterCFinalizerEx(*<SEXPREC>p<Rboolean>)v s fun onexit;
+    R_RunPendingFinalizers()v;
+    R_MakeWeakRef(*<SEXPREC>*<SEXPREC>*<SEXPREC><Rboolean>)*<SEXPREC> key val fin onexit;
+    R_MakeWeakRefC(*<SEXPREC>*<SEXPREC>p<Rboolean>)*<SEXPREC> key val fin onexit;
+    R_WeakRefKey(*<SEXPREC>)*<SEXPREC> w;
+    R_WeakRefValue(*<SEXPREC>)*<SEXPREC> w;
+    R_RunWeakRefFinalizer(*<SEXPREC>)v w;
+    R_ClosureExpr(*<SEXPREC>)*<SEXPREC> X;
+    R_ToplevelExec(pp)<Rboolean> fun data;
+    R_ExecWithCleanup(pppp)*<SEXPREC> fun data cleanfun cleandata;
+    R_IsPackageEnv(*<SEXPREC>)<Rboolean> rho;
+    R_PackageEnvName(*<SEXPREC>)*<SEXPREC> rho;
+    R_IsNamespaceEnv(*<SEXPREC>)<Rboolean> rho;
+    R_NamespaceEnvSpec(*<SEXPREC>)*<SEXPREC> rho;
+    R_FindNamespace(*<SEXPREC>)*<SEXPREC> info;
+    R_LockEnvironment(*<SEXPREC><Rboolean>)v env bindings;
+    R_EnvironmentIsLocked(*<SEXPREC>)<Rboolean> env;
+    R_LockBinding(*<SEXPREC>*<SEXPREC>)v sym env;
+    R_unLockBinding(*<SEXPREC>*<SEXPREC>)v sym env;
+    R_MakeActiveBinding(*<SEXPREC>*<SEXPREC>*<SEXPREC>)v sym fun env;
+    R_BindingIsLocked(*<SEXPREC>*<SEXPREC>)<Rboolean> sym env;
+    R_BindingIsActive(*<SEXPREC>*<SEXPREC>)<Rboolean> sym env;
+    R_Serialize(*<SEXPREC>*<R_outpstream_st>)v s ops;
+    R_Unserialize(*<R_inpstream_st>)*<SEXPREC> ips;
+    R_do_slot(*<SEXPREC>*<SEXPREC>)*<SEXPREC> obj name;
+    R_do_slot_assign(*<SEXPREC>*<SEXPREC>*<SEXPREC>)*<SEXPREC> obj name value;
+    R_has_slot(*<SEXPREC>*<SEXPREC>)i obj name;
+    R_do_MAKE_CLASS(Z)*<SEXPREC> what;
+    R_getClassDef(Z)*<SEXPREC> what;
+    R_do_new_object(*<SEXPREC>)*<SEXPREC> class_def;
+    R_check_class_etc(*<SEXPREC>p)i x valid;
+    R_PreserveObject(*<SEXPREC>)v X;
+    R_ReleaseObject(*<SEXPREC>)v X;
+    R_dot_Last()v;
+    R_RunExitFinalizers()v;
+    R_compute_identical(*<SEXPREC>*<SEXPREC>i)<Rboolean> X Y Z;
+    R_orderVector(*ii*<SEXPREC><Rboolean><Rboolean>)v indx n arglist nalast decreasing;
+    Rf_allocVector(Ij)*<SEXPREC> X Y;
+    Rf_elt(*<SEXPREC>i)*<SEXPREC> X Y;
+    Rf_inherits(*<SEXPREC>Z)<Rboolean> X Y;
+    Rf_isArray(*<SEXPREC>)<Rboolean> X;
+    Rf_isFactor(*<SEXPREC>)<Rboolean> X;
+    Rf_isFunction(*<SEXPREC>)<Rboolean> X;
+    Rf_isInteger(*<SEXPREC>)<Rboolean> X;
+    Rf_isLanguage(*<SEXPREC>)<Rboolean> X;
+    Rf_isList(*<SEXPREC>)<Rboolean> X;
+    Rf_isMatrix(*<SEXPREC>)<Rboolean> X;
+    Rf_isNewList(*<SEXPREC>)<Rboolean> X;
+    Rf_isNumber(*<SEXPREC>)<Rboolean> X;
+    Rf_isNumeric(*<SEXPREC>)<Rboolean> X;
+    Rf_isPairList(*<SEXPREC>)<Rboolean> X;
+    Rf_isPrimitive(*<SEXPREC>)<Rboolean> X;
+    Rf_isTs(*<SEXPREC>)<Rboolean> X;
+    Rf_isVector(*<SEXPREC>)<Rboolean> X;
+    Rf_isVectorAtomic(*<SEXPREC>)<Rboolean> X;
+    Rf_isVectorList(*<SEXPREC>)<Rboolean> X;
+    Rf_isVectorizable(*<SEXPREC>)<Rboolean> X;
+    Rf_lang1(*<SEXPREC>)*<SEXPREC> X;
+    Rf_lang2(*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y;
+    Rf_lang3(*<SEXPREC>*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y Z;
+    Rf_lang4(*<SEXPREC>*<SEXPREC>*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y Z U;
+    Rf_lang5(*<SEXPREC>*<SEXPREC>*<SEXPREC>*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y Z U V;
+    Rf_lang6(*<SEXPREC>*<SEXPREC>*<SEXPREC>*<SEXPREC>*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y Z U V W;
+    Rf_lastElt(*<SEXPREC>)*<SEXPREC> X;
+    Rf_lcons(*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y;
+    Rf_length(*<SEXPREC>)i X;
+    Rf_list1(*<SEXPREC>)*<SEXPREC> X;
+    Rf_list2(*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y;
+    Rf_list3(*<SEXPREC>*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y Z;
+    Rf_list4(*<SEXPREC>*<SEXPREC>*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y Z U;
+    Rf_list5(*<SEXPREC>*<SEXPREC>*<SEXPREC>*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y Z U V;
+    Rf_listAppend(*<SEXPREC>*<SEXPREC>)*<SEXPREC> X Y;
+    Rf_mkNamed(Ip)*<SEXPREC> X Y;
+    Rf_mkString(Z)*<SEXPREC> X;
+    Rf_nlevels(*<SEXPREC>)i X;
+    Rf_ScalarInteger(i)*<SEXPREC> X;
+    Rf_ScalarLogical(i)*<SEXPREC> X;
+    Rf_ScalarRaw(C)*<SEXPREC> X;
+    Rf_ScalarReal(d)*<SEXPREC> X;
+    Rf_ScalarString(*<SEXPREC>)*<SEXPREC> X;
+    Rf_xlength(*<SEXPREC>)j X;
+    Rf_protect(*<SEXPREC>)*<SEXPREC> X;
+    Rf_unprotect(i)v X;
+    R_ProtectWithIndex(*<SEXPREC>*i)v X Y;
+    R_Reprotect(*<SEXPREC>i)v X Y;
+Variadic:
+    Rf_error(Z)v X;
+    Rf_warning(Z)v X;
+    Rprintf(Z)v X;
+    REprintf(Z)v X;
+    Rf_errorcall(*<SEXPREC>Z)v X Y;
+    Rf_warningcall(*<SEXPREC>Z)v X Y;
+    Rf_warningcall_immediate(*<SEXPREC>Z)v X Y;
+FuncPtr:
+    OutPersistHookFunc(*<SEXPREC>*<SEXPREC>)*<SEXPREC>;
+    R_CFinalizer_t(*<SEXPREC>)v;
+    InChar(*<R_inpstream_st>)i;
+    InBytes(*<R_inpstream_st>pi)v;
+    OutChar(*<R_outpstream_st>i)v;
+    OutBytes(*<R_outpstream_st>pi)v;
+Enum/Rboolean:
+Enum/RNGtype:
+    WICHMANN_HILL=0
+    MARSAGLIA_MULTICARRY=1
+    SUPER_DUPER=2
+    MERSENNE_TWISTER=3
+    KNUTH_TAOCP=4
+    USER_UNIF=5
+    KNUTH_TAOCP2=6
+    LECUYER_CMRG=7
+Enum/N01type:
+    BUGGY_KINDERMAN_RAMAGE=0
+    AHRENS_DIETER=1
+    BOX_MULLER=2
+    USER_NORM=3
+    INVERSION=4
+    KINDERMAN_RAMAGE=5
+Enum/cetype_t:
+    CE_NATIVE=0
+    CE_UTF8=1
+    CE_LATIN1=2
+    CE_BYTES=3
+    CE_SYMBOL=5
+    CE_ANY=99
+Struct:
+    SEXPREC{};
+    R_allocator{};
+Union:

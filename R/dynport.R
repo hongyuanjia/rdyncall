@@ -29,6 +29,7 @@
 #'
 #' | **DynPort name/C library** | **Description**                                 |
 #' |:---------------------------|:------------------------------------------------|
+#' | `R`                        | R API                                           |
 #' | `SDL2`                     | Simple DirectMedia Layer 2                      |
 #'
 #' The DCF format records the following binding metadata:

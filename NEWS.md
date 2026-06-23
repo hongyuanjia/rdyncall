@@ -10,6 +10,7 @@
 - Allow `dynbind()` to generate wrappers for C variadic functions.
 - Support `Variadic` DynPort entries and keep function pointer declarations as
   metadata.
+- Add a generated DCF DynPort for the R API.
 - Allow `dynbind()` to accept direct library paths and existing external
   pointer handles in addition to short library names.
 - Improve `dynfind()` discovery for libraries installed by common package

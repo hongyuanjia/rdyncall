@@ -101,6 +101,7 @@ name is explicitly supplied.
 
 The following gives a list of currently supported DCF \emph{DynPorts}:\tabular{ll}{
    \strong{DynPort name/C library} \tab \strong{Description} \cr
+   \code{R} \tab R API \cr
    \code{SDL2} \tab Simple DirectMedia Layer 2 \cr
 }
 

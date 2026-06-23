@@ -130,6 +130,21 @@ sdl2 <- rdyncall:::dynport_read(sdl2_portfile)
 expect_equal(as.character(sdl2$Package), "SDL2")
 expect_true("SDL_mutex" %in% names(sdl2$Struct))
 
+r_portfile <- system.file("dynports", "R.dynport", package = "rdyncall", mustWork = TRUE)
+r_port <- rdyncall:::dynport_read(r_portfile)
+expect_equal(as.character(r_port$Package), "R")
+expect_equal(r_port$Library, "R")
+expect_true("R_IsNA" %in% names(r_port$Function))
+expect_true("R_finite" %in% names(r_port$Function))
+expect_true("R_atof" %in% names(r_port$Function))
+expect_true("Rprintf" %in% names(r_port$Variadic))
+expect_true("R_CFinalizer_t" %in% names(r_port$FuncPtr))
+expect_false("R_allocLD" %in% names(r_port$Function))
+expect_true("SEXPREC" %in% names(r_port$Struct))
+expect_false("Rcomplex" %in% names(r_port$Struct))
+expect_false("Rcomplex" %in% names(r_port$Union))
+expect_false(any(c("FALSE", "TRUE") %in% names(r_port$Enum$Rboolean)))
+
 local({
     portfile <- write_dynport(c(
         "Package: TinyPort",
@@ -242,5 +257,21 @@ local({
         buf <- raw(32)
         expect_equal(getExportedValue(package, "sprintf")(buf, "value=%d", 7L, .varargs = "i"), 7L)
         expect_equal(rawToChar(buf[seq_len(7L)]), "value=7")
+    }
+})
+
+local({
+    if (!is.null(dynfind("R"))) {
+        lib <- tempfile("rdyncall-r-dynport-lib")
+        package <- "dyn.R"
+        unload_test_package(package)
+        on.exit(unload_test_package(package), add = TRUE)
+
+        dynport(R, portfile = r_portfile, lib = lib, quiet = TRUE)
+        expect_equal(getExportedValue(package, "R_IsNA")(NA_real_), 1L)
+        expect_equal(getExportedValue(package, "R_finite")(1), 1L)
+        expect_equal(getExportedValue(package, "R_atof")("1.5"), 1.5)
+        expect_true(".varargs" %in% names(formals(getExportedValue(package, "Rprintf"))))
+        expect_false("DL_FUNC" %in% getNamespaceExports(package))
     }
 })
