@@ -58,6 +58,12 @@
 #' `<TARGET>` is replaced with the expression `unpack(<TARGET>,"p",0)` in order
 #' to dereference `<TARGET>` as a pointer-to-function variable at call-time.
 #'
+#' C variadic functions can be bound by setting `variadic` to `TRUE`. In that
+#' case the library signature describes only the fixed argument prefix and
+#' return type. The generated wrapper accepts an additional named `.varargs`
+#' argument containing the type signatures for the values passed through `...`
+#' at that call site.
+#'
 #' @param libnames character vector or external pointer handle specifying the
 #'        shared library. Character values that contain a path separator, or
 #'        name an existing file, are passed directly to [dynload()]. Other
@@ -81,6 +87,10 @@
 #' @param funcptr logical, that indicates whether foreign objects refer to
 #'        functions (`FALSE`, default) or to function pointer variables
 #'        (`TRUE` rarely needed).
+#'
+#' @param variadic logical, indicating whether the foreign objects are C
+#'        variadic functions. Variadic wrappers require a named `.varargs`
+#'        argument at call time when values are passed through C `...`.
 #'
 #' @return
 #' The function returns a list with two fields:
@@ -110,7 +120,20 @@
 #' @keywords programming interface
 #' @export
 # TODO: use named character vector for signatures?
-dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "default", pattern = NULL, replace = NULL, funcptr = FALSE) {
+dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "default", pattern = NULL, replace = NULL, funcptr = FALSE, variadic = FALSE) {
+    if (!is.logical(funcptr) || length(funcptr) != 1L || is.na(funcptr)) {
+        stop("'funcptr' must be TRUE or FALSE.", call. = FALSE)
+    }
+    if (!is.logical(variadic) || length(variadic) != 1L || is.na(variadic)) {
+        stop("'variadic' must be TRUE or FALSE.", call. = FALSE)
+    }
+    if (funcptr && variadic) {
+        stop("'funcptr' and 'variadic' cannot both be TRUE.", call. = FALSE)
+    }
+    if (variadic && !callmode %in% c("default", "cdecl")) {
+        stop("variadic bindings currently support only the default C calling convention.", call. = FALSE)
+    }
+
     # load shared library
     libh <- dynbind_resolve_libhandle(libnames)
     if (is.null(libh)) {
@@ -149,7 +172,13 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
         if (!is.null(address)) {
             # make call function f
             f <- function(...) NULL
-            if (funcptr) {
+            if (variadic) {
+                formals(f) <- alist(... = , .varargs = "")
+                body(f) <- substitute(
+                    dyncall_variadic(address, signature, .varargs, ...),
+                    list(address = address, signature = signature)
+                )
+            } else if (funcptr) {
                 body(f) <- substitute(
                     dyncallfunc(unpack(address, 0, "p"), signature, ...),
                     list(dyncallfunc = dyncallfunc, address = address, signature = signature)
@@ -201,7 +230,7 @@ dynbind_resolve_libhandle <- function(libnames) {
 }
 
 dynbind_is_library_path <- function(libname) {
-    !is.na(libname) && (grepl("[/\\\\]", libname) || file.exists(libname))
+    !is.na(libname) && (grepl("[/\\\\]", libname) || (file.exists(libname) && !dir.exists(libname)))
 }
 
 dynbind_libnames_label <- function(libnames) {

@@ -11,7 +11,8 @@ dynbind(
   callmode = "default",
   pattern = NULL,
   replace = NULL,
-  funcptr = FALSE
+  funcptr = FALSE,
+  variadic = FALSE
 )
 }
 \arguments{
@@ -39,6 +40,10 @@ part of symbolic names.}
 \item{funcptr}{logical, that indicates whether foreign objects refer to
 functions (\code{FALSE}, default) or to function pointer variables
 (\code{TRUE} rarely needed).}
+
+\item{variadic}{logical, indicating whether the foreign objects are C
+variadic functions. Variadic wrappers require a named \code{.varargs}
+argument at call time when values are passed through C \code{...}.}
 }
 \value{
 The function returns a list with two fields:
@@ -107,6 +112,12 @@ As a special case, \code{\link[=dynbind]{dynbind()}} supports binding of pointer
 variables, indicated by setting \code{funcptr} to \code{TRUE}, in which case
 \verb{<TARGET>} is replaced with the expression \verb{unpack(<TARGET>,"p",0)} in order
 to dereference \verb{<TARGET>} as a pointer-to-function variable at call-time.
+
+C variadic functions can be bound by setting \code{variadic} to \code{TRUE}. In that
+case the library signature describes only the fixed argument prefix and
+return type. The generated wrapper accepts an additional named \code{.varargs}
+argument containing the type signatures for the values passed through \code{...}
+at that call site.
 }
 \examples{
 \donttest{

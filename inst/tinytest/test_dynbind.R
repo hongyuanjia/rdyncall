@@ -53,10 +53,33 @@ expect_error(
     "argument type signatures"
 )
 
+env <- new.env()
+bind <- dynbind(fixture, "rdyncall_dynbind_sum_variadic(i)i;", envir = env, variadic = TRUE)
+expect_equal(class(bind), "dynbind.report")
+expect_equal(env$rdyncall_dynbind_sum_variadic(1L, 2L, 3L, .varargs = "ii"), 6L)
+expect_error(
+    dynbind(fixture, "rdyncall_dynbind_sum_variadic(i)i;", funcptr = TRUE, variadic = TRUE),
+    "cannot both be TRUE"
+)
+
 local({
     oldwd <- setwd(dirname(fixture))
     on.exit(setwd(oldwd), add = TRUE)
     expect_dynbind_add(file.path(".", basename(fixture)))
+})
+
+local({
+    if (!is.null(dynfind("R"))) {
+        tmp <- tempfile("rdyncall-dynbind-short-name-")
+        dir.create(file.path(tmp, "R"), recursive = TRUE)
+        oldwd <- setwd(tmp)
+        on.exit(setwd(oldwd), add = TRUE)
+
+        env <- new.env()
+        bind <- dynbind("R", "R_IsNA(d)i;", envir = env)
+        expect_equal(class(bind), "dynbind.report")
+        expect_equal(env$R_IsNA(NA_real_), 1L)
+    }
 })
 
 attr(handle, "dynbind-test") <- "input-handle"
