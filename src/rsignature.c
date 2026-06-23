@@ -10,6 +10,90 @@
 #include <Rinternals.h>
 #include <R_ext/Error.h>
 
+typedef struct {
+  const char *text;
+  int length;
+} rsignature_input;
+
+static rsignature_input rsignature_get_input(SEXP x, const char *name)
+{
+  rsignature_input input;
+  size_t length;
+
+  if (!isString(x) || XLENGTH(x) != 1 || STRING_ELT(x, 0) == NA_STRING) {
+    error("%s must be a single character string", name);
+  }
+
+  input.text = CHAR(STRING_ELT(x, 0));
+  length = strlen(input.text);
+  if (length > INT_MAX) {
+    error("%s is too long", name);
+  }
+  input.length = (int) length;
+  return input;
+}
+
+static int rsignature_is_space(char c)
+{
+  return c == ' ' || c == '\n' || c == '\t';
+}
+
+static void rsignature_set_slice(SEXP x, int index, const char *source,
+                                 int start, int end)
+{
+  SET_STRING_ELT(x, index, mkCharLenCE(source + start, end - start, CE_NATIVE));
+}
+
+static int rsignature_parse_decimal(const char *source, int start, int end,
+                                    int allow_zero, int *value)
+{
+  long parsed = 0;
+  int i;
+
+  if (start >= end) {
+    return 0;
+  }
+  if (source[start] < '0' || source[start] > '9') {
+    return 0;
+  }
+  if (source[start] == '0' && (!allow_zero || start + 1 < end)) {
+    return 0;
+  }
+
+  for (i = start; i < end; ++i) {
+    int digit;
+    if (source[i] < '0' || source[i] > '9') {
+      return 0;
+    }
+    digit = source[i] - '0';
+    if (parsed > INT_MAX / 10L ||
+        (parsed == INT_MAX / 10L && digit > INT_MAX % 10L)) {
+      return 0;
+    }
+    parsed = parsed * 10L + digit;
+  }
+
+  *value = (int) parsed;
+  return 1;
+}
+
+static void rsignature_set_error_metadata(SEXP out, int reason_index,
+                                          int start_index, int end_index,
+                                          const char *reason, int start, int end)
+{
+  SET_VECTOR_ELT(out, reason_index, mkString(reason));
+  SET_VECTOR_ELT(out, start_index, ScalarInteger(start));
+  SET_VECTOR_ELT(out, end_index, ScalarInteger(end));
+}
+
+static void rsignature_set_error_metadata_names(SEXP names, int reason_index,
+                                                int start_index, int end_index)
+{
+  SET_STRING_ELT(names, reason_index, mkChar("error_reason"));
+  SET_STRING_ELT(names, start_index, mkChar("error_start"));
+  SET_STRING_ELT(names, end_index, mkChar("error_end"));
+}
+
 static SEXP rsignature_make_success(SEXP types, SEXP array_lens,
                                     SEXP starts, SEXP ends, int count)
 {
@@ -57,9 +141,7 @@ static SEXP rsignature_make_error(const char *reason, int start, int end)
   SET_VECTOR_ELT(out, 2, allocVector(INTSXP, 0));
   SET_VECTOR_ELT(out, 3, allocVector(INTSXP, 0));
   SET_VECTOR_ELT(out, 4, allocVector(INTSXP, 0));
-  SET_VECTOR_ELT(out, 5, mkString(reason));
-  SET_VECTOR_ELT(out, 6, ScalarInteger(start));
-  SET_VECTOR_ELT(out, 7, ScalarInteger(end));
+  rsignature_set_error_metadata(out, 5, 6, 7, reason, start, end);
 
   PROTECT(names = allocVector(STRSXP, 8));
   SET_STRING_ELT(names, 0, mkChar("ok"));
@@ -67,9 +149,7 @@ static SEXP rsignature_make_error(const char *reason, int start, int end)
   SET_STRING_ELT(names, 2, mkChar("array_len"));
   SET_STRING_ELT(names, 3, mkChar("start"));
   SET_STRING_ELT(names, 4, mkChar("end"));
-  SET_STRING_ELT(names, 5, mkChar("error_reason"));
-  SET_STRING_ELT(names, 6, mkChar("error_start"));
-  SET_STRING_ELT(names, 7, mkChar("error_end"));
+  rsignature_set_error_metadata_names(names, 5, 6, 7);
   setAttrib(out, R_NamesSymbol, names);
 
   UNPROTECT(2);
@@ -146,9 +226,7 @@ static SEXP rsignature_make_field_tail_error(const char *reason, int start, int 
   SET_VECTOR_ELT(out, 5, allocVector(STRSXP, 0));
   SET_VECTOR_ELT(out, 6, allocVector(INTSXP, 0));
   SET_VECTOR_ELT(out, 7, allocVector(INTSXP, 0));
-  SET_VECTOR_ELT(out, 8, mkString(reason));
-  SET_VECTOR_ELT(out, 9, ScalarInteger(start));
-  SET_VECTOR_ELT(out, 10, ScalarInteger(end));
+  rsignature_set_error_metadata(out, 8, 9, 10, reason, start, end);
 
   PROTECT(names = allocVector(STRSXP, 11));
   SET_STRING_ELT(names, 0, mkChar("ok"));
@@ -159,38 +237,23 @@ static SEXP rsignature_make_field_tail_error(const char *reason, int start, int 
   SET_STRING_ELT(names, 5, mkChar("directive"));
   SET_STRING_ELT(names, 6, mkChar("directive_start"));
   SET_STRING_ELT(names, 7, mkChar("directive_end"));
-  SET_STRING_ELT(names, 8, mkChar("error_reason"));
-  SET_STRING_ELT(names, 9, mkChar("error_start"));
-  SET_STRING_ELT(names, 10, mkChar("error_end"));
+  rsignature_set_error_metadata_names(names, 8, 9, 10);
   setAttrib(out, R_NamesSymbol, names);
 
   UNPROTECT(2);
   return out;
 }
 
-static int rsignature_is_field_tail_space(char c)
-{
-  return c == ' ' || c == '\n' || c == '\t';
-}
-
 SEXP C_scan_signature_tokens(SEXP signature_x)
 {
   SEXP types, array_lens, starts, ends, out;
+  rsignature_input input;
   const char *signature;
-  size_t length;
   int n, i, count;
 
-  if (!isString(signature_x) || XLENGTH(signature_x) != 1 ||
-      STRING_ELT(signature_x, 0) == NA_STRING) {
-    error("signature must be a single character string");
-  }
-
-  signature = CHAR(STRING_ELT(signature_x, 0));
-  length = strlen(signature);
-  if (length > INT_MAX) {
-    error("signature is too long");
-  }
-  n = (int) length;
+  input = rsignature_get_input(signature_x, "signature");
+  signature = input.text;
+  n = input.length;
   i = 0;
   count = 0;
 
@@ -232,8 +295,7 @@ SEXP C_scan_signature_tokens(SEXP signature_x)
       int array_start = i;
       int value_start;
       int close;
-      int j;
-      long value = 0;
+      int value;
 
       ++i;
       value_start = i;
@@ -248,32 +310,8 @@ SEXP C_scan_signature_tokens(SEXP signature_x)
         return out;
       }
 
-      if (value_start >= close ||
-          signature[value_start] < '1' || signature[value_start] > '9') {
-        out = rsignature_make_error("array", array_start + 1, close + 1);
-        UNPROTECT(4);
-        return out;
-      }
-
-      for (j = value_start; j < close; ++j) {
-        int digit;
-        if (signature[j] < '0' || signature[j] > '9') {
-          out = rsignature_make_error("array", array_start + 1, close + 1);
-          UNPROTECT(4);
-          return out;
-        }
-
-        digit = signature[j] - '0';
-        if (value > INT_MAX / 10L ||
-            (value == INT_MAX / 10L && digit > INT_MAX % 10L)) {
-          out = rsignature_make_error("array", array_start + 1, close + 1);
-          UNPROTECT(4);
-          return out;
-        }
-        value = value * 10L + digit;
-      }
-
-      if (array_len > INT_MAX / value) {
+      if (!rsignature_parse_decimal(signature, value_start, close, 0, &value) ||
+          array_len > INT_MAX / value) {
         out = rsignature_make_error("array", array_start + 1, close + 1);
         UNPROTECT(4);
         return out;
@@ -283,8 +321,7 @@ SEXP C_scan_signature_tokens(SEXP signature_x)
       i = close + 1;
     }
 
-    SET_STRING_ELT(types, count,
-      mkCharLenCE(signature + token_start, type_end - token_start + 1, CE_NATIVE));
+    rsignature_set_slice(types, count, signature, token_start, type_end + 1);
     INTEGER(array_lens)[count] = array_len;
     INTEGER(starts)[count] = token_start + 1;
     INTEGER(ends)[count] = i;
@@ -300,21 +337,13 @@ SEXP C_scan_field_tail(SEXP tail_x)
 {
   SEXP field_names, bit_widths, field_starts, field_ends;
   SEXP directives, directive_starts, directive_ends, out;
+  rsignature_input input;
   const char *tail;
-  size_t length;
   int n, i, field_count, directive_count;
 
-  if (!isString(tail_x) || XLENGTH(tail_x) != 1 ||
-      STRING_ELT(tail_x, 0) == NA_STRING) {
-    error("field tail must be a single character string");
-  }
-
-  tail = CHAR(STRING_ELT(tail_x, 0));
-  length = strlen(tail);
-  if (length > INT_MAX) {
-    error("field tail is too long");
-  }
-  n = (int) length;
+  input = rsignature_get_input(tail_x, "field tail");
+  tail = input.text;
+  n = input.length;
   i = 0;
   field_count = 0;
   directive_count = 0;
@@ -334,7 +363,7 @@ SEXP C_scan_field_tail(SEXP tail_x)
     int colon_pos = -1;
     int j;
 
-    while (i < n && rsignature_is_field_tail_space(tail[i])) {
+    while (i < n && rsignature_is_space(tail[i])) {
       ++i;
     }
     if (i >= n) {
@@ -342,14 +371,13 @@ SEXP C_scan_field_tail(SEXP tail_x)
     }
 
     token_start = i;
-    while (i < n && !rsignature_is_field_tail_space(tail[i])) {
+    while (i < n && !rsignature_is_space(tail[i])) {
       ++i;
     }
     token_end = i - 1;
 
     if (tail[token_start] == '@') {
-      SET_STRING_ELT(directives, directive_count,
-        mkCharLenCE(tail + token_start, token_end - token_start + 1, CE_NATIVE));
+      rsignature_set_slice(directives, directive_count, tail, token_start, token_end + 1);
       INTEGER(directive_starts)[directive_count] = token_start + 1;
       INTEGER(directive_ends)[directive_count] = token_end + 1;
       ++directive_count;
@@ -364,12 +392,11 @@ SEXP C_scan_field_tail(SEXP tail_x)
     }
 
     if (colon_count == 0) {
-      SET_STRING_ELT(field_names, field_count,
-        mkCharLenCE(tail + token_start, token_end - token_start + 1, CE_NATIVE));
+      rsignature_set_slice(field_names, field_count, tail, token_start, token_end + 1);
       INTEGER(bit_widths)[field_count] = NA_INTEGER;
     } else {
       int value_start;
-      long value = 0;
+      int value;
 
       if (colon_count != 1) {
         out = rsignature_make_field_tail_error("bitfield_spec", token_start + 1, token_end + 1);
@@ -384,26 +411,14 @@ SEXP C_scan_field_tail(SEXP tail_x)
         return out;
       }
 
-      for (j = value_start; j <= token_end; ++j) {
-        int digit;
-        if (tail[j] < '0' || tail[j] > '9') {
-          out = rsignature_make_field_tail_error("bitfield_width", token_start + 1, token_end + 1);
-          UNPROTECT(7);
-          return out;
-        }
-        digit = tail[j] - '0';
-        if (value > INT_MAX / 10L ||
-            (value == INT_MAX / 10L && digit > INT_MAX % 10L)) {
-          out = rsignature_make_field_tail_error("bitfield_width", token_start + 1, token_end + 1);
-          UNPROTECT(7);
-          return out;
-        }
-        value = value * 10L + digit;
+      if (!rsignature_parse_decimal(tail, value_start, token_end + 1, 1, &value)) {
+        out = rsignature_make_field_tail_error("bitfield_width", token_start + 1, token_end + 1);
+        UNPROTECT(7);
+        return out;
       }
 
-      SET_STRING_ELT(field_names, field_count,
-        mkCharLenCE(tail + token_start, colon_pos - token_start, CE_NATIVE));
-      INTEGER(bit_widths)[field_count] = (int) value;
+      rsignature_set_slice(field_names, field_count, tail, token_start, colon_pos);
+      INTEGER(bit_widths)[field_count] = value;
     }
 
     INTEGER(field_starts)[field_count] = token_start + 1;

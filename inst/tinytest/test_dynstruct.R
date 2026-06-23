@@ -46,6 +46,11 @@ expect_false(bad_array$ok)
 expect_equal(bad_array$error_reason, "array")
 expect_equal(c(bad_array$error_start, bad_array$error_end), c(2L, 4L))
 
+bad_array_leading_zero <- rdyncall:::scan_signature_tokens("C[03]")
+expect_false(bad_array_leading_zero$ok)
+expect_equal(bad_array_leading_zero$error_reason, "array")
+expect_equal(c(bad_array_leading_zero$error_start, bad_array_leading_zero$error_end), c(2L, 5L))
+
 bad_array_close <- rdyncall:::scan_signature_tokens("C[12x]")
 expect_false(bad_array_close$ok)
 expect_equal(c(bad_array_close$error_start, bad_array_close$error_end), c(2L, 6L))
@@ -68,6 +73,11 @@ expect_equal(tail_tokens$directive, c("@packed", "@align(8)"))
 expect_equal(tail_tokens$directive_start, c(10L, 18L))
 expect_equal(tail_tokens$directive_end, c(16L, 26L))
 
+zero_width_tail <- rdyncall:::scan_field_tail(":0")
+expect_true(zero_width_tail$ok)
+expect_equal(zero_width_tail$field_name, "")
+expect_equal(zero_width_tail$bit_width, 0L)
+
 field_layout <- rdyncall:::parse_aggregate_fields("a b:3 :0 @packed @align(8)")
 expect_equal(
     field_layout$fields,
@@ -88,6 +98,11 @@ bad_tail_width_text <- rdyncall:::scan_field_tail("a:b")
 expect_false(bad_tail_width_text$ok)
 expect_equal(bad_tail_width_text$error_reason, "bitfield_width")
 expect_equal(c(bad_tail_width_text$error_start, bad_tail_width_text$error_end), c(1L, 3L))
+
+bad_tail_width_leading_zero <- rdyncall:::scan_field_tail("a:03")
+expect_false(bad_tail_width_leading_zero$ok)
+expect_equal(bad_tail_width_leading_zero$error_reason, "bitfield_width")
+expect_equal(c(bad_tail_width_leading_zero$error_start, bad_tail_width_leading_zero$error_end), c(1L, 4L))
 
 bad_tail_spec <- rdyncall:::scan_field_tail("a:1:2")
 expect_false(bad_tail_spec$ok)
@@ -322,4 +337,5 @@ local({
 expect_error(cstruct("BadFloatBits{d}x:1;"), "integer")
 expect_error(cstruct("TooWideBits{I}x:33;"), "exceeds")
 expect_error(cstruct("NamedZeroBits{I}x:0;"), "zero-width")
+expect_error(cstruct("LeadingZeroBits{I}x:03;"), "invalid bitfield width")
 expect_error(cstruct("ArrayBits{I[2]}x:1;"), "fixed array field cannot be a bitfield")
