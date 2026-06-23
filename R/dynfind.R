@@ -1,19 +1,110 @@
-dynfind1 <- if (.Platform$OS.type == "windows") {
-    function(name, ...) {
-        handle <- dynload(paste("lib", name, sep = ""), ...)
+dynfind_values <- function(x) {
+    unique(x[!is.na(x) & nzchar(x)])
+}
+
+dynfind_name_variants <- function(name) {
+    dynfind_values(c(name, tolower(name), toupper(name)))
+}
+
+dynfind_try <- function(paths, ..., existing.only = FALSE) {
+    paths <- dynfind_values(paths)
+    if (existing.only) {
+        paths <- paths[file.exists(paths)]
+    }
+    for (path in paths) {
+        handle <- dynload(path, ...)
         if (!is.null(handle)) {
             return(handle)
         }
-        dynload(name, ...)
+    }
+    NULL
+}
+
+dynfind_files <- function(dirs, patterns) {
+    dirs <- dynfind_values(dirs)
+    dirs <- dirs[dir.exists(dirs)]
+    if (!length(dirs)) {
+        return(character())
+    }
+    unique(unlist(lapply(dirs, function(dir) {
+        unlist(lapply(patterns, function(pattern) {
+            Sys.glob(file.path(dir, pattern))
+        }), use.names = FALSE)
+    }), use.names = FALSE))
+}
+
+dynfind_package_manager_dirs <- function(name) {
+    names <- dynfind_name_variants(name)
+    if (.Platform$OS.type == "windows") {
+        userprofile <- Sys.getenv("USERPROFILE", "")
+        programdata <- Sys.getenv("ProgramData", "")
+        roots <- dynfind_values(c(
+            Sys.getenv("SCOOP", ""),
+            Sys.getenv("SCOOP_GLOBAL", ""),
+            if (nzchar(userprofile)) file.path(userprofile, "scoop") else character(),
+            if (nzchar(programdata)) file.path(programdata, "scoop") else character()
+        ))
+        return(unique(unlist(lapply(roots, function(root) {
+            c(
+                file.path(root, "apps", names, "current", "bin"),
+                file.path(root, "apps", names, "current", "lib"),
+                file.path(root, "apps", names, "current")
+            )
+        }), use.names = FALSE)))
+    }
+
+    if (Sys.info()[["sysname"]] == "Darwin") {
+        homebrew <- dynfind_values(c(Sys.getenv("HOMEBREW_PREFIX", ""), "/opt/homebrew", "/usr/local"))
+        macports <- dynfind_values(c(Sys.getenv("MACPORTS_PREFIX", ""), "/opt/local"))
+        return(unique(c(
+            file.path(homebrew, "lib"),
+            unlist(lapply(homebrew, function(root) {
+                file.path(root, "opt", names, "lib")
+            }), use.names = FALSE),
+            file.path(macports, "lib")
+        )))
+    }
+
+    homebrew <- dynfind_values(c(Sys.getenv("HOMEBREW_PREFIX", ""), "/home/linuxbrew/.linuxbrew"))
+    unique(c(
+        file.path(homebrew, "lib"),
+        unlist(lapply(homebrew, function(root) {
+            file.path(root, "opt", names, "lib")
+        }), use.names = FALSE)
+    ))
+}
+
+dynfind_package_manager_files <- function(name) {
+    names <- dynfind_name_variants(name)
+    patterns <- if (.Platform$OS.type == "windows") {
+        c(paste0(names, ".dll"), paste0("lib", names, ".dll"), paste0(names, "*.dll"), paste0("lib", names, "*.dll"))
+    } else if (Sys.info()[["sysname"]] == "Darwin") {
+        c(paste0("lib", names, ".dylib"), paste0("lib", names, ".*.dylib"))
+    } else {
+        c(paste0("lib", names, ".so"), paste0("lib", names, ".so.*"))
+    }
+    dynfind_files(dynfind_package_manager_dirs(name), patterns)
+}
+
+dynfind1 <- if (.Platform$OS.type == "windows") {
+    function(name, ...) {
+        handle <- dynfind_try(c(paste("lib", name, sep = ""), name), ...)
+        if (!is.null(handle)) {
+            return(handle)
+        }
+        dynfind_try(dynfind_package_manager_files(name), ..., existing.only = TRUE)
     }
 } else {
     if (Sys.info()[["sysname"]] == "Darwin") {
         function(name, ...) {
-            handle <- dynload(paste(name, ".framework/", name, sep = ""), ...)
+            handle <- dynfind_try(c(
+                paste(name, ".framework/", name, sep = ""),
+                paste("lib", name, ".dylib", sep = "")
+            ), ...)
             if (!is.null(handle)) {
                 return(handle)
             }
-            handle <- dynload(paste("lib", name, ".dylib", sep = ""), ...)
+            handle <- dynfind_try(dynfind_package_manager_files(name), ..., existing.only = TRUE)
             if (!is.null(handle)) {
                 return(handle)
             }
@@ -30,23 +121,26 @@ dynfind1 <- if (.Platform$OS.type == "windows") {
             #
             # Also, for C libraries, it seems that using
             # '/usr/lib/system/libsystem_*' works for 'dlSymsName'
-            handle <- dynload(paste("/usr/lib/system/libsystem_", name, ".dylib", sep = ""), ...)
+            handle <- dynfind_try(paste("/usr/lib/system/libsystem_", name, ".dylib", sep = ""), ...)
             if (!is.null(handle)) {
                 return(handle)
             }
-            dynload(paste("/usr/lib/lib", name, ".dylib", sep = ""), ...)
+            dynfind_try(paste("/usr/lib/lib", name, ".dylib", sep = ""), ...)
         }
     } else {
         function(name, ...) {
-            handle <- dynload(paste("lib", name, ".so", sep = ""), ...)
+            handle <- dynfind_try(c(
+                paste("lib", name, ".so", sep = ""),
+                paste("lib", name, sep = "")
+            ), ...)
             if (!is.null(handle)) {
                 return(handle)
             }
-            handle <- dynload(paste("lib", name, sep = ""), ...)
+            handle <- dynfind_try(dynfind_package_manager_files(name), ..., existing.only = TRUE)
             if (!is.null(handle)) {
                 return(handle)
             }
-            dynload(paste(name, sep = ""), ...) # needed by Solaris to lookup 'R'.
+            dynfind_try(paste(name, sep = ""), ...) # needed by Solaris to lookup 'R'.
         }
     }
 }
@@ -103,10 +197,13 @@ dynfind1 <- if (.Platform$OS.type == "windows") {
 #' useful for all platforms}
 #' }
 #'
-#' The vector of `location`s is initialized by environment variables such
-#' as `PATH` on Windows and `LD_LIBRARY_PATH` on Unix-flavour systems in
-#' additional to some hardcoded locations: `/opt/local/lib`, `/usr/local/lib`,
-#' `/usr/lib` and `/lib`.
+#' The vector of `location`s is initialized by the dynamic linker search rules,
+#' including environment variables such as `PATH` on Windows and
+#' `LD_LIBRARY_PATH` on Unix-flavour systems. If the dynamic linker lookup
+#' fails, `dynfind()` also checks common package-manager library locations such
+#' as Homebrew (`HOMEBREW_PREFIX`, `/opt/homebrew`, `/usr/local`), MacPorts
+#' (`MACPORTS_PREFIX`, `/opt/local`), Linuxbrew (`/home/linuxbrew/.linuxbrew`)
+#' and Scoop (`SCOOP`, `SCOOP_GLOBAL`, `ProgramData/scoop`).
 #' (The set of hardcoded locations might expand and change within the next minor releases).
 #'
 #' The file extension depends on the OS: `.dll` (Windows), `.dylib` (macOS),
