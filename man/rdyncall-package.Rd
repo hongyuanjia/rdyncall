@@ -4,94 +4,72 @@
 \name{rdyncall-package}
 \alias{rdyncall}
 \alias{rdyncall-package}
-\title{Improved Foreign Function Interface (FFI) and Dynamic Bindings to C Libraries}
+\title{Improved Foreign Function Interface and Dynamic Bindings to C Libraries}
 \description{
-The package provides a cross-platform framework for dynamic binding of C
-libraries using a flexible Foreign Function Interface (FFI).
-The FFI supports almost all fundamental C types, multiple calling conventions,
-symbolic access to foreign C struct/union data types and wrapping of R
-functions as C callback function pointers.
-Dynamic bindings to shared C libraries are data-driven by cross-platform
-DynPort specifications. The current \code{dynport()} implementation supports DCF
-\code{.dynport} files and generates real R packages from them.
-The package includes a variety of technology demos and OS-specific notes for
-installation of shared libraries.
+\code{rdyncall} provides a low-level Foreign Function Interface (FFI) for loading
+shared C libraries, resolving symbols, calling C functions from R by
+signature, working with C \code{struct} and \code{union} data, and exposing R functions
+as C callback pointers.
 }
 \details{
-\pkg{rdyncall} offers a stack of interoperability technologies for working
-with foreign compiled languages using cross-platform portable abstraction
-methods.
+The package is intended for developers who know the C API they want to call
+and need an exploratory or dynamic binding layer from R without writing a
+compiled wrapper for every function.
 
-For R application development, the package facilitates direct access from R
-to the C Application Programming Interface (API) of common libraries.
-This enables a new style of development: R applications can use low-level
-services of portable C libraries.
-System-level code can be implemented in R without leaving the language.
-C APIs can be explored from within the R interpreter.
-Moving the R code from one platform to the other does not involve
-recompilation.
-Of course, the run-time libraries need to be installed using a standard
-procedure of the target Operating-System Distribution.
-See \link{rdyncall-demos} for details on this.
+Shared libraries can be opened directly with \code{\link[=dynload]{dynload()}} or located by short
+names with \code{\link[=dynfind]{dynfind()}}. Function addresses are resolved with \code{\link[=dynsym]{dynsym()}} and
+called with \code{\link[=dyncall]{dyncall()}} using compact type signatures. \code{\link[=dyncall_variadic]{dyncall_variadic()}}
+supports C functions declared with \code{...} when the call-site vararg signature
+is supplied explicitly.
 
-For R core development and research, the package provides an improved Foreign
-Function Interface (FFI) that can be used to call arbitrary foreign
-pre-compiled C code without the need for additional compilation of wrapper
-code.
-The back-end library is extendable with new calling conventions (such as
-Fortran,Pascal,COM,etc.. - which has not been the focus as of this release,
-but might be supported officially in the near future).
-Basic type-safety checks for argument passing and framework support for
-working with foreign C data types such as pointers, arrays, structs and
-wrapping of R functions into first-level C callback function pointers
-round up this framework.
+C aggregate data can be described with \code{\link[=cstruct]{cstruct()}} and \code{\link[=cunion]{cunion()}} and accessed
+through raw-backed \code{\link[=cdata]{cdata()}} objects. The aggregate layout support includes
+ordinary struct and union fields, fixed-size array fields, integer bitfields,
+packed layouts, manual alignment directives and by-value aggregate calls on
+supported DynCall backends. Aggregate by-value callback arguments and returns
+are currently unsupported.
+
+R functions can be wrapped as C function pointers with \code{\link[=ccallback]{ccallback()}}. Keep an
+R reference to callback objects for as long as foreign code may call them.
+
+\code{\link[=dynport]{dynport()}} builds and loads generated R packages from DCF \code{.dynport} binding
+specifications. The source tree also carries older \verb{inst/dynports/*.R}
+resources from previous rdyncall releases as legacy binding material.
 }
 \section{Overview}{
 \itemize{
-\item Flexible FFI with support for almost all C types, type-safety checks and
-multiple calling conventions. See \code{\link[=dyncall]{dyncall()}}.
-\item Loading of shared libraries with \emph{automatic unload management} and using
-direct access to OS linker. See \code{\link[=dynload]{dynload()}}.
-\item Cross-platform naming and loading of shared libraries. See \code{\link[=dynfind]{dynfind()}}.
-\item Binding C library functions via thin call wrappers. See \code{\link[=dynbind]{dynbind()}}.
-\item Handling of foreign C pointer, array and struct/union data types. See
-\code{\link[=pack]{pack()}} and \code{\link[=cstruct]{cstruct()}}.
-\item Dynamic wrapping of R functions as C function pointers to be used in C
-callbacks. See \link{ccallback}.
-\item Dynamic bindings to standard and common C libraries and APIs (functions,
-variables, macro constants, enums, struct and union types). See \code{\link[=dynport]{dynport()}}.
+\item Load libraries and inspect symbols with \code{\link[=dynload]{dynload()}}, \code{\link[=dynfind]{dynfind()}},
+\code{\link[=dynsym]{dynsym()}} and \code{\link[=dynlist]{dynlist()}}.
+\item Call C functions with \code{\link[=dyncall]{dyncall()}} and \code{\link[=dyncall_variadic]{dyncall_variadic()}}.
+\item Create batches of thin wrappers with \code{\link[=dynbind]{dynbind()}}.
+\item Describe and access C aggregates with \code{\link[=cstruct]{cstruct()}}, \code{\link[=cunion]{cunion()}} and \code{\link[=cdata]{cdata()}}.
+\item Read and write low-level values with \code{\link[=pack]{pack()}} and \code{\link[=unpack]{unpack()}}.
+\item Wrap R functions as C callbacks with \code{\link[=ccallback]{ccallback()}}.
+\item Generate packages from DCF DynPort specifications with \code{\link[=dynport]{dynport()}}.
 }
 }
 
-\section{Getting Starrted}{
-Several demos ranging from simple FFI calls to the C standard math library up
-to more complex 3D OpenGL/SDL Applications are available.
-See \code{demos(package = "rdyncall")} for an overview.
-Some demos require shared C libraries to be installed in the system.
-Please read \link{rdyncall-demos} for details.
+\section{Getting Started}{
+Several demos range from simple FFI calls to C standard library functions to
+callback, GLPK, libxml2, SDL3 and raylib examples. See
+\code{demo(package = "rdyncall")} for an overview. Some demos require shared C
+libraries to be installed on the system or open GUI windows.
 }
 
-\section{Supported Platforms}{
-The low-level implementation is mainly based on libraries from the DynCall
-Project (\url{https://dyncall.org}).
-The library suite is distributed as part of the package source tree.
-
-The dyncall and dyncallback libraries implement generic low-level services
-with the help of a small amount of hand-written assembly code and careful
-modeling of the target machine's calling sequence for each platform to
-support.
-
-The DynCall libraries are tested on Linux, Mac OS X, Windows, BSD derivates
-and more exotic platforms such as game consoles and Plan9.
-Please see the details in the official DynCall manual for full details of the
-back-end.
-The R Package has been tested on several major R platforms.
+\section{Safety}{
+This is a low-level FFI. A wrong function address, call signature, calling
+convention, pointer lifetime or struct layout can crash the R process. Keep
+the C declaration beside the R signature when writing bindings.
 }
 
 \examples{
-\dontrun{
-dynport(SDL2)
-dyn.SDL2::SDL_GetPlatform()
+\donttest{
+mathlib <- dynfind(c("msvcrt", "m", "m.so.6"))
+sqrt_addr <- dynsym(mathlib, "sqrt")
+dyncall(sqrt_addr, "d)d", 144)
+
+cb <- ccallback("ii)i", function(x, y) x + y)
+dyncall(cb, "ii)i", 20L, 3L)
 }
 }
 \references{
