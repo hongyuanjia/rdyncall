@@ -39,6 +39,7 @@ callvm.thiscall.msvc <- NULL
 callvm.fastcall      <- NULL
 callvm.fastcall.gcc  <- NULL
 callvm.fastcall.msvc <- NULL
+callvm.variadic      <- NULL
 
 # ----------------------------------------------------------------------------
 # aggregate by-value support (internal)
@@ -186,6 +187,11 @@ dyncall_aggregate_layouts <- function(signature, envir = parent.frame()) {
         i <- i + 1L
 
         if (ch == ")") break
+        if (ch == "_") {
+            i <- i + 1L
+            ptrcnt <- 0L
+            next
+        }
         if (ch == "*") {
             ptrcnt <- ptrcnt + 1L
             next
@@ -228,6 +234,30 @@ dyncall_call <- function(callvm, address, signature, ..., envir = parent.frame()
         attr(ans, "typeinfo") <- get_typeinfo(aggregates$return$name, envir = envir)
     }
     ans
+}
+
+dyncall_variadic_signature <- function(signature, varargs) {
+    if (!is.character(signature) || length(signature) != 1L || is.na(signature) || !nzchar(signature)) {
+        stop("'signature' must be a single non-empty character string.", call. = FALSE)
+    }
+    if (!is.character(varargs) || length(varargs) != 1L || is.na(varargs)) {
+        stop("'varargs' must be a single character string.", call. = FALSE)
+    }
+    if (startsWith(signature, "_")) {
+        stop("variadic signatures must not include a calling-convention prefix.", call. = FALSE)
+    }
+    if (grepl(")", varargs, fixed = TRUE)) {
+        stop("'varargs' must contain only argument type signatures, not a return signature.", call. = FALSE)
+    }
+
+    end <- regexpr(")", signature, fixed = TRUE)[[1L]]
+    if (end < 1L || end == nchar(signature)) {
+        stop("'signature' must be a complete call signature with a return type.", call. = FALSE)
+    }
+
+    args <- substr(signature, 1L, end - 1L)
+    ret <- substr(signature, end + 1L, nchar(signature))
+    paste0("_e", args, "_.", varargs, ")", ret)
 }
 
 # ----------------------------------------------------------------------------
@@ -278,6 +308,12 @@ dyncall_call <- function(callvm, address, signature, ..., envir = parent.frame()
 #'
 #' Arguments passed via `...` are converted to C according to `signature`; see
 #' below for details.
+#'
+#' `dyncall_variadic()` calls C functions declared with `...`. The `signature`
+#' argument describes the fixed parameter prefix and return type, while
+#' `varargs` describes the actual argument types passed through `...` at this
+#' specific call site. C default promotions are the caller's responsibility; for
+#' example, pass promoted variadic `float` values as `double` (`"d"`).
 #'
 #' Given that the `signature` matches the foreign function type, the FFI
 #' provides a certain level of type-safety to users, when exposing foreign
@@ -438,6 +474,11 @@ dyncall_call <- function(callvm, address, signature, ..., envir = parent.frame()
 #'        converted from R to C values according to the _call signature_. See
 #'        details.
 #'
+#' @param varargs character string specifying the type signatures for the
+#'        arguments passed through the C `...` portion of a variadic function.
+#'        This string contains argument types only, without `)` and without a
+#'        return type.
+#'
 #' @param callmode character string specifying the _calling convention_. This
 #'        argument has no effect on most platforms, but on Microsoft Windows
 #'        32-Bit Intel/x86 platforms. See details.
@@ -483,6 +524,13 @@ dyncall <- function(address, signature, ..., callmode = "default") {
         fastcall.msvc = callvm.fastcall.msvc
     )
     dyncall_call(callvm, address, signature, ..., envir = parent.frame())
+}
+
+#' @rdname dyncall
+#' @export
+dyncall_variadic <- function(address, signature, varargs = "", ..., callmode = c("default", "cdecl")) {
+    callmode <- match.arg(callmode)
+    dyncall_call(callvm.variadic, address, dyncall_variadic_signature(signature, varargs), ..., envir = parent.frame())
 }
 
 #' @rdname dyncall
@@ -535,4 +583,5 @@ dyncall.fastcall      <- dyncall.fastcall.gcc
     callvm.fastcall      <<- callvm_new("fastcall", size)
     callvm.fastcall.gcc  <<- callvm_new("fastcall.gcc", size)
     callvm.fastcall.msvc <<- callvm_new("fastcall.msvc", size)
+    callvm.variadic      <<- callvm_new("cdecl", size)
 }

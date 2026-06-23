@@ -250,6 +250,28 @@ static void rdyncall_set_struct_attrib(SEXP x, const char *name)
   Rf_setAttrib(x, R_ClassSymbol, Rf_mkString("struct"));
 }
 
+static int rdyncall_mode_from_signature_char(char ch)
+{
+  switch(ch)
+  {
+    case DC_SIGCHAR_CC_DEFAULT:
+      return DC_CALL_C_DEFAULT;
+    case DC_SIGCHAR_CC_ELLIPSIS:
+      return DC_CALL_C_ELLIPSIS;
+    case DC_SIGCHAR_CC_ELLIPSIS_VARARGS:
+      return DC_CALL_C_ELLIPSIS_VARARGS;
+    case DC_SIGCHAR_CC_STDCALL:
+      return DC_CALL_C_X86_WIN32_STD;
+    case DC_SIGCHAR_CC_FASTCALL_GNU:
+      return DC_CALL_C_X86_WIN32_FAST_GNU;
+    case DC_SIGCHAR_CC_FASTCALL_MS:
+      return DC_CALL_C_X86_WIN32_FAST_MS;
+    default:
+      Rf_error("Unknown calling convention prefix hint signature character '%c'", ch);
+      return DC_CALL_C_DEFAULT;
+  }
+}
+
 /** ---------------------------------------------------------------------------
  ** C-Function: C_dyncall
  ** R-Interface: .External
@@ -320,20 +342,7 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
     /* specify calling convention by signature prefix hint */
     ++sig;
     char ch = *sig++;
-    int mode = DC_CALL_C_DEFAULT;
-    switch(ch)
-    {
-      case DC_SIGCHAR_CC_STDCALL:
-        mode = DC_CALL_C_X86_WIN32_STD; break;
-      case DC_SIGCHAR_CC_FASTCALL_GNU:
-        mode = DC_CALL_C_X86_WIN32_FAST_GNU; break;
-      case DC_SIGCHAR_CC_FASTCALL_MS:
-        mode = DC_CALL_C_X86_WIN32_FAST_MS; break;
-      default:
-        Rf_error("Unknown calling convention prefix hint signature character '%c'", ch );
-        /* dummy */ return R_NilValue;
-    }
-    dcMode(pvm, mode);
+    dcMode(pvm, rdyncall_mode_from_signature_char(ch));
   }
 
   if (aggr_return_layout != R_NilValue) {
@@ -351,6 +360,17 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
     }
     /* argument terminator */
     if (ch == ')') break;
+
+    if (ch == DC_SIGCHAR_CC_PREFIX) {
+      char mode_ch = *sig++;
+      if (mode_ch == '\0') {
+        Rf_error("Function-call signature '%s' is invalid - missing calling convention mode character.", signature);
+        return R_NilValue; /* dummy */
+      }
+      dcMode(pvm, rdyncall_mode_from_signature_char(mode_ch));
+      ptrcnt = 0;
+      continue;
+    }
 
     /* end of arguments? */
     if (args == R_NilValue) {

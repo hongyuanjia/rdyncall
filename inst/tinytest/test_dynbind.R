@@ -42,13 +42,23 @@ fixture <- build_dynbind_fixture()
 
 expect_dynbind_add(fixture)
 
+handle <- dynload(fixture)
+sum_variadic <- dynsym(handle, "rdyncall_dynbind_sum_variadic")
+expect_equal(dyncall_variadic(sum_variadic, "i)i", "ii", 1L, 2L, 3L), 6L)
+
+sum_variadic_double <- dynsym(handle, "rdyncall_dynbind_sum_variadic_double")
+expect_equal(dyncall_variadic(sum_variadic_double, "d)d", "d", 1.5, 2.25), 3.75)
+expect_error(
+    dyncall_variadic(sum_variadic, "i)i", "i)i", 1L, 2L),
+    "argument type signatures"
+)
+
 local({
     oldwd <- setwd(dirname(fixture))
     on.exit(setwd(oldwd), add = TRUE)
     expect_dynbind_add(file.path(".", basename(fixture)))
 })
 
-handle <- dynload(fixture)
 attr(handle, "dynbind-test") <- "input-handle"
 bind <- expect_dynbind_add(handle)
 expect_equal(attr(bind$libhandle, "dynbind-test"), "input-handle")
