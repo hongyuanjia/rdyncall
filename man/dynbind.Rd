@@ -15,9 +15,12 @@ dynbind(
 )
 }
 \arguments{
-\item{libnames}{vector of character strings giving short library names of the
-shared library to be loaded. See \code{\link[=dynfind]{dynfind()}} for details.
-`}
+\item{libnames}{character vector or external pointer handle specifying the
+shared library. Character values that contain a path separator, or
+name an existing file, are passed directly to \code{\link[=dynload]{dynload()}}. Other
+character values are treated as short library names and loaded using
+\code{\link[=dynfind]{dynfind()}}. External pointer handles returned by \code{\link[=dynload]{dynload()}} or
+\code{\link[=dynfind]{dynfind()}} are used directly.}
 
 \item{signature}{character string specifying the \emph{library signature} that
 determines the set of foreign function names and types. See details.}
@@ -77,8 +80,10 @@ library:
 \if{html}{\out{<div class="sourceCode">}}\preformatted{`"glAccum(If)v ; glClear(I)v ; glClearColor(ffff)v ;"`
 }\if{html}{\out{</div>}}
 
-Symbolic names are resolved using the library specified by \code{libnames}
-using \code{\link[=dynfind]{dynfind()}} for loading.
+Symbolic names are resolved using the library specified by \code{libnames}.
+Character short library names are loaded using \code{\link[=dynfind]{dynfind()}}, character paths
+are loaded directly using \code{\link[=dynload]{dynload()}}, and external pointer handles returned
+by \code{\link[=dynload]{dynload()}} or \code{\link[=dynfind]{dynfind()}} are used as-is.
 For each function, a thin call wrapper function is created using the
 following template:
 

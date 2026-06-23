@@ -225,6 +225,10 @@ dynload <- function(libname, auto.unload = TRUE) {
     libh
 }
 
+dynload_is_handle <- function(libhandle) {
+    .Call("C_is_dynload_handle", libhandle, PACKAGE = "rdyncall")
+}
+
 #' @rdname dynload
 #' @export
 dynunload <- function(libhandle) {

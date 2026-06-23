@@ -23,6 +23,7 @@ SEXP C_dynlist(SEXP libh);
 SEXP C_dynload(SEXP libpath);
 SEXP C_dynsym(SEXP libobj, SEXP symname, SEXP protectlib);
 SEXP C_dynunload(SEXP libobj);
+SEXP C_is_dynload_handle(SEXP libobj);
 
 /* rpack.c */
 SEXP C_pack(SEXP ptr, SEXP offset, SEXP sig, SEXP value);
@@ -76,6 +77,7 @@ R_CallMethodDef callMethods[] =
   {"C_dynload"                  , (DL_FUNC) &C_dynload          , 1},
   {"C_dynsym"                   , (DL_FUNC) &C_dynsym           , 3},
   {"C_dynunload"                , (DL_FUNC) &C_dynunload        , 1},
+  {"C_is_dynload_handle"        , (DL_FUNC) &C_is_dynload_handle, 1},
   {"C_dynpath"                  , (DL_FUNC) &C_dynpath          , 1},
   {"C_dyncount"                 , (DL_FUNC) &C_dyncount         , 1},
   {"C_dynlist"                  , (DL_FUNC) &C_dynlist          , 1},
