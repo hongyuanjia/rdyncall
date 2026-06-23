@@ -212,6 +212,43 @@ expect_equal(fixed_array_access$bytes, 1:4)
 expect_equal(fixed_array_access$tag, 42L)
 expect_error(fixed_array_access$bytes <- 1:3, "fixed array field length")
 
+local({
+    cstruct("NestedFieldVec2{ff}x y;")
+    cstruct("NestedFieldHolder{<NestedFieldVec2>}xy;")
+    cstruct("NestedFieldArrayHolder{<NestedFieldVec2>[2]}xy;")
+
+    holder <- cdata(NestedFieldHolder)
+    holder_base <- NestedFieldHolder$fields$offset[match("xy", NestedFieldHolder$fields$name)]
+    pack(holder, holder_base + NestedFieldVec2$fields$offset[match("x", NestedFieldVec2$fields$name)], "f", 1.25)
+    pack(holder, holder_base + NestedFieldVec2$fields$offset[match("y", NestedFieldVec2$fields$name)], "f", 2.5)
+
+    xy <- holder$xy
+    expect_true(is.raw(xy))
+    expect_true(inherits(xy, "struct"))
+    expect_equal(attr(xy, "struct"), "NestedFieldVec2")
+    expect_equal(attr(xy, "typeinfo"), NestedFieldVec2)
+    expect_equal(xy$x, 1.25)
+    expect_equal(xy$y, 2.5)
+
+    array_holder <- cdata(NestedFieldArrayHolder)
+    array_base <- NestedFieldArrayHolder$fields$offset[match("xy", NestedFieldArrayHolder$fields$name)]
+    pack(array_holder, array_base + NestedFieldVec2$fields$offset[match("x", NestedFieldVec2$fields$name)], "f", 1.25)
+    pack(array_holder, array_base + NestedFieldVec2$fields$offset[match("y", NestedFieldVec2$fields$name)], "f", 2.5)
+    pack(array_holder, array_base + NestedFieldVec2$size + NestedFieldVec2$fields$offset[match("x", NestedFieldVec2$fields$name)], "f", 3.5)
+    pack(array_holder, array_base + NestedFieldVec2$size + NestedFieldVec2$fields$offset[match("y", NestedFieldVec2$fields$name)], "f", 4.75)
+
+    xy_array <- array_holder$xy
+    expect_true(is.list(xy_array))
+    expect_equal(length(xy_array), 2L)
+    expect_true(all(vapply(xy_array, inherits, logical(1L), "struct")))
+    expect_equal(vapply(xy_array, attr, character(1L), "struct"), rep("NestedFieldVec2", 2L))
+    expect_equal(lapply(xy_array, attr, "typeinfo"), list(NestedFieldVec2, NestedFieldVec2))
+    expect_equal(xy_array[[1L]]$x, 1.25)
+    expect_equal(xy_array[[1L]]$y, 2.5)
+    expect_equal(xy_array[[2L]]$x, 3.5)
+    expect_equal(xy_array[[2L]]$y, 4.75)
+})
+
 expect_null(cstruct("PackedCharDouble{Cd} c d @packed;", env))
 expect_equal(env$PackedCharDouble$size, 9L)
 expect_equal(env$PackedCharDouble$align, 1L)

@@ -817,6 +817,19 @@ cdata <- function(type) {
     return(x)
 }
 
+as_aggregate_field <- function(x, type) {
+    if (is.character(type)) {
+        type <- get_typeinfo(type)
+    } else if (!is.typeinfo(type)) {
+        stop("type is not of class typeinfo and no character string")
+    }
+    if (!type$type %in% c("struct", "union")) stop("type must be C struct or union.")
+    class(x) <- "struct"
+    attr(x, "struct") <- type$name
+    attr(x, "typeinfo") <- type
+    x
+}
+
 struct_typeinfo <- function(x, envir = parent.frame()) {
     struct_name <- attr(x, "struct")
     info <- attr(x, "typeinfo")
@@ -874,9 +887,9 @@ unpack_aggregate_array_field <- function(x, offset, field_type_name, field_type_
         element_offset <- offset + (i - 1L) * field_type_info$size
         if (is.raw(x)) {
             size <- field_type_info$size
-            as.ctype(x[(element_offset + 1):(element_offset + size)], field_type_name)
+            as_aggregate_field(x[(element_offset + 1):(element_offset + size)], field_type_info)
         } else if (is.externalptr(x)) {
-            as.ctype(offset_ptr(x, element_offset), field_type_name)
+            as_aggregate_field(offset_ptr(x, element_offset), field_type_info)
         }
     }
 
@@ -905,7 +918,8 @@ pack_aggregate_array_field <- function(x, offset, field_type_info, array_len, va
 #' @rdname struct
 #' @export
 `$.struct` <- unpack.struct <- function(x, index) {
-    struct_info <- struct_typeinfo(x, parent.frame())
+    caller <- parent.frame()
+    struct_info <- struct_typeinfo(x, caller)
     field_info <- struct_info$fields
     field_index <- match(index, field_info$name)
     if (is.na(field_index)) stop("unknown field index '", index, "'")
@@ -919,7 +933,7 @@ pack_aggregate_array_field <- function(x, offset, field_type_info, array_len, va
     }
     offset <- field_info[field_index, "offset"]
     field_type_name <- as.character(field_info[[field_index, "type"]])
-    field_type_info <- get_typeinfo(field_type_name)
+    field_type_info <- get_typeinfo(field_type_name, caller)
     array_len <- field_array_len(field_info, field_index)
     if (field_type_info$type %in% c("base", "pointer")) {
         unpack_array_field(x, offset, field_type_info, array_len)
@@ -933,7 +947,8 @@ pack_aggregate_array_field <- function(x, offset, field_type_info, array_len, va
 #' @rdname struct
 #' @export
 `$<-.struct` <- pack.struct <- function(x, index, value) {
-    struct_info <- struct_typeinfo(x, parent.frame())
+    caller <- parent.frame()
+    struct_info <- struct_typeinfo(x, caller)
     field_info <- struct_info$fields
     field_index <- match(index, field_info$name)
     if (is.na(field_index)) stop("unknown field index '", index, "'")
@@ -948,7 +963,7 @@ pack_aggregate_array_field <- function(x, offset, field_type_info, array_len, va
     }
     offset <- field_info[field_index, "offset"]
     field_type_name <- as.character(field_info[field_index, "type"])
-    field_type_info <- get_typeinfo(field_type_name)
+    field_type_info <- get_typeinfo(field_type_name, caller)
     array_len <- field_array_len(field_info, field_index)
     if (field_type_info$type %in% c("base", "pointer")) {
         pack_array_field(x, offset, field_type_info, array_len, value)
