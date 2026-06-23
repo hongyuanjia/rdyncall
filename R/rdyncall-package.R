@@ -1,5 +1,4 @@
 #' Improved Foreign Function Interface (FFI) and Dynamic Bindings to C Libraries
-#' (e.g. OpenGL)
 #'
 #' @description
 #' The package provides a cross-platform framework for dynamic binding of C
@@ -8,9 +7,8 @@
 #' symbolic access to foreign C struct/union data types and wrapping of R
 #' functions as C callback function pointers.
 #' Dynamic bindings to shared C libraries are data-driven by cross-platform
-#' binding specification using a compact plain text format; an initial
-#' repository of bindings to a couple of common C libraries (OpenGL, SDL, Expat,
-#' glew, CUDA, OpenCL, ODE, R) comes with the package.
+#' DynPort specifications. The current `dynport()` implementation supports DCF
+#' `.dynport` files and generates real R packages from them.
 #' The package includes a variety of technology demos and OS-specific notes for
 #' installation of shared libraries.
 #'
@@ -94,44 +92,8 @@
 #'
 #' @examples
 #' \dontrun{
-#' # multimedia example
-#' # load dynports for OpenGL, Simple DirectMedia library
-#' # globals:
-#' surface <- NULL
-#' # init SDL and OpenGL
-#' init <- function()
-#' {
-#'     dynport(SDL)
-#'     dynport(GL)
-#'     if ( SDL_Init(SDL_INIT_VIDEO) != 0 ) stop("SDL_Init failed")
-#'     surface <<- SDL_SetVideoMode(320,240,32,SDL_DOUBLEBUF+SDL_OPENGL)
-#'     cat("surface dimension:", surface$w, "x",surface$h,sep="")
-#' }
-#' # draw blue screen
-#' updateSurface <- function(t)
-#' {
-#'     glClearColor(0,0,t \%\% 1,0)
-#'     glClear(GL_COLOR_BUFFER_BIT+GL_DEPTH_BUFFER_BIT)
-#'     SDL_GL_SwapBuffers()
-#' }
-#' # wait till close
-#' mainloop <- function()
-#' {
-#'     quit <- FALSE
-#'     evt <- cdata(SDL_Event)
-#'     base <- SDL_GetTicks() / 1000
-#'     t <- 0
-#'     while(!quit) {
-#'         updateSurface(t)
-#'         while(SDL_PollEvent(evt)) {
-#'             if ( evt$type == SDL_QUIT ) quit <- TRUE
-#'         }
-#'         now <- SDL_GetTicks() / 1000
-#'         t <- now - base
-#'     }
-#' }
-#' init()
-#' mainloop()
+#' dynport(SDL2)
+#' dyn.SDL2::SDL_GetPlatform()
 #' }
 #' @keywords internal
 "_PACKAGE"

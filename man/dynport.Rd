@@ -2,28 +2,81 @@
 % Please edit documentation in R/dynport.R
 \name{dynport}
 \alias{dynport}
-\alias{loadDynportNamespace}
+\alias{dynport_install_package}
+\alias{dynport_load_into}
+\alias{dynport_lib}
 \title{Dynamic R Bindings to standard and common C libraries}
 \usage{
 dynport(
   portname,
   portfile = NULL,
-  repo = system.file("dynports", package = "rdyncall")
+  repo = system.file("dynports", package = "rdyncall"),
+  package = NULL,
+  lib = dynport_lib(),
+  rebuild = FALSE,
+  load = TRUE,
+  quiet = FALSE
 )
+
+dynport_install_package(
+  portname,
+  portfile = NULL,
+  repo = system.file("dynports", package = "rdyncall"),
+  package = NULL,
+  lib = dynport_lib(),
+  rebuild = FALSE,
+  load = FALSE,
+  quiet = FALSE
+)
+
+dynport_load_into(portfile, envir)
+
+dynport_lib(create = TRUE, add = FALSE)
 }
 \arguments{
 \item{portname}{the name of a dynport, given as a literal or character
-string. It will be used as the namespace name.}
+string.}
 
-\item{portfile}{\code{NULL} or character string giving a script file to parse.}
+\item{portfile}{\code{NULL} or character string giving a DCF \code{.dynport} file to
+parse.}
 
 \item{repo}{character string giving the path to the root of the \code{dynport}
 repository.}
+
+\item{package}{\code{NULL} or character string giving the generated R package name.
+When \code{NULL}, the \code{Package} field from the DynPort file is prefixed by
+option \code{rdyncall.dynport.package.prefix}.}
+
+\item{lib}{character string giving the R library path where the generated
+package is installed. Defaults to \code{dynport_lib()}.}
+
+\item{rebuild}{logical. If \code{TRUE}, reinstall an existing generated package
+when the DynPort file contents have changed.}
+
+\item{load}{logical. If \code{TRUE}, load and attach the generated package in the
+current R session after installation.}
+
+\item{quiet}{logical. If \code{TRUE}, suppress installation and loading output
+where possible.}
+
+\item{envir}{environment to populate from a DynPort file.}
+
+\item{create}{logical. If \code{TRUE}, create the default DynPort package library
+when it does not exist.}
+
+\item{add}{logical. If \code{TRUE}, prepend the DynPort package library to
+\code{.libPaths()}.}
+}
+\value{
+\code{dynport()} invisibly returns the generated package name.
+\code{dynport_install_package()} invisibly returns the installed package path with
+the generated package name stored in attribute \code{"package"}.
+\code{dynport_load_into()} invisibly returns \code{envir}.
+\code{dynport_lib()} returns the DynPort package library path.
 }
 \description{
-Function to bind APIs of standard and common C libraries to R via dynamically
-created interface environment objects comprising R wrappers for C functions,
-object-like macros, enums and data types.
+Functions to turn DCF DynPort files into generated R packages that provide
+wrappers for C functions, object-like macros, enums and data types.
 }
 \details{
 \code{dynport()} offers a convenient method for binding entire C libraries to R.
@@ -35,57 +88,24 @@ manual installation.
 See \link{rdyncall-demos} for OS-specific installation notes for several C
 libraries.
 
-The binding method is data-driven using platform-portable specifications
-named \emph{DynPort} files.
-\emph{DynPort} files are stored in a repository that is installed as part of the
-package installation. They are generated using the \pkg{porter} package.
-When \code{dynport()} processes a \emph{DynPort} file given by \code{portname}, an
-environment object is created, populated with R wrapper and helper objects
-that make up the interface to the C library, and attached to the search path
-with the name \verb{dynport:<PORTNAME>}.
-Unloading of previously loaded dynport environments is achieved via
-\verb{detach(dynport:<PORTNAME>)}.
+The binding method is data-driven using platform-portable specifications named
+\emph{DynPort} files. The current implementation supports DCF (Debian Control File)
+\code{.dynport} files.
 
-Up to \pkg{rdyncall} version 0.7.4, R name space objects were used as
-containers as described in the article \emph{Foreign Library Interface}, thus
-dynport \sQuote{packages} appeared as \code{"package:<PORTNAME>"} on the
-search path.
-The mechanism to create synthesized R packages at run-time required the use
-of \code{.Internal} calls.
-But since the use of internal R functions is not permitted for packages
-distributed on CRAN we downgraded the package to use ordinary environment
-objects starting with version 0.7.5 until a public interface for the creation
-of R namespace objects is available.
+When \code{dynport()} processes a \emph{DynPort} file, it generates and installs a real
+R package whose namespace is populated at load time from the DynPort metadata.
+By default, generated package names use the prefix given by option
+\code{rdyncall.dynport.package.prefix}, which defaults to \code{"dyn."}. For example,
+a DynPort with \code{Package: SDL2} is installed as \code{dyn.SDL2} unless a package
+name is explicitly supplied.
 
-The following gives a list of currently available \emph{DynPorts}:\tabular{ll}{
+The following gives a list of currently supported DCF \emph{DynPorts}:\tabular{ll}{
    \strong{DynPort name/C library} \tab \strong{Description} \cr
-   \code{expat} \tab Expat XML Parser Library \cr
-   \code{GL} \tab OpenGL 1.1 API \cr
-   \code{GLU} \tab OpenGL Utility Library \cr
-   \code{GLUT} \tab OpenGL Utility Toolkit Library \cr
-   \code{SDL} \tab Simple DirectMedia Layer Library \cr
-   \code{SDL_image} \tab Loading of image files (png, jpeg, ...) \cr
-   \code{SDL_mixer} \tab Loading/Playing of ogg/mp3/mod music files. \cr
-   \code{SDL_ttf} \tab Loading/Rendering of True Type Fonts. \cr
-   \code{SDL_net} \tab Networking library. \cr
-   \code{glew} \tab OpenGL Extension Wrangler (includes OpenGL 3.0) \cr
-   \code{glfw} \tab OpenGL Windowing/Setup Library \cr
-   \code{gl3} \tab strict OpenGL 3 (untested) \cr
-   \code{R} \tab R shared library \cr
-   \code{ode} \tab Open Dynamics (Physics-) Engine (untested) \cr
-   \code{cuda} \tab NVIDIA Cuda (untested) \cr
-   \code{csound} \tab Sound programming language and library \cr
-   \code{opencl} \tab OpenCL (untested) \cr
-   \code{stdio} \tab C Standard Library I/O Functions \cr
-   \code{glpk} \tab GNU Linear Programming Kit \cr
-   \code{EGL} \tab Embedded Systems Graphics Library \cr
+   \code{SDL2} \tab Simple DirectMedia Layer 2 \cr
 }
 
 
-As of the current implementation \emph{DynPort} files are DCF (Debian Control File)
-files which follow the same rules for R package \code{DESCRIPTION} files.
-
-The format records the following binding metadata:
+The DCF format records the following binding metadata:
 \itemize{
 \item Functions (and pointer-to-function variables) are mapped via \code{\link[=dynbind]{dynbind()}}
 and a description of the C library using a \emph{library signatures}.
@@ -99,30 +119,16 @@ The file path to the \emph{DynPort} file is derived from \code{portname} per def
 This would refer to \code{"<repo>/<portname>.dynport"} where \code{repo} usually refers
 to the initial \emph{DynPort} repository located at the sub-folder \code{"dynports/"}
 of the package.
-If \code{portfile} is given, then this value is taken as file path (usually for
-testing purpose).
+If \code{portfile} is given, then this value is taken as file path.
 
 A tool suite, comprising AWK (was boost wave), GCC Preprocessor, GCC-XML and
 XSLT, was used to generate the available \emph{DynPort} files automatically
 by extracting type information from C library header files.
-
-In a future release, the DynPort format will be changed to
-a language-neutral text file document.
 }
 \examples{
 \dontrun{
-# Using SDL and OpenGL in R
-dynport(SDL)
-dynport(GL)
-# Initialize Video Sub-system
-SDL_Init(SDL_INIT_VIDEO)
-# Initialize Screen with OpenGL Context and Double Buffering
-SDL_SetVideoMode(320, 256, 32, SDL_OPENGL+SDL_DOUBLEBUF)
-# Clear Color and Clear Screen
-glClearColor(0, 0, 1, 0) # blue
-glClear(GL_COLOR_BUFFER_BIT)
-# Flip Double-Buffer
-SDL_GL_SwapBuffers()
+dynport(SDL2)
+dyn.SDL2::SDL_GetPlatform()
 }
 }
 \references{
