@@ -3,6 +3,7 @@
 \name{typeinfo}
 \alias{typeinfo}
 \alias{type-information}
+\alias{print.typeinfo}
 \alias{get_typeinfo}
 \title{S3 class for run-time type information of foreign C data types}
 \usage{
@@ -15,6 +16,8 @@ typeinfo(
   fields = NA,
   signature = NA
 )
+
+\method{print}{typeinfo}(x, ...)
 
 get_typeinfo(name, envir = parent.frame())
 }
@@ -35,6 +38,10 @@ types.}
 
 \item{signature}{character string specifying the struct/union type
 \link[=type-signature]{signature}.}
+
+\item{x}{S3 \code{typeinfo} object to print.}
+
+\item{...}{additional arguments to be passed to \code{\link[base:print]{base::print()}} methods.}
 
 \item{envir}{the environment to look for type object.}
 }

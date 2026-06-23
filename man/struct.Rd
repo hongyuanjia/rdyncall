@@ -8,6 +8,7 @@
 \alias{$.struct}
 \alias{$<-.struct}
 \alias{print.struct}
+\alias{print.ctype}
 \title{Allocation and handling of foreign C aggregate data types}
 \usage{
 cstruct(sigs, envir = parent.frame())
@@ -23,6 +24,8 @@ cdata(type)
 \method{$}{struct}(x, index) <- value
 
 \method{print}{struct}(x, indent = 0, ...)
+
+\method{print}{ctype}(x, ...)
 }
 \arguments{
 \item{sigs}{character string that specifies several C struct/union type

@@ -2,6 +2,7 @@
 % Please edit documentation in R/dynbind.R
 \name{dynbind}
 \alias{dynbind}
+\alias{print.dynbind.report}
 \title{Binding C library functions via thin call wrappers}
 \usage{
 dynbind(
@@ -13,6 +14,8 @@ dynbind(
   replace = NULL,
   funcptr = FALSE
 )
+
+\method{print}{dynbind.report}(x, ...)
 }
 \arguments{
 \item{libnames}{character vector or external pointer handle specifying the
@@ -39,6 +42,10 @@ part of symbolic names.}
 \item{funcptr}{logical, that indicates whether foreign objects refer to
 functions (\code{FALSE}, default) or to function pointer variables
 (\code{TRUE} rarely needed).}
+
+\item{x}{S3 \code{dynbind.report} object to print.}
+
+\item{...}{additional arguments to be passed to \code{\link[base:print]{base::print()}} methods.}
 }
 \value{
 The function returns a list with two fields:

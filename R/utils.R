@@ -52,6 +52,8 @@
 #' @param n integer specifying the number of single-precision C `float` values
 #'        to allocate.
 #'
+#' @param ... additional arguments to be passed to [base::print()] methods.
+#'
 #' @examples
 #' is.nullptr(NULL)
 #'
@@ -102,6 +104,25 @@ floatraw <- function(n) {
     x <- raw(n * 4)
     class(x) <- "floatraw"
     x
+}
+
+#' @rdname utils
+#' @export
+print.floatraw <- function(x, ...) {
+    nbytes <- length(x)
+    if (nbytes %% 4L != 0L) {
+        cat("floatraw bytes[", nbytes, "]: ", paste(format(unclass(x)), collapse = " "), "\n", sep = "")
+        return(invisible(x))
+    }
+
+    n <- nbytes / 4L
+    cat("floatraw[", n, "]", sep = "")
+    if (n) {
+        cat(": ", paste(format(floatraw2numeric(x)), collapse = " "), sep = "")
+    }
+    cat("\n")
+
+    invisible(x)
 }
 #' @rdname utils
 #' @export
