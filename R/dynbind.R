@@ -29,8 +29,10 @@
 #' `"glAccum(If)v ; glClear(I)v ; glClearColor(ffff)v ;"`
 #' ```
 #'
-#' Symbolic names are resolved using the library specified by `libnames`
-#' using [dynfind()] for loading.
+#' Symbolic names are resolved using the library specified by `libnames`.
+#' Character short library names are loaded using [dynfind()], character paths
+#' are loaded directly using [dynload()], and external pointer handles returned
+#' by [dynload()] or [dynfind()] are used as-is.
 #' For each function, a thin call wrapper function is created using the
 #' following template:
 #'
@@ -56,9 +58,12 @@
 #' `<TARGET>` is replaced with the expression `unpack(<TARGET>,"p",0)` in order
 #' to dereference `<TARGET>` as a pointer-to-function variable at call-time.
 #'
-#' @param libnames vector of character strings giving short library names of the
-#'        shared library to be loaded. See [dynfind()] for details.
-#'        `
+#' @param libnames character vector or external pointer handle specifying the
+#'        shared library. Character values that contain a path separator, or
+#'        name an existing file, are passed directly to [dynload()]. Other
+#'        character values are treated as short library names and loaded using
+#'        [dynfind()]. External pointer handles returned by [dynload()] or
+#'        [dynfind()] are used directly.
 #' @param signature character string specifying the *library signature* that
 #'        determines the set of foreign function names and types. See details.
 #'
@@ -107,13 +112,14 @@
 # TODO: use named character vector for signatures?
 dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "default", pattern = NULL, replace = NULL, funcptr = FALSE) {
     # load shared library
-    libh <- dynfind(libnames)
+    libh <- dynbind_resolve_libhandle(libnames)
     if (is.null(libh)) {
-        cat("dynbind error: Unable to find shared library '", libnames[[1L]], "'.\n", sep = "")
+        liblabel <- dynbind_libnames_label(libnames)
+        cat("dynbind error: Unable to find shared library '", liblabel, "'.\n", sep = "")
         cat("For details how to install dynport shared libs, type: ?'rdyncall-demos' might help.\n")
         cat("If there is no information about your OS, consult the projects page how to build and install the shared library for your operating-system.\n")
         cat("Make sure the shared library can be found at the default system places or adjust environment variables (e.g. %PATH% or $LD_LIBRARY_PATH).\n")
-        stop("unable to find shared library '", libnames[[1]], "'.\n", call. = FALSE)
+        stop("unable to find shared library '", liblabel, "'.\n", call. = FALSE)
     }
 
     # -- convert library signature to signature table
@@ -166,4 +172,44 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
         list(libhandle = libh, unresolved.symbols = syms.failed),
         class = "dynbind.report"
     )
+}
+
+dynbind_resolve_libhandle <- function(libnames) {
+    if (is.externalptr(libnames)) {
+        if (!dynload_is_handle(libnames)) {
+            stop("libnames external pointer must be returned by dynload() or dynfind()", call. = FALSE)
+        }
+        return(libnames)
+    }
+
+    if (!is.character(libnames)) {
+        stop("libnames must be a character vector or external pointer handle", call. = FALSE)
+    }
+
+    for (libname in libnames) {
+        handle <- if (dynbind_is_library_path(libname)) {
+            dynload(libname)
+        } else {
+            dynfind(libname)
+        }
+        if (!is.null(handle)) {
+            return(handle)
+        }
+    }
+
+    NULL
+}
+
+dynbind_is_library_path <- function(libname) {
+    !is.na(libname) && (grepl("[/\\\\]", libname) || file.exists(libname))
+}
+
+dynbind_libnames_label <- function(libnames) {
+    if (is.externalptr(libnames)) {
+        return("<external pointer>")
+    }
+    if (length(libnames)) {
+        return(libnames[[1L]])
+    }
+    "<empty>"
 }

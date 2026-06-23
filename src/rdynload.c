@@ -9,7 +9,21 @@
 #include "dynload.h"
 #include <string.h>
 
+#define RDYNCALL_LIBHANDLE_TAG "rdyncall.libhandle"
+
 SEXP C_dynpath(SEXP libh);
+
+static SEXP C_libhandle_tag(void)
+{
+  return Rf_install(RDYNCALL_LIBHANDLE_TAG);
+}
+
+static int C_is_libhandle(SEXP libh)
+{
+  return TYPEOF(libh) == EXTPTRSXP &&
+    R_ExternalPtrAddr(libh) != NULL &&
+    R_ExternalPtrTag(libh) == C_libhandle_tag();
+}
 
 #if defined(__APPLE__)
 #define RDYNCALL_DARWIN_LIBSYSTEM_PATH "/usr/lib/libSystem.B.dylib"
@@ -140,7 +154,12 @@ SEXP C_dynload(SEXP libpath_x)
   if (!libHandle)
     return R_NilValue;
 
-  return R_MakeExternalPtr(libHandle, R_NilValue, R_NilValue);
+  return R_MakeExternalPtr(libHandle, C_libhandle_tag(), R_NilValue);
+}
+
+SEXP C_is_dynload_handle(SEXP libh)
+{
+  return Rf_ScalarLogical(C_is_libhandle(libh));
 }
 
 /** ---------------------------------------------------------------------------
