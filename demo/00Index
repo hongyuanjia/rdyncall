@@ -7,5 +7,6 @@ stdio           Read and write R raw vectors through C stdio.
 glpk            Solve a small linear program through the GLPK C API.
 SDL             SDL3 Snake game demo.
 SDL_audio       SDL3 planar audio demo.
+SDL_raster      SDL3 raster texture demo with illustrative base R timing.
 libxml2         Parse XML using direct libxml2 calls and compare with xml2.
 raylib          raylib recursive tree demo using aggregate arguments.
