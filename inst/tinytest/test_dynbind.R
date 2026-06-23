@@ -59,6 +59,22 @@ local({
     expect_dynbind_add(file.path(".", basename(fixture)))
 })
 
+local({
+    rlib <- dynfind("R")
+    if (!is.null(rlib)) {
+        temp_wd <- tempfile("rdyncall-dynbind-short-name-")
+        dir.create(temp_wd)
+        oldwd <- setwd(temp_wd)
+        on.exit(setwd(oldwd), add = TRUE)
+        dir.create("R")
+        env <- new.env()
+        bind <- dynbind("R", "R_ShowMessage(Z)v;", envir = env)
+        expect_equal(class(bind), "dynbind.report")
+        expect_equal(bind$unresolved.symbols, character(0))
+        expect_true(exists("R_ShowMessage", env, inherits = FALSE))
+    }
+})
+
 attr(handle, "dynbind-test") <- "input-handle"
 bind <- expect_dynbind_add(handle)
 expect_equal(attr(bind$libhandle, "dynbind-test"), "input-handle")

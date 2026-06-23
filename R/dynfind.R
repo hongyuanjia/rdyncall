@@ -33,6 +33,35 @@ dynfind_files <- function(dirs, patterns) {
     }), use.names = FALSE))
 }
 
+dynfind_library_patterns <- function(name) {
+    names <- dynfind_name_variants(name)
+    if (.Platform$OS.type == "windows") {
+        c(paste0(names, ".dll"), paste0("lib", names, ".dll"), paste0(names, "*.dll"), paste0("lib", names, "*.dll"))
+    } else if (Sys.info()[["sysname"]] == "Darwin") {
+        c(paste0("lib", names, ".dylib"), paste0("lib", names, ".*.dylib"))
+    } else {
+        c(paste0("lib", names, ".so"), paste0("lib", names, ".so.*"))
+    }
+}
+
+dynfind_runtime_dirs <- function() {
+    if (.Platform$OS.type == "windows") {
+        return(dynfind_values(c(
+            R.home("bin"),
+            file.path(R.home("bin"), R.version$arch),
+            file.path(R.home("bin"), "x64"),
+            file.path(R.home("bin"), "i386"),
+            R.home("lib")
+        )))
+    }
+
+    dynfind_values(c(R.home("lib"), R.home("bin")))
+}
+
+dynfind_runtime_files <- function(name) {
+    dynfind_files(dynfind_runtime_dirs(), dynfind_library_patterns(name))
+}
+
 dynfind_package_manager_dirs <- function(name) {
     names <- dynfind_name_variants(name)
     if (.Platform$OS.type == "windows") {
@@ -75,20 +104,16 @@ dynfind_package_manager_dirs <- function(name) {
 }
 
 dynfind_package_manager_files <- function(name) {
-    names <- dynfind_name_variants(name)
-    patterns <- if (.Platform$OS.type == "windows") {
-        c(paste0(names, ".dll"), paste0("lib", names, ".dll"), paste0(names, "*.dll"), paste0("lib", names, "*.dll"))
-    } else if (Sys.info()[["sysname"]] == "Darwin") {
-        c(paste0("lib", names, ".dylib"), paste0("lib", names, ".*.dylib"))
-    } else {
-        c(paste0("lib", names, ".so"), paste0("lib", names, ".so.*"))
-    }
-    dynfind_files(dynfind_package_manager_dirs(name), patterns)
+    dynfind_files(dynfind_package_manager_dirs(name), dynfind_library_patterns(name))
 }
 
 dynfind1 <- if (.Platform$OS.type == "windows") {
     function(name, ...) {
         handle <- dynfind_try(c(paste("lib", name, sep = ""), name), ...)
+        if (!is.null(handle)) {
+            return(handle)
+        }
+        handle <- dynfind_try(dynfind_runtime_files(name), ..., existing.only = TRUE)
         if (!is.null(handle)) {
             return(handle)
         }
@@ -101,6 +126,10 @@ dynfind1 <- if (.Platform$OS.type == "windows") {
                 paste(name, ".framework/", name, sep = ""),
                 paste("lib", name, ".dylib", sep = "")
             ), ...)
+            if (!is.null(handle)) {
+                return(handle)
+            }
+            handle <- dynfind_try(dynfind_runtime_files(name), ..., existing.only = TRUE)
             if (!is.null(handle)) {
                 return(handle)
             }
@@ -133,6 +162,10 @@ dynfind1 <- if (.Platform$OS.type == "windows") {
                 paste("lib", name, ".so", sep = ""),
                 paste("lib", name, sep = "")
             ), ...)
+            if (!is.null(handle)) {
+                return(handle)
+            }
+            handle <- dynfind_try(dynfind_runtime_files(name), ..., existing.only = TRUE)
             if (!is.null(handle)) {
                 return(handle)
             }
@@ -200,10 +233,12 @@ dynfind1 <- if (.Platform$OS.type == "windows") {
 #' The vector of `location`s is initialized by the dynamic linker search rules,
 #' including environment variables such as `PATH` on Windows and
 #' `LD_LIBRARY_PATH` on Unix-flavour systems. If the dynamic linker lookup
-#' fails, `dynfind()` also checks common package-manager library locations such
-#' as Homebrew (`HOMEBREW_PREFIX`, `/opt/homebrew`, `/usr/local`), MacPorts
-#' (`MACPORTS_PREFIX`, `/opt/local`), Linuxbrew (`/home/linuxbrew/.linuxbrew`)
-#' and Scoop (`SCOOP`, `SCOOP_GLOBAL`, `ProgramData/scoop`).
+#' fails, `dynfind()` also checks library directories that belong to the
+#' current R runtime, such as `R.home("lib")` and `R.home("bin")`, and common
+#' package-manager library locations such as Homebrew (`HOMEBREW_PREFIX`,
+#' `/opt/homebrew`, `/usr/local`), MacPorts (`MACPORTS_PREFIX`, `/opt/local`),
+#' Linuxbrew (`/home/linuxbrew/.linuxbrew`) and Scoop (`SCOOP`, `SCOOP_GLOBAL`,
+#' `ProgramData/scoop`).
 #' (The set of hardcoded locations might expand and change within the next minor releases).
 #'
 #' The file extension depends on the OS: `.dll` (Windows), `.dylib` (macOS),

@@ -69,10 +69,12 @@ useful for all platforms}
 The vector of \code{location}s is initialized by the dynamic linker search rules,
 including environment variables such as \code{PATH} on Windows and
 \code{LD_LIBRARY_PATH} on Unix-flavour systems. If the dynamic linker lookup
-fails, \code{dynfind()} also checks common package-manager library locations such
-as Homebrew (\code{HOMEBREW_PREFIX}, \verb{/opt/homebrew}, \verb{/usr/local}), MacPorts
-(\code{MACPORTS_PREFIX}, \verb{/opt/local}), Linuxbrew (\verb{/home/linuxbrew/.linuxbrew})
-and Scoop (\code{SCOOP}, \code{SCOOP_GLOBAL}, \code{ProgramData/scoop}).
+fails, \code{dynfind()} also checks library directories that belong to the
+current R runtime, such as \code{R.home("lib")} and \code{R.home("bin")}, and common
+package-manager library locations such as Homebrew (\code{HOMEBREW_PREFIX},
+\verb{/opt/homebrew}, \verb{/usr/local}), MacPorts (\code{MACPORTS_PREFIX}, \verb{/opt/local}),
+Linuxbrew (\verb{/home/linuxbrew/.linuxbrew}) and Scoop (\code{SCOOP}, \code{SCOOP_GLOBAL},
+\code{ProgramData/scoop}).
 (The set of hardcoded locations might expand and change within the next minor releases).
 
 The file extension depends on the OS: \code{.dll} (Windows), \code{.dylib} (macOS),

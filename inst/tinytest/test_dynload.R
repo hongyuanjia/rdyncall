@@ -19,3 +19,8 @@ if (Sys.info()[["sysname"]] == "Darwin") {
     expect_true(length(libm_symbols) < 1000L)
 }
 expect_null(dynunload(libm))
+
+libr <- dynfind("R")
+expect_true(is.externalptr(libr))
+expect_true(is.externalptr(dynsym(libr, "R_ShowMessage")))
+expect_null(dynunload(libr))
