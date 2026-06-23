@@ -1,27 +1,28 @@
-# Package: rdyncall 
+# Package: rdyncall
 # File: demo/callbacks.R
-# Description: Creating a callback and call it via dyncall
+# Description: Create callbacks and call them through dyncall.
 
-# The function to wrap:
-f <- function(x,y) x+y
+library(rdyncall)
 
-# Create the callback:
-cb <- ccallback("ii)i", f)
-
-# Call the callback
-r <- dyncall(cb, "ii)i", 20, 3)
-r == 23
-
-# Recursive callback example:
-
-f <- function(x,y,f,i) 
-{
-  if (i > 1) dyncall(f, "iipi)i", x,y,f,i-1)
-  x+y
+# A callback is represented as a C-callable function pointer.
+add <- function(x, y) {
+    x + y
 }
 
-cb <- ccallback("iipi)i", f)
+add_callback <- ccallback("ii)i", add)
+result <- dyncall(add_callback, "ii)i", 20L, 3L)
+print(result)
+stopifnot(identical(result, 23L))
 
-r <- dyncall(cb, "iipi)i", 1,1,cb,100 )
-r == 2
+# A callback can receive its own function pointer and call it recursively.
+recursive_add <- function(x, y, fun, n) {
+    if (n > 1L) {
+        dyncall(fun, "iipi)i", x, y, fun, n - 1L)
+    }
+    x + y
+}
 
+recursive_callback <- ccallback("iipi)i", recursive_add)
+result <- dyncall(recursive_callback, "iipi)i", 20L, 3L, recursive_callback, 100L)
+print(result)
+stopifnot(identical(result, 23L))
