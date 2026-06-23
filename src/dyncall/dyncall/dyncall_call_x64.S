@@ -45,6 +45,9 @@ BEGIN_ASM
 
 GLOBAL(dcCall_x64_sysv)
 BEGIN_PROC(dcCall_x64_sysv)
+#if !defined(GEN_MASM)
+LOCAL(dcCall_x64_sysv):
+#endif
 	PUSH(RBP)			/* Pseudo-prolog - preserve RBP. */
 	PUSH(RBX)			/* Preserve RBX and store pointer to function in it. */
 	MOV(RSP,RBP)			/* Store stack pointer in RBP. */
@@ -88,7 +91,7 @@ END_PROC(dcCall_x64_sysv)
 GLOBAL(dcCall_x64_sysv_aggr)
 BEGIN_PROC(dcCall_x64_sysv_aggr)
 	PUSH(R9)			/* preserve ptr to copy retval regs to (also realigns stack) */
-	CALL(CSYM(dcCall_x64_sysv))	/* params (in regs) passed-through to next call, as-is */
+	CALL(LOCAL(dcCall_x64_sysv))	/* params (in regs) passed-through to next call, as-is */
 	POP(R9)				/* get ptr to retval regs back */
 
 	/* copy regs holding aggregate data to provided space (pointed to by r12) */
@@ -114,6 +117,9 @@ END_PROC(dcCall_x64_sysv_aggr)
 
 GLOBAL_FRAME(dcCall_x64_win64)
 FRAME_BEGIN_PROC(dcCall_x64_win64)
+#if !defined(GEN_MASM)
+LOCAL(dcCall_x64_win64):
+#endif
 
 	PUSH(RBP)			/* Pseudo-prolog - preserve RBP. */
 	FRAME_PUSH_REG(RBP)
@@ -167,7 +173,7 @@ END_PROC(dcCall_x64_win64)
 GLOBAL(dcCall_x64_win64_aggr)
 BEGIN_PROC(dcCall_x64_win64_aggr)
 	SUB(LIT(8), RSP)		/* Re-align the stack */
-	CALL(CSYM(dcCall_x64_win64))	/* params (in regs) passed-through to next call, as-is */
+	CALL(LOCAL(dcCall_x64_win64))	/* params (in regs) passed-through to next call, as-is */
 	ADD(LIT(8), RSP)		/* Restore the stack pointer */
 
 	MOV(QWORD(RSP, 40), R8)		/* ptr to aggregate mem -> R8 (passed as only stack arg, 0x40 to skip ret addr and spill area */

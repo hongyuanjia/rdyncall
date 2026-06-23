@@ -7,5 +7,5 @@ all: $(SHLIB)
 $(SHLIB): mylibs
 
 mylibs:
-	(cd dyncall ; CC="$(CC)" AR="$(AR)" CFLAGS="-fPIC $(CFLAGS)" CPPFLAGS="-DNDEBUG ${CPPFLAGS}" make -f Makefile.embedded)
+	(cd dyncall ; CC="$(CC)" AR="$(AR)" CFLAGS="-fPIC $(CFLAGS)" ASFLAGS="-fPIC $(ASFLAGS)" CPPFLAGS="-DNDEBUG ${CPPFLAGS}" make -f Makefile.embedded)
 
