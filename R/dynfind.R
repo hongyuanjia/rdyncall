@@ -276,6 +276,7 @@ dynfind1 <- if (.Platform$OS.type == "windows") {
 #'
 #' @keywords programming interface
 #' @rdname dynfind
+#' @export
 dynfind <- function(libnames, auto.unload = TRUE) {
     for (libname in libnames) {
         handle <- dynfind1(libname, auto.unload)
