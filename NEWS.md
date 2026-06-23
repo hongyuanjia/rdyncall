@@ -7,6 +7,8 @@
 - Generate real on-disk R packages from DCF DynPort files via `dynport()`.
 - Allow `dynbind()` to accept direct library paths and existing external
   pointer handles in addition to short library names.
+- Improve `dynfind()` discovery for libraries installed by common package
+  managers, including Homebrew, MacPorts, Linuxbrew and Scoop.
 - Fix `cstruct()` and `cunion()` field parsing when whitespace follows the type signature.
 - Store aggregate field names in the explicit `typeinfo$fields$name` column.
 - Add `struct` and `union` bitfield layout, access, DynPort parsing, and by-value aggregate support.

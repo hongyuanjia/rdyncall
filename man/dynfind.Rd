@@ -66,10 +66,13 @@ Here is a sample list of values for the three other components:
 useful for all platforms}
 }
 
-The vector of \code{location}s is initialized by environment variables such
-as \code{PATH} on Windows and \code{LD_LIBRARY_PATH} on Unix-flavour systems in
-additional to some hardcoded locations: \verb{/opt/local/lib}, \verb{/usr/local/lib},
-\verb{/usr/lib} and \verb{/lib}.
+The vector of \code{location}s is initialized by the dynamic linker search rules,
+including environment variables such as \code{PATH} on Windows and
+\code{LD_LIBRARY_PATH} on Unix-flavour systems. If the dynamic linker lookup
+fails, \code{dynfind()} also checks common package-manager library locations such
+as Homebrew (\code{HOMEBREW_PREFIX}, \verb{/opt/homebrew}, \verb{/usr/local}), MacPorts
+(\code{MACPORTS_PREFIX}, \verb{/opt/local}), Linuxbrew (\verb{/home/linuxbrew/.linuxbrew})
+and Scoop (\code{SCOOP}, \code{SCOOP_GLOBAL}, \code{ProgramData/scoop}).
 (The set of hardcoded locations might expand and change within the next minor releases).
 
 The file extension depends on the OS: \code{.dll} (Windows), \code{.dylib} (macOS),
