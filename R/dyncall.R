@@ -53,7 +53,7 @@ dyncall_aggregate_field_type_name <- function(type) {
     substr(type, 2L, nchar(type) - 1L)
 }
 
-dyncall_aggregate_field_layout <- function(fields) {
+dyncall_normalize_aggregate_fields <- function(fields) {
     array_lens <- if ("array_len" %in% names(fields)) {
         as.integer(fields$array_len)
     } else {
@@ -100,6 +100,8 @@ dyncall_aggregate_field_layout <- function(fields) {
     )
 }
 
+dyncall_aggregate_field_layout <- dyncall_normalize_aggregate_fields
+
 dyncall_aggregate_layout <- function(name, envir = parent.frame(), seen = character()) {
     info <- get_typeinfo(name, envir = envir)
     if (is.null(info)) {
@@ -119,14 +121,14 @@ dyncall_aggregate_layout <- function(name, envir = parent.frame(), seen = charac
 
     size <- as.integer(info$size)
     alignment <- as.integer(info$align)
-    layout_fields <- dyncall_aggregate_field_layout(fields)
-    offsets <- as.integer(layout_fields$offset)
+    fields <- dyncall_normalize_aggregate_fields(fields)
+    offsets <- as.integer(fields$offset)
     if (is.na(size) || size < 1L || is.na(alignment) || alignment < 1L || anyNA(offsets)) {
         stop("aggregate type '", name, "' does not contain a complete memory layout", call. = FALSE)
     }
 
-    field_types <- as.character(layout_fields$type)
-    array_lens <- as.integer(layout_fields$array_len)
+    field_types <- as.character(fields$type)
+    array_lens <- as.integer(fields$array_len)
     if (length(array_lens) != length(field_types) || anyNA(array_lens) || any(array_lens < 1L)) {
         stop("aggregate type '", name, "' contains invalid fixed array lengths", call. = FALSE)
     }
@@ -148,12 +150,7 @@ dyncall_aggregate_layout <- function(name, envir = parent.frame(), seen = charac
         kind = info$type,
         size = size,
         align = alignment,
-        fields = data.frame(
-            type = field_types,
-            offset = offsets,
-            array_len = array_lens,
-            stringsAsFactors = FALSE
-        ),
+        fields = fields,
         field_layouts = field_layouts
     )
 }

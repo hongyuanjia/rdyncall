@@ -186,7 +186,8 @@ make_field_info <- function(field_names, types, offsets,
         bit_offset = bit_offsets,
         bit_width = bit_widths,
         storage_offset = storage_offsets,
-        storage_size = storage_sizes
+        storage_size = storage_sizes,
+        stringsAsFactors = FALSE
     )
 }
 
@@ -470,7 +471,7 @@ make_aggregate_info <- function(name, kind = c("struct", "union"), signature,
         )
         return(typeinfo(
             name = name, type = kind, size = parsed$size, align = parsed$align,
-            fields = field_info
+            fields = field_info, signature = signature
         ))
     }
 
@@ -556,7 +557,10 @@ make_aggregate_info <- function(name, kind = c("struct", "union"), signature,
         storage_offsets = storage_offsets,
         storage_sizes = storage_sizes
     )
-    typeinfo(name = name, type = kind, size = size, align = max_align, fields = field_info)
+    typeinfo(
+        name = name, type = kind, size = size, align = max_align,
+        fields = field_info, signature = signature
+    )
 }
 
 is_bitfield <- function(field_info) {

@@ -25,6 +25,14 @@ expect_error(rdyncall:::get_typeinfo(1))
 
 expect_equal(rdyncall:::align(4, 8), 8L)
 
+local({
+    old <- suppressWarnings(options(stringsAsFactors = TRUE))
+    on.exit(options(old))
+    field_info <- rdyncall:::make_field_info(c("a", "b"), c("C", "i"), c(0L, 4L))
+    expect_false(is.factor(field_info$name))
+    expect_equal(as.character(field_info$type), c("C", "i"))
+})
+
 tokens <- rdyncall:::scan_signature_tokens("C[2][3]i*<Rect>[2]")
 expect_true(tokens$ok)
 expect_equal(tokens$type, c("C", "i", "*<Rect>"))
@@ -130,9 +138,10 @@ expect_equal(
                 bit_offset = rep(NA_integer_, 4L),
                 bit_width = rep(NA_integer_, 4L),
                 storage_offset = rep(NA_integer_, 4L),
-                storage_size = rep(NA_integer_, 4L)
+                storage_size = rep(NA_integer_, 4L),
+                stringsAsFactors = FALSE
             ),
-            signature = NA
+            signature = "ssSS"
         ), class = "typeinfo"
     )
 )
@@ -155,9 +164,11 @@ expect_error(cstruct("OnlyLayout{C}@packed;", env), "number of field types")
 
 parsed_struct <- rdyncall:::dynport_parse_struct("Rect{ssSS} x y w h;")
 expect_equal(parsed_struct$Rect$fields, env$RectWithSpace$fields)
+expect_equal(parsed_struct$Rect$signature, "ssSS")
 
 parsed_union <- rdyncall:::dynport_parse_union("Number{id} i d;")
 expect_equal(parsed_union$Number$fields, env$NumberWithSpace$fields)
+expect_equal(parsed_union$Number$signature, "id")
 
 expect_null(cstruct("FixedArray{C[4]id[2]}bytes tag values;", env))
 expect_equal(
@@ -170,16 +181,19 @@ expect_equal(
         bit_offset = rep(NA_integer_, 3L),
         bit_width = rep(NA_integer_, 3L),
         storage_offset = rep(NA_integer_, 3L),
-        storage_size = rep(NA_integer_, 3L)
+        storage_size = rep(NA_integer_, 3L),
+        stringsAsFactors = FALSE
     )
 )
 expect_equal(env$FixedArray$size, 24L)
 expect_equal(env$FixedArray$align, 8L)
+expect_equal(env$FixedArray$signature, "C[4]id[2]")
 
 expect_null(cunion("FixedArrayUnion|i[2]d} ints value ;", env))
 expect_equal(env$FixedArrayUnion$size, 8L)
 expect_equal(env$FixedArrayUnion$align, 8L)
 expect_equal(env$FixedArrayUnion$fields$array_len, c(2L, 1L))
+expect_equal(env$FixedArrayUnion$signature, "i[2]d")
 
 expect_null(cunion("FixedArrayUnionPadding|C[3]s} bytes short ;", env))
 expect_equal(env$FixedArrayUnionPadding$size, 4L)

@@ -32,6 +32,56 @@ out <- suppressWarnings(run_rdyncall_subprocess(invalid_size))
 expect_true(!is.null(attr(out, "status")))
 expect_true(any(grepl("rdyncall.callvm.size", out, fixed = TRUE)))
 
+legacy_fields <- data.frame(
+    type = c("C", "i"),
+    offset = c(0L, 4L),
+    stringsAsFactors = FALSE
+)
+expect_equal(
+    rdyncall:::dyncall_normalize_aggregate_fields(legacy_fields),
+    data.frame(
+        type = c("C", "i"),
+        offset = c(0L, 4L),
+        array_len = c(1L, 1L),
+        stringsAsFactors = FALSE
+    )
+)
+
+array_fields <- data.frame(
+    type = I(c("C", "d")),
+    offset = c(0L, 8L),
+    array_len = c(4L, 2L),
+    stringsAsFactors = FALSE
+)
+expect_equal(
+    rdyncall:::dyncall_normalize_aggregate_fields(array_fields),
+    data.frame(
+        type = c("C", "d"),
+        offset = c(0L, 8L),
+        array_len = c(4L, 2L),
+        stringsAsFactors = FALSE
+    )
+)
+
+bitfield_fields <- data.frame(
+    type = I(c("I", "I", "I", "C")),
+    offset = c(0L, 0L, 4L, 5L),
+    array_len = rep(1L, 4L),
+    bit_offset = c(0L, 1L, NA_integer_, NA_integer_),
+    bit_width = c(1L, 3L, 0L, NA_integer_),
+    storage_offset = c(0L, 0L, NA_integer_, NA_integer_),
+    storage_size = c(4L, 4L, NA_integer_, NA_integer_),
+    stringsAsFactors = FALSE
+)
+expect_equal(
+    rdyncall:::dyncall_normalize_aggregate_fields(bitfield_fields),
+    data.frame(
+        type = c("I", "C"),
+        offset = c(0L, 5L),
+        array_len = c(1L, 1L),
+        stringsAsFactors = FALSE
+    )
+)
 
 build_aggregate_by_value_fixture <- function() {
     src <- system.file("tinytest", "aggregate_by_value.c", package = "rdyncall", mustWork = TRUE)
