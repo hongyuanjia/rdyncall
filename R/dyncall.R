@@ -100,8 +100,6 @@ dyncall_normalize_aggregate_fields <- function(fields) {
     )
 }
 
-dyncall_aggregate_field_layout <- dyncall_normalize_aggregate_fields
-
 dyncall_aggregate_layout <- function(name, envir = parent.frame(), seen = character()) {
     info <- get_typeinfo(name, envir = envir)
     if (is.null(info)) {
