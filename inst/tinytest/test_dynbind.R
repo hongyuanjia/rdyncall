@@ -7,6 +7,18 @@ expect_equal(
     "dynbind.report"
 )
 expect_true(exists("c_qsort", env, inherits = FALSE))
+bind_print <- capture.output(expect_identical(print(bind), bind))
+expect_true(any(grepl("dynbind report", bind_print, fixed = TRUE)))
+expect_true(any(grepl("unresolved symbols: 0", bind_print, fixed = TRUE)))
+
+missing_bind <- dynbind(
+    c("msvcrt", "c", "c.so.6"),
+    "rdyncall_missing_symbol_for_print_probe(i)i;",
+    envir = new.env()
+)
+missing_bind_print <- capture.output(expect_identical(print(missing_bind), missing_bind))
+expect_true(any(grepl("unresolved symbols: 1", missing_bind_print, fixed = TRUE)))
+expect_true(any(grepl("rdyncall_missing_symbol_for_print_probe", missing_bind_print, fixed = TRUE)))
 
 build_dynbind_fixture <- function() {
     src <- system.file("tinytest", "dynbind.c", package = "rdyncall", mustWork = TRUE)

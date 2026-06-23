@@ -82,6 +82,10 @@
 #'        functions (`FALSE`, default) or to function pointer variables
 #'        (`TRUE` rarely needed).
 #'
+#' @param x S3 `dynbind.report` object to print.
+#'
+#' @param ... additional arguments to be passed to [base::print()] methods.
+#'
 #' @return
 #' The function returns a list with two fields:
 #'
@@ -172,6 +176,23 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
         list(libhandle = libh, unresolved.symbols = syms.failed),
         class = "dynbind.report"
     )
+}
+
+#' @rdname dynbind
+#' @export
+print.dynbind.report <- function(x, ...) {
+    path <- attr(x$libhandle, "path")
+    if (length(path) == 0L || all(is.na(path))) path <- "<unknown>"
+    unresolved <- x$unresolved.symbols
+
+    cat("dynbind report\n")
+    cat("  library: ", path[[1L]], "\n", sep = "")
+    cat("  unresolved symbols: ", length(unresolved), "\n", sep = "")
+    if (length(unresolved)) {
+        cat("    ", paste(unresolved, collapse = "\n    "), "\n", sep = "")
+    }
+
+    invisible(x)
 }
 
 dynbind_resolve_libhandle <- function(libnames) {

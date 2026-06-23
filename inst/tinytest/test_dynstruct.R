@@ -23,6 +23,83 @@ expect_equal(
 )
 expect_error(rdyncall:::get_typeinfo(1))
 
+typeinfo_base_print <- capture.output(print(rdyncall:::get_typeinfo("p")))
+expect_true(any(grepl("base typeinfo p", typeinfo_base_print, fixed = TRUE)))
+expect_true(any(grepl("signature: p", typeinfo_base_print, fixed = TRUE)))
+
+typeinfo_pointer_print <- capture.output(print(rdyncall:::get_typeinfo("*i")))
+expect_true(any(grepl("pointer typeinfo *i", typeinfo_pointer_print, fixed = TRUE)))
+expect_true(any(grepl("basetype: i", typeinfo_pointer_print, fixed = TRUE)))
+
+local({
+    env <- new.env()
+    cstruct("PrintRect{ssSS}x y w h;", env)
+    rect_type_print <- capture.output(print(env$PrintRect))
+    expect_true(any(grepl("struct typeinfo PrintRect", rect_type_print, fixed = TRUE)))
+    expect_true(any(grepl("signature: ssSS", rect_type_print, fixed = TRUE)))
+    expect_true(any(grepl("array_len", rect_type_print, fixed = TRUE)))
+
+    rect <- cdata(env$PrintRect)
+    rect$x <- 1L
+    rect$y <- 2L
+    rect$w <- 3L
+    rect$h <- 4L
+    rect_print <- capture.output(expect_identical(print(rect), rect))
+    expect_true(any(grepl("struct PrintRect", rect_print, fixed = TRUE)))
+    expect_true(any(grepl("x :1", rect_print, fixed = TRUE)))
+
+    cunion("PrintUnion|iC}i c;", env)
+    union <- cdata(env$PrintUnion)
+    union$i <- 42L
+    union_print <- capture.output(expect_identical(print(union), union))
+    expect_true(any(grepl("union PrintUnion", union_print, fixed = TRUE)))
+
+    cstruct("PrintArray{C[3]}bytes;", env)
+    array <- cdata(env$PrintArray)
+    array$bytes <- 1:3
+    array_print <- capture.output(print(array))
+    expect_true(any(grepl("bytes :1 2 3", array_print, fixed = TRUE)))
+
+    cstruct("PrintBits{IIII}a:1 b:3 :4 c:8;", env)
+    bits_type_print <- capture.output(print(env$PrintBits))
+    expect_true(any(grepl("bit_width", bits_type_print, fixed = TRUE)))
+    bits <- cdata(env$PrintBits)
+    bits$a <- 1L
+    bits$b <- 5L
+    bits$c <- 171L
+    bits_print <- capture.output(print(bits))
+    expect_true(any(grepl("a :1", bits_print, fixed = TRUE)))
+    expect_true(any(grepl("b :5", bits_print, fixed = TRUE)))
+
+    cstruct("PrintEmpty{};", env)
+    empty_print <- capture.output(print(env$PrintEmpty))
+    expect_true(any(grepl("<none>", empty_print, fixed = TRUE)))
+
+    ctype <- as.ctype(raw(env$PrintRect$size), env$PrintRect)
+    ctype$x <- 7L
+    expect_equal(ctype$x, 7L)
+    expect_true(inherits(ctype, "ctype"))
+    expect_true(inherits(ctype, "struct"))
+    ctype_print <- capture.output(expect_identical(print(ctype), ctype))
+    expect_true(any(grepl("struct PrintRect", ctype_print, fixed = TRUE)))
+    expect_true(any(grepl("x :7", ctype_print, fixed = TRUE)))
+})
+
+cstruct("PrintVec2{ff}x y;")
+cstruct("PrintHolder{<PrintVec2>[2]}xy;")
+holder <- cdata(PrintHolder)
+vec_a <- cdata(PrintVec2)
+vec_a$x <- 1
+vec_a$y <- 2
+vec_b <- cdata(PrintVec2)
+vec_b$x <- 3
+vec_b$y <- 4
+holder$xy <- list(vec_a, vec_b)
+holder_print <- capture.output(print(holder))
+expect_true(any(grepl("xy :[", holder_print, fixed = TRUE)))
+expect_true(any(grepl("[[1]]: struct PrintVec2", holder_print, fixed = TRUE)))
+expect_true(any(grepl("[[2]]: struct PrintVec2", holder_print, fixed = TRUE)))
+
 expect_equal(rdyncall:::align(4, 8), 8L)
 
 local({

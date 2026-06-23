@@ -58,6 +58,10 @@
 #'        bitfield layout information that specifies aggregate struct and union
 #'        types.
 #'
+#' @param x S3 `typeinfo` object to print.
+#'
+#' @param ... additional arguments to be passed to [base::print()] methods.
+#'
 #' @return
 #' List object tagged as S3 class `typeinfo` with the following named entries
 #' \item{type}{Type name.}
@@ -92,6 +96,43 @@ typeinfo <- function(name, type = c("base", "pointer", "struct", "union"),
         ),
         class = "typeinfo"
     )
+}
+
+#' @rdname typeinfo
+#' @export
+print.typeinfo <- function(x, ...) {
+    typeinfo_value <- function(value) {
+        if (length(value) == 0L || all(is.na(value))) "<unknown>" else as.character(value)
+    }
+
+    cat(x$type, " typeinfo ", x$name, "\n", sep = "")
+    cat("  size: ", typeinfo_value(x$size), "\n", sep = "")
+    cat("  align: ", typeinfo_value(x$align), "\n", sep = "")
+    if (!all(is.na(x$signature))) {
+        cat("  signature: ", x$signature, "\n", sep = "")
+    }
+    if (identical(x$type, "pointer") && !all(is.na(x$basetype))) {
+        cat("  basetype: ", x$basetype, "\n", sep = "")
+    }
+
+    if (is.data.frame(x$fields)) {
+        cat("  fields:\n")
+        if (!nrow(x$fields)) {
+            cat("    <none>\n")
+        } else {
+            fields <- x$fields
+            fields$type <- as.character(fields$type)
+            base_cols <- c("name", "type", "offset", "array_len")
+            bit_cols <- c("bit_offset", "bit_width", "storage_offset", "storage_size")
+            cols <- base_cols[base_cols %in% names(fields)]
+            if ("bit_width" %in% names(fields) && any(!is.na(fields$bit_width))) {
+                cols <- c(cols, bit_cols[bit_cols %in% names(fields)])
+            }
+            print(fields[cols], row.names = FALSE)
+        }
+    }
+
+    invisible(x)
 }
 
 is.typeinfo <- function(x) {
@@ -789,19 +830,28 @@ cunion <- function(sigs, envir = parent.frame()) {
 #' @rdname struct
 #' @export
 as.ctype <- function(x, type) {
-    # TODO: check
-    if (is.typeinfo(x)) struct_name <- type$name
+    caller <- parent.frame()
+    if (is.character(type)) {
+        type <- get_typeinfo(type, caller)
+    } else if (!is.typeinfo(type)) {
+        stop("type is not of class typeinfo and no character string")
+    }
+    if (!type$type %in% c("struct", "union")) stop("type must be C struct or union.")
     attr(x, "ctype") <- type
-    class(x) <- "ctype"
+    attr(x, "struct") <- type$name
+    attr(x, "typeinfo") <- type
+    attr(x, "typeinfo_env") <- caller
+    class(x) <- c("ctype", "struct")
     return(x)
 }
 
 #' @rdname struct
 #' @export
 cdata <- function(type) {
+    caller <- parent.frame()
     if (is.character(type)) {
         name <- type
-        type <- get_typeinfo(type)
+        type <- get_typeinfo(type, caller)
     } else if (is.typeinfo(type)) {
         name <- type$name
     } else {
@@ -812,12 +862,13 @@ cdata <- function(type) {
     class(x) <- "struct"
     attr(x, "struct") <- type$name
     attr(x, "typeinfo") <- type
+    attr(x, "typeinfo_env") <- caller
     return(x)
 }
 
-as_aggregate_field <- function(x, type) {
+as_aggregate_field <- function(x, type, envir = parent.frame()) {
     if (is.character(type)) {
-        type <- get_typeinfo(type)
+        type <- get_typeinfo(type, envir)
     } else if (!is.typeinfo(type)) {
         stop("type is not of class typeinfo and no character string")
     }
@@ -825,6 +876,7 @@ as_aggregate_field <- function(x, type) {
     class(x) <- "struct"
     attr(x, "struct") <- type$name
     attr(x, "typeinfo") <- type
+    attr(x, "typeinfo_env") <- envir
     x
 }
 
@@ -835,7 +887,9 @@ struct_typeinfo <- function(x, envir = parent.frame()) {
         return(info)
     }
 
-    info <- get_typeinfo(struct_name, envir = envir)
+    lookup_env <- attr(x, "typeinfo_env")
+    if (!is.environment(lookup_env)) lookup_env <- envir
+    info <- get_typeinfo(struct_name, envir = lookup_env)
     if (!is.null(info)) return(info)
 
     stop("unknown struct type '", struct_name, "'")
@@ -880,14 +934,17 @@ pack_array_field <- function(x, offset, field_type_info, array_len, value) {
     invisible(NULL)
 }
 
-unpack_aggregate_array_field <- function(x, offset, field_type_name, field_type_info, array_len) {
+unpack_aggregate_array_field <- function(x, offset, field_type_name, field_type_info,
+                                         array_len, envir = parent.frame()) {
     unpack_one <- function(i) {
         element_offset <- offset + (i - 1L) * field_type_info$size
         if (is.raw(x)) {
             size <- field_type_info$size
-            as_aggregate_field(x[(element_offset + 1):(element_offset + size)], field_type_info)
+            as_aggregate_field(x[(element_offset + 1):(element_offset + size)],
+                field_type_info, envir = envir
+            )
         } else if (is.externalptr(x)) {
-            as_aggregate_field(offset_ptr(x, element_offset), field_type_info)
+            as_aggregate_field(offset_ptr(x, element_offset), field_type_info, envir = envir)
         }
     }
 
@@ -918,6 +975,8 @@ pack_aggregate_array_field <- function(x, offset, field_type_info, array_len, va
 `$.struct` <- unpack.struct <- function(x, index) {
     caller <- parent.frame()
     struct_info <- struct_typeinfo(x, caller)
+    lookup_env <- attr(x, "typeinfo_env")
+    if (!is.environment(lookup_env)) lookup_env <- caller
     field_info <- struct_info$fields
     field_index <- match(index, field_info$name)
     if (is.na(field_index)) stop("unknown field index '", index, "'")
@@ -931,12 +990,14 @@ pack_aggregate_array_field <- function(x, offset, field_type_info, array_len, va
     }
     offset <- field_info[field_index, "offset"]
     field_type_name <- as.character(field_info[[field_index, "type"]])
-    field_type_info <- get_typeinfo(field_type_name, caller)
+    field_type_info <- get_typeinfo(field_type_name, lookup_env)
     array_len <- field_array_len(field_info, field_index)
     if (field_type_info$type %in% c("base", "pointer")) {
         unpack_array_field(x, offset, field_type_info, array_len)
     } else if (!is.null(field_type_info$fields)) {
-        unpack_aggregate_array_field(x, offset, field_type_name, field_type_info, array_len)
+        unpack_aggregate_array_field(x, offset, field_type_name, field_type_info,
+            array_len, envir = lookup_env
+        )
     } else {
         stop("invalid field type '", field_type_name, "' at field '", index)
     }
@@ -947,6 +1008,8 @@ pack_aggregate_array_field <- function(x, offset, field_type_info, array_len, va
 `$<-.struct` <- pack.struct <- function(x, index, value) {
     caller <- parent.frame()
     struct_info <- struct_typeinfo(x, caller)
+    lookup_env <- attr(x, "typeinfo_env")
+    if (!is.environment(lookup_env)) lookup_env <- caller
     field_info <- struct_info$fields
     field_index <- match(index, field_info$name)
     if (is.na(field_index)) stop("unknown field index '", index, "'")
@@ -961,7 +1024,7 @@ pack_aggregate_array_field <- function(x, offset, field_type_info, array_len, va
     }
     offset <- field_info[field_index, "offset"]
     field_type_name <- as.character(field_info[field_index, "type"])
-    field_type_info <- get_typeinfo(field_type_name, caller)
+    field_type_info <- get_typeinfo(field_type_name, lookup_env)
     array_len <- field_array_len(field_info, field_index)
     if (field_type_info$type %in% c("base", "pointer")) {
         pack_array_field(x, offset, field_type_info, array_len, value)
@@ -977,18 +1040,37 @@ pack_aggregate_array_field <- function(x, offset, field_type_info, array_len, va
 #' @rdname struct
 #' @export
 print.struct <- function(x, indent = 0, ...) {
+    print_struct_value <- function(value, indent) {
+        if (typeof(value) == "externalptr") {
+            cat(if (is.nullptr(value)) "NULL" else "ptr", "\n")
+        } else if (inherits(value, "struct")) {
+            print.struct(value, indent = indent)
+        } else if (is.list(value) && length(value) && all(vapply(value, inherits, logical(1L), "struct"))) {
+            cat("[\n")
+            for (i in seq_along(value)) {
+                cat(rep("  ", indent + 1L), "[[", i, "]]: ", sep = "")
+                print.struct(value[[i]], indent = indent + 1L)
+            }
+            cat(rep("  ", indent), "]\n", sep = "")
+        } else if (length(value) == 0L) {
+            cat("<empty>\n")
+        } else {
+            cat(paste(value, collapse = " "), "\n")
+        }
+    }
+
     struct_name <- attr(x, "struct")
     struct_info <- struct_typeinfo(x, parent.frame())
     field_info <- struct_info$fields
     field_names <- field_info$name
     field_names <- field_names[nzchar(field_names)]
 
-    cat("struct ", struct_name, " ")
+    cat(struct_info$type, " ", struct_name, " ", sep = "")
     if (typeof(x) == "externalptr") {
         cat("*")
         if (is.nullptr(x)) {
             cat("=NULL\n")
-            return()
+            return(invisible(x))
         }
     }
     cat("{\n")
@@ -997,12 +1079,15 @@ print.struct <- function(x, indent = 0, ...) {
     {
         cat(rep("  ", indent + 1), field_names[[i]], ":")
         val <- unpack.struct(x, field_names[[i]])
-        if (typeof(val) == "externalptr") val <- "ptr" # .extptr2str(val)
-        if (inherits(val, "struct")) {
-            print.struct(val, indent = indent + 1)
-        } else {
-            cat(val, "\n")
-        }
+        print_struct_value(val, indent = indent + 1L)
     }
     cat(rep("  ", indent), "}\n")
+    invisible(x)
+}
+
+#' @rdname struct
+#' @export
+print.ctype <- function(x, ...) {
+    print.struct(x, ...)
+    invisible(x)
 }

@@ -8,6 +8,7 @@
 \alias{as.floatraw}
 \alias{floatraw2numeric}
 \alias{floatraw}
+\alias{print.floatraw}
 \alias{ptr2str}
 \alias{strarrayptr}
 \alias{strptr}
@@ -27,6 +28,8 @@ floatraw2numeric(x)
 
 floatraw(n)
 
+\method{print}{floatraw}(x, ...)
+
 ptr2str(x)
 
 strarrayptr(x)
@@ -40,6 +43,8 @@ strptr(x)
 
 \item{n}{integer specifying the number of single-precision C \code{float} values
 to allocate.}
+
+\item{...}{additional arguments to be passed to \code{\link[base:print]{base::print()}} methods.}
 }
 \value{
 A logical value is returned by \code{is.nullptr()} and \code{is.externalptr()}.
