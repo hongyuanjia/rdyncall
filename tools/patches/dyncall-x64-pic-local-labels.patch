@@ -1,0 +1,18 @@
+diff --git a/src/dyncall/dyncall/dyncall_call_x64.S b/src/dyncall/dyncall/dyncall_call_x64.S
+index 12addf9..a066a7b 100644
+--- a/src/dyncall/dyncall/dyncall_call_x64.S
++++ b/src/dyncall/dyncall/dyncall_call_x64.S
+@@ -47,0 +48,3 @@ BEGIN_PROC(dcCall_x64_sysv)
++#if !defined(GEN_MASM)
++LOCAL(dcCall_x64_sysv):
++#endif
+@@ -91 +94 @@ BEGIN_PROC(dcCall_x64_sysv_aggr)
+-	CALL(CSYM(dcCall_x64_sysv))	/* params (in regs) passed-through to next call, as-is */
++	CALL(LOCAL(dcCall_x64_sysv))	/* params (in regs) passed-through to next call, as-is */
+@@ -116,0 +120,3 @@ FRAME_BEGIN_PROC(dcCall_x64_win64)
++#if !defined(GEN_MASM)
++LOCAL(dcCall_x64_win64):
++#endif
+@@ -170 +176 @@ BEGIN_PROC(dcCall_x64_win64_aggr)
+-	CALL(CSYM(dcCall_x64_win64))	/* params (in regs) passed-through to next call, as-is */
++	CALL(LOCAL(dcCall_x64_win64))	/* params (in regs) passed-through to next call, as-is */
