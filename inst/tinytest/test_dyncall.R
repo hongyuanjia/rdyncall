@@ -32,6 +32,56 @@ out <- suppressWarnings(run_rdyncall_subprocess(invalid_size))
 expect_true(!is.null(attr(out, "status")))
 expect_true(any(grepl("rdyncall.callvm.size", out, fixed = TRUE)))
 
+legacy_fields <- data.frame(
+    type = c("C", "i"),
+    offset = c(0L, 4L),
+    stringsAsFactors = FALSE
+)
+expect_equal(
+    rdyncall:::dyncall_normalize_aggregate_fields(legacy_fields),
+    data.frame(
+        type = c("C", "i"),
+        offset = c(0L, 4L),
+        array_len = c(1L, 1L),
+        stringsAsFactors = FALSE
+    )
+)
+
+array_fields <- data.frame(
+    type = I(c("C", "d")),
+    offset = c(0L, 8L),
+    array_len = c(4L, 2L),
+    stringsAsFactors = FALSE
+)
+expect_equal(
+    rdyncall:::dyncall_normalize_aggregate_fields(array_fields),
+    data.frame(
+        type = c("C", "d"),
+        offset = c(0L, 8L),
+        array_len = c(4L, 2L),
+        stringsAsFactors = FALSE
+    )
+)
+
+bitfield_fields <- data.frame(
+    type = I(c("I", "I", "I", "C")),
+    offset = c(0L, 0L, 4L, 5L),
+    array_len = rep(1L, 4L),
+    bit_offset = c(0L, 1L, NA_integer_, NA_integer_),
+    bit_width = c(1L, 3L, 0L, NA_integer_),
+    storage_offset = c(0L, 0L, NA_integer_, NA_integer_),
+    storage_size = c(4L, 4L, NA_integer_, NA_integer_),
+    stringsAsFactors = FALSE
+)
+expect_equal(
+    rdyncall:::dyncall_normalize_aggregate_fields(bitfield_fields),
+    data.frame(
+        type = c("I", "C"),
+        offset = c(0L, 5L),
+        array_len = c(1L, 1L),
+        stringsAsFactors = FALSE
+    )
+)
 
 build_aggregate_by_value_fixture <- function() {
     src <- system.file("tinytest", "aggregate_by_value.c", package = "rdyncall", mustWork = TRUE)
@@ -82,6 +132,18 @@ expect_repeated <- function(x, info, sigchar, values) {
 }
 
 aggregate_fixture <- build_aggregate_by_value_fixture()
+
+fixture_int <- function(name) {
+    dyncall(dynsym(aggregate_fixture, name), ")i")
+}
+
+expect_c_layout <- function(info, prefix, offset_fields) {
+    expect_equal(info$size, fixture_int(paste0(prefix, "_size")))
+    expect_equal(info$align, fixture_int(paste0(prefix, "_align")))
+    for (field in offset_fields) {
+        expect_equal(field_offset(info, field), fixture_int(paste0(prefix, "_offset_", field)))
+    }
+}
 
 # Small byte aggregate argument is passed by value.
 cstruct("Color{CCCC}r g b a;")
@@ -179,6 +241,17 @@ for (n in c(1L, 2L, 4L, 8L, 9L, 16L, 17L)) {
     expect_repeated(ret, info, "C", as.integer(10L + seq_len(n) - 1L))
 }
 
+# Fixed array fields pass the same aggregate descriptor as C arrays.
+cstruct("ByteArray4{C[4]}b;")
+byte_array4 <- cdata(ByteArray4)
+byte_array4$b <- 1:4
+byte_array4_sum <- dynsym(aggregate_fixture, "rdyncall_test_bytes4_sum")
+expect_equal(dyncall(byte_array4_sum, "<ByteArray4>)i", byte_array4), 10L)
+make_byte_array4 <- dynsym(aggregate_fixture, "rdyncall_test_make_bytes4")
+byte_array4_ret <- dyncall(make_byte_array4, "C)<ByteArray4>", 20L)
+expect_struct_raw(byte_array4_ret, "ByteArray4")
+expect_equal(byte_array4_ret$b, 20:23)
+
 # Float and double HFA matrices cover 1-4 register HFA cases plus the 5-element fallback path.
 for (case in list(list(prefix = "Float", kind = "float", sig = "f", base = 2),
                   list(prefix = "Double", kind = "double", sig = "d", base = 20))) {
@@ -198,6 +271,17 @@ for (case in list(list(prefix = "Float", kind = "float", sig = "f", base = 2),
         expect_repeated(ret, info, case$sig, values)
     }
 }
+
+# Fixed float arrays preserve ARM64 homogeneous floating-point aggregate handling.
+cstruct("FloatArray3{f[3]}v;")
+float_array3 <- cdata(FloatArray3)
+float_array3$v <- c(2, 3, 4)
+float_array3_sum <- dynsym(aggregate_fixture, "rdyncall_test_float3_sum")
+expect_equal(dyncall(float_array3_sum, "<FloatArray3>)d", float_array3), 9)
+make_float_array3 <- dynsym(aggregate_fixture, "rdyncall_test_make_float3")
+float_array3_ret <- dyncall(make_float_array3, "f)<FloatArray3>", 5)
+expect_struct_raw(float_array3_ret, "FloatArray3")
+expect_equal(float_array3_ret$v, c(5, 6, 7))
 
 # Mixed non-HFA aggregates make sure field order and padding stay visible to the backend.
 cstruct("FloatInt{fi}f i;")
@@ -260,6 +344,57 @@ expect_struct_raw(char_double_ret, "CharDouble")
 expect_equal(unpack(char_double_ret, field_offset(CharDouble, "c"), "C"), 18L)
 expect_equal(unpack(char_double_ret, field_offset(CharDouble, "d"), "d"), 19.5)
 
+# Packed and manually aligned aggregates use the compiler's layout.
+cstruct("PackedCharDouble{Cd}c d @packed;")
+expect_c_layout(PackedCharDouble, "rdyncall_test_packed_char_double", "d")
+packed_char_double <- cdata(PackedCharDouble)
+pack(packed_char_double, field_offset(PackedCharDouble, "c"), "C", 4L)
+pack(packed_char_double, field_offset(PackedCharDouble, "d"), "d", 5.5)
+packed_char_double_sum <- dynsym(aggregate_fixture, "rdyncall_test_packed_char_double_sum")
+expect_equal(dyncall(packed_char_double_sum, "<PackedCharDouble>)d", packed_char_double), 9.5)
+make_packed_char_double <- dynsym(aggregate_fixture, "rdyncall_test_make_packed_char_double")
+packed_char_double_ret <- dyncall(make_packed_char_double, "Cd)<PackedCharDouble>", 6L, 7.5)
+expect_struct_raw(packed_char_double_ret, "PackedCharDouble")
+expect_equal(unpack(packed_char_double_ret, field_offset(PackedCharDouble, "c"), "C"), 6L)
+expect_equal(unpack(packed_char_double_ret, field_offset(PackedCharDouble, "d"), "d"), 7.5)
+
+cstruct("Pack4CharDouble{Cd}c d @pack(4);")
+expect_c_layout(Pack4CharDouble, "rdyncall_test_pack4_char_double", "d")
+pack4_char_double <- cdata(Pack4CharDouble)
+pack(pack4_char_double, field_offset(Pack4CharDouble, "c"), "C", 8L)
+pack(pack4_char_double, field_offset(Pack4CharDouble, "d"), "d", 9.5)
+pack4_char_double_sum <- dynsym(aggregate_fixture, "rdyncall_test_pack4_char_double_sum")
+expect_equal(dyncall(pack4_char_double_sum, "<Pack4CharDouble>)d", pack4_char_double), 17.5)
+make_pack4_char_double <- dynsym(aggregate_fixture, "rdyncall_test_make_pack4_char_double")
+pack4_char_double_ret <- dyncall(make_pack4_char_double, "Cd)<Pack4CharDouble>", 10L, 11.5)
+expect_struct_raw(pack4_char_double_ret, "Pack4CharDouble")
+expect_equal(unpack(pack4_char_double_ret, field_offset(Pack4CharDouble, "c"), "C"), 10L)
+expect_equal(unpack(pack4_char_double_ret, field_offset(Pack4CharDouble, "d"), "d"), 11.5)
+
+cstruct("AlignedChar{C}c @align(8);")
+expect_c_layout(AlignedChar, "rdyncall_test_aligned_char", "c")
+aligned_char <- cdata(AlignedChar)
+pack(aligned_char, field_offset(AlignedChar, "c"), "C", 12L)
+aligned_char_value <- dynsym(aggregate_fixture, "rdyncall_test_aligned_char_value")
+expect_equal(dyncall(aligned_char_value, "<AlignedChar>)i", aligned_char), 12L)
+make_aligned_char <- dynsym(aggregate_fixture, "rdyncall_test_make_aligned_char")
+aligned_char_ret <- dyncall(make_aligned_char, "C)<AlignedChar>", 13L)
+expect_struct_raw(aligned_char_ret, "AlignedChar")
+expect_equal(unpack(aligned_char_ret, field_offset(AlignedChar, "c"), "C"), 13L)
+
+cstruct("PackedAlignedCharDouble{Cd}c d @packed @align(8);")
+expect_c_layout(PackedAlignedCharDouble, "rdyncall_test_packed_aligned_char_double", "d")
+packed_aligned_char_double <- cdata(PackedAlignedCharDouble)
+pack(packed_aligned_char_double, field_offset(PackedAlignedCharDouble, "c"), "C", 14L)
+pack(packed_aligned_char_double, field_offset(PackedAlignedCharDouble, "d"), "d", 15.5)
+packed_aligned_char_double_sum <- dynsym(aggregate_fixture, "rdyncall_test_packed_aligned_char_double_sum")
+expect_equal(dyncall(packed_aligned_char_double_sum, "<PackedAlignedCharDouble>)d", packed_aligned_char_double), 29.5)
+make_packed_aligned_char_double <- dynsym(aggregate_fixture, "rdyncall_test_make_packed_aligned_char_double")
+packed_aligned_char_double_ret <- dyncall(make_packed_aligned_char_double, "Cd)<PackedAlignedCharDouble>", 16L, 17.5)
+expect_struct_raw(packed_aligned_char_double_ret, "PackedAlignedCharDouble")
+expect_equal(unpack(packed_aligned_char_double_ret, field_offset(PackedAlignedCharDouble, "c"), "C"), 16L)
+expect_equal(unpack(packed_aligned_char_double_ret, field_offset(PackedAlignedCharDouble, "d"), "d"), 17.5)
+
 # Register exhaustion checks that stack placement still preserves aggregate values.
 exhaust_ints_color_sum <- dynsym(aggregate_fixture, "rdyncall_test_exhaust_ints_color_sum")
 expect_equal(dyncall(exhaust_ints_color_sum, "iiiiiiii<Color>)i", 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, color), 4357L)
@@ -286,6 +421,23 @@ pack(ptr_box, field_offset(PtrBox, "p"), "p", ptr_value)
 pack(ptr_box, field_offset(PtrBox, "tag"), "i", 23L)
 ptr_box_sum <- dynsym(aggregate_fixture, "rdyncall_test_ptr_box_sum")
 expect_equal(dyncall(ptr_box_sum, "<PtrBox>)i", ptr_box), 123L)
+
+# Bitfield aggregate storage is passed and returned by value using the
+# registered storage-unit layout.
+cstruct("Bits{IIII}a:1 b:3 :4 c:8;")
+bits <- cdata(Bits)
+bits$a <- 1
+bits$b <- 5
+bits$c <- 171
+bits_sum <- dynsym(aggregate_fixture, "rdyncall_test_bits_sum")
+expect_equal(dyncall(bits_sum, "<Bits>)i", bits), 17151L)
+
+make_bits <- dynsym(aggregate_fixture, "rdyncall_test_make_bits")
+bits_ret <- dyncall(make_bits, "III)<Bits>", 1, 2, 3)
+expect_struct_raw(bits_ret, "Bits")
+expect_equal(bits_ret$a, 1)
+expect_equal(bits_ret$b, 2)
+expect_equal(bits_ret$c, 3)
 
 # Aggregate errors remain explicit.
 wrong_color <- color

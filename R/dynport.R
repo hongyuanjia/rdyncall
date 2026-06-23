@@ -396,18 +396,8 @@ dynport_parse_function <- function(value, lnum = 1L, envir = parent.frame()) {
             issue_error(name, "Extra ')' in specification")
         }
 
-        arg <- dynport_parse_types("struct", tail[[1L]], envir)
-        # error if failed to parse argument types
-        if (!is.null(arg) && !length(arg)) {
-            type <- attr(arg, "type")
-            if (!is.null(type)) {
-                issue_error(name, sprintf("Invalid base type name %s found in argument", sQuote(type)))
-            } else {
-                pos <- attr(arg, "pos")
-                str <- substr(sig, pos[1], pos[2])
-                issue_error(name, sprintf("Missing '>' in struct member %s found in argument", sQuote(str)))
-            }
-        }
+        arg <- dynport_parse_types("struct", tail[[1L]], envir, allow_arrays = FALSE)
+        dynport_issue_type_error(arg, tail[[1L]], issue_error, name, "argument")
 
         nm <- ret_nm[-1L]
         if (length(nm)) {
@@ -433,18 +423,8 @@ dynport_parse_function <- function(value, lnum = 1L, envir = parent.frame()) {
             }
         }
 
-        ret <- dynport_parse_types("struct", ret_nm[[1L]])
-        # error if failed to parse field types
-        if (!is.null(ret) && !length(ret)) {
-            type <- attr(ret, "type")
-            if (!is.null(type)) {
-                issue_error(name, sprintf("Invalid base type name %s found in return", sQuote(type)))
-            } else {
-                pos <- attr(ret, "pos")
-                str <- substr(sig, pos[1], pos[2])
-                issue_error(name, sprintf("Missing '>' in struct member %s found in return", sQuote(str)))
-            }
-        }
+        ret <- dynport_parse_types("struct", ret_nm[[1L]], allow_arrays = FALSE)
+        dynport_issue_type_error(ret, ret_nm[[1L]], issue_error, name, "return")
 
         lnum <- lnum + lncnt[[i]]
 
@@ -520,46 +500,38 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
         if (!len || len > 2L) {
             issue_error(name, "Missing '}' in specification")
         } else if (len == 1L) {
-            fields <- NULL
+            field_layout <- list(fields = empty_field_specs(), layout = aggregate_layout())
         } else {
             # TODO: invalid field names?
-            fields <- parse_field_names(tail[[2L]])
+            field_layout <- tryCatch(
+                parse_aggregate_fields(tail[[2L]]),
+                error = function(e) issue_error(name, conditionMessage(e))
+            )
             # this is the case when there are extra '}'
-            if (!length(fields)) {
+            if (!nrow(field_layout$fields)) {
                 issue_error(name, "Extra '}' in specification")
             }
         }
 
         # parse field types
-        parsed <- dynport_parse_types(kind, tail[[1L]], envir)
-
-        # error if failed to parse field types
-        if (!is.null(parsed) && !length(parsed)) {
-            type <- attr(parsed, "type")
-            if (!is.null(type)) {
-                issue_error(name, sprintf("Invalid base type name %s found", sQuote(type)))
-            } else {
-                pos <- attr(parsed, "pos")
-                str <- substr(sig, pos[1], pos[2])
-                issue_error(name, sprintf("Missing '>' in struct member %s found", sQuote(str)))
-            }
-        }
+        parsed <- dynport_parse_types(kind, tail[[1L]], envir, layout = field_layout$layout)
+        dynport_issue_type_error(parsed, tail[[1L]], issue_error, name)
 
         # check imbalance between signatures and field names
-        if (length(parsed$type) != length(fields)) {
+        if (length(parsed$type) != nrow(field_layout$fields)) {
             issue_error(name,
                 sprintf("Imbalance number of field types (%s) and names (%s) found",
-                    sQuote(length(parsed$type)), sQuote(length(fields))
+                    sQuote(length(parsed$type)), sQuote(nrow(field_layout$fields))
                 )
             )
         }
 
         lnum <- lnum + lncnt[[i]]
 
-        out[[i]] <- typeinfo(
-            name = name, type = kind,
-            size = parsed$size, align = parsed$align,
-            fields = make_field_info(fields, parsed$type, parsed$offset)
+        out[[i]] <- tryCatch(
+            make_aggregate_info(name, kind, tail[[1L]], field_layout$fields,
+                envir = envir, layout = field_layout$layout),
+            error = function(e) issue_error(name, conditionMessage(e))
         )
     }
 
@@ -567,88 +539,32 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
     out
 }
 
-dynport_parse_types <- function(kind = c("struct", "union"), signature, envir = parent.frame()) {
-    kind <- match.arg(kind)
-    signature <- trimws(signature)
+dynport_parse_types <- function(kind = c("struct", "union"), signature, envir = parent.frame(),
+                                allow_arrays = TRUE, layout = aggregate_layout()) {
+    parse_aggregate_types(kind, signature, envir = envir, allow_arrays = allow_arrays,
+        layout = layout, on_error = "return")
+}
 
-    # computations
-    types     <- character()
-    max_size  <- 0L
-    max_align <- 1L
-
-    if (kind == "struct") {
-        offset    <- 0L
-        offsets   <- integer()
+dynport_type_error_message <- function(parsed, signature, context = NULL) {
+    found <- if (is.null(context)) "found" else paste("found in", context)
+    type <- attr(parsed, "type")
+    if (!is.null(type)) {
+        return(sprintf("Invalid base type name %s %s", sQuote(type), found))
     }
 
-    # scan variables
-    n <- nchar(signature)
-    # empty input
-    if (n == 0L) return(NULL)
-
-    i <- 1L
-    start <- i
-    while (i <= n) {
-        char <- substr(signature, i, i)
-        # pointer
-        if (char == "*") {
-            i <- i + 1L
-            next
-        } else if (char == "<") {
-            i <- i + 1L
-            # move until '>'
-            while (i <= n) {
-                if ((char <- substr(signature, i, i)) == ">") break
-                i <- i + 1L
-            }
-            # fail if the last character is not '>' for struct
-            if (char != ">") {
-                res <- list()
-                attr(res, "pos") <- c(start, i)
-                return(res)
-            }
-        }
-        type <- substr(signature, start, i)
-        info <- get_typeinfo(type, envir = envir)
-
-        # fail if no matched types
-        if (is.null(info)) {
-            res <- list()
-            attr(res, "pos") <- c(start, i)
-            attr(res, "type") <- type
-            return(res)
-        }
-
-        types <- c(types, type)
-
-        if (kind == "struct") {
-            max_align <- max(max_align, info$align)
-            offset    <- tryCatch(align(offset, info$align),
-                warning = function(w) browser(),
-                error = function(e) browser()
-            )
-            offsets   <- c(offsets, offset)
-            # increment offset by size
-            offset    <- offset + info$size
-        } else {
-            max_align <- max(max_align, info$align)
-            max_size  <- max(max_size, info$size)
-        }
-
-        # next token
-        i <- i + 1
-        start <- i
+    pos <- attr(parsed, "pos")
+    str <- if (is.null(pos)) signature else substr(signature, pos[1L], pos[2L])
+    if (identical(attr(parsed, "reason"), "array")) {
+        return(sprintf("Invalid fixed array member %s %s", sQuote(str), found))
     }
 
-    if (kind == "struct") {
-        # align the structure size (compiler-specific?)
-        size <- align(offset, max_align)
-    } else {
-        size <- max_size
-        offsets <- rep(0, length(types))
-    }
+    sprintf("Missing '>' in struct member %s %s", sQuote(str), found)
+}
 
-    list(size = size, align = max_align, type = types, offset = offsets)
+dynport_issue_type_error <- function(parsed, signature, issue_error, name = NULL, context = NULL) {
+    if (!is.null(parsed) && !length(parsed)) {
+        issue_error(name, dynport_type_error_message(parsed, signature, context))
+    }
 }
 
 dynport_parse_enum <- function(value, lnum, key) {

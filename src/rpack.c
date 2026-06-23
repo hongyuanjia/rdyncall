@@ -2,12 +2,11 @@
  ** R-Package: rdyncall
  ** File: src/rpack.c
  ** Description: (un-)packing of C structure data
- ** TODO
- ** - support for bitfields
  **/
 
 // #define USE_RINTERNALS
 #include <Rinternals.h>
+#include <stdint.h>
 #include <string.h>
 #include <stddef.h>
 #include "rdyncall_signature.h"
@@ -18,11 +17,10 @@
  **
  **/
 
-static char* C_dataptr(SEXP x, SEXP off, size_t element_size)
+static char* C_dataptr_offset(SEXP x, ptrdiff_t o, size_t element_size)
 {
-  if ( LENGTH(off) == 0 ) error("missing offset");
   char* p = NULL;
-  ptrdiff_t o = INTEGER(off)[0], s = 0;
+  ptrdiff_t s = 0;
   
   switch(TYPEOF(x))
   {
@@ -33,12 +31,167 @@ static char* C_dataptr(SEXP x, SEXP off, size_t element_size)
     case CPLXSXP:   p = (char*) COMPLEX(x); s = LENGTH(x)*sizeof(Rcomplex); break; 
     case STRSXP:    p = (char*) CHAR( STRING_ELT(x,0) ); s = strlen(p)*sizeof(char); break;
     case RAWSXP:    p = (char*) RAW(x); s = LENGTH(x)*sizeof(char); break;
-    case EXTPTRSXP: return (char*) R_ExternalPtrAddr(x) + o; break;
+    case EXTPTRSXP:
+      p = (char*) R_ExternalPtrAddr(x);
+      if (p == NULL) error("NULL address pointer");
+      return p + o;
     default: error("invalid object type"); break;
   }
   if (p == NULL) error("NULL address pointer");
   if (o < 0 || o+element_size > s) error("offset %td is out-of-bounds of the R object (max size %td)", o, s);
   return p + o; 
+}
+
+static char* C_dataptr(SEXP x, SEXP off, size_t element_size)
+{
+  if ( LENGTH(off) == 0 ) error("missing offset");
+  return C_dataptr_offset(x, INTEGER(off)[0], element_size);
+}
+
+static void C_store(SEXP x, SEXP off, const void* value, size_t size)
+{
+  memcpy(C_dataptr(x, off, size), value, size);
+}
+
+static void C_load(SEXP x, SEXP off, void* value, size_t size)
+{
+  memcpy(value, C_dataptr(x, off, size), size);
+}
+
+static int C_bit_index_in_byte(int bit)
+{
+#if defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+  return 7 - bit;
+#else
+  return bit;
+#endif
+}
+
+static uint64_t C_bitfield_mask(int width)
+{
+  if (width >= 64) return UINT64_MAX;
+  return (UINT64_C(1) << width) - UINT64_C(1);
+}
+
+static uint64_t C_read_bitfield_bits(const unsigned char* ptr, int bit_offset, int width)
+{
+  uint64_t value = 0;
+  for (int i = 0; i < width; ++i) {
+    int absolute_bit = bit_offset + i;
+    int byte_index = absolute_bit / 8;
+    int bit_index = C_bit_index_in_byte(absolute_bit % 8);
+    if (ptr[byte_index] & (1u << bit_index)) {
+      value |= (UINT64_C(1) << i);
+    }
+  }
+  return value;
+}
+
+static void C_write_bitfield_bits(unsigned char* ptr, int bit_offset, int width, uint64_t value)
+{
+  for (int i = 0; i < width; ++i) {
+    int absolute_bit = bit_offset + i;
+    int byte_index = absolute_bit / 8;
+    int bit_index = C_bit_index_in_byte(absolute_bit % 8);
+    unsigned char mask = (unsigned char) (1u << bit_index);
+    if (value & (UINT64_C(1) << i)) {
+      ptr[byte_index] = (unsigned char) (ptr[byte_index] | mask);
+    } else {
+      ptr[byte_index] = (unsigned char) (ptr[byte_index] & ~mask);
+    }
+  }
+}
+
+static int C_bitfield_sig_is_signed(char sig)
+{
+  return sig == DC_SIGCHAR_CHAR ||
+         sig == DC_SIGCHAR_SHORT ||
+         sig == DC_SIGCHAR_INT ||
+         sig == DC_SIGCHAR_LONG ||
+         sig == DC_SIGCHAR_LONGLONG;
+}
+
+static uint64_t C_bitfield_value(SEXP value_x, int is_signed)
+{
+  switch(TYPEOF(value_x))
+  {
+    case LGLSXP:
+      return (uint64_t) LOGICAL(value_x)[0];
+    case INTSXP:
+      return is_signed ? (uint64_t) ((int64_t) INTEGER(value_x)[0]) :
+                         (uint64_t) ((uint32_t) INTEGER(value_x)[0]);
+    case REALSXP:
+      return is_signed ? (uint64_t) ((int64_t) REAL(value_x)[0]) :
+                         (uint64_t) REAL(value_x)[0];
+    case RAWSXP:
+      return (uint64_t) RAW(value_x)[0];
+    default:
+      error("value mismatch with bitfield pack type");
+  }
+  return 0;
+}
+
+SEXP C_unpack_bitfield(SEXP ptr_x, SEXP bit_offset_x, SEXP bit_width_x, SEXP sig_x)
+{
+  int bit_offset = INTEGER(bit_offset_x)[0];
+  int width = INTEGER(bit_width_x)[0];
+  const char sig = CHAR(STRING_ELT(sig_x, 0))[0];
+  int byte_offset = bit_offset / 8;
+  int intra_bit_offset = bit_offset % 8;
+  size_t byte_count = (size_t) ((intra_bit_offset + width + 7) / 8);
+  unsigned char* ptr = (unsigned char*) C_dataptr_offset(ptr_x, byte_offset, byte_count);
+  uint64_t raw = C_read_bitfield_bits(ptr, intra_bit_offset, width);
+
+  if (sig == DC_SIGCHAR_BOOL) {
+    return ScalarLogical(raw != 0);
+  }
+
+  if (C_bitfield_sig_is_signed(sig)) {
+    int64_t value;
+    if (width < 64 && (raw & (UINT64_C(1) << (width - 1)))) {
+      value = (int64_t) (raw | ~C_bitfield_mask(width));
+    } else {
+      value = (int64_t) raw;
+    }
+    switch(sig) {
+      case DC_SIGCHAR_CHAR:
+      case DC_SIGCHAR_SHORT:
+      case DC_SIGCHAR_INT:
+        return ScalarInteger((int) value);
+      case DC_SIGCHAR_LONG:
+      case DC_SIGCHAR_LONGLONG:
+        return ScalarReal((double) value);
+    }
+  }
+
+  switch(sig) {
+    case DC_SIGCHAR_UCHAR:
+    case DC_SIGCHAR_USHORT:
+      return ScalarInteger((int) raw);
+    case DC_SIGCHAR_UINT:
+    case DC_SIGCHAR_ULONG:
+    case DC_SIGCHAR_ULONGLONG:
+      return ScalarReal((double) raw);
+    default:
+      error("invalid bitfield signature");
+  }
+
+  return R_NilValue;
+}
+
+SEXP C_pack_bitfield(SEXP ptr_x, SEXP bit_offset_x, SEXP bit_width_x, SEXP sig_x, SEXP value_x)
+{
+  int bit_offset = INTEGER(bit_offset_x)[0];
+  int width = INTEGER(bit_width_x)[0];
+  const char sig = CHAR(STRING_ELT(sig_x, 0))[0];
+  int byte_offset = bit_offset / 8;
+  int intra_bit_offset = bit_offset % 8;
+  size_t byte_count = (size_t) ((intra_bit_offset + width + 7) / 8);
+  unsigned char* ptr = (unsigned char*) C_dataptr_offset(ptr_x, byte_offset, byte_count);
+  uint64_t value = C_bitfield_value(value_x, C_bitfield_sig_is_signed(sig));
+
+  C_write_bitfield_bits(ptr, intra_bit_offset, width, value & C_bitfield_mask(width));
+  return R_NilValue;
 }
 
 
@@ -57,209 +210,223 @@ SEXP C_pack(SEXP ptr_x, SEXP offset, SEXP sig_x, SEXP value_x)
   {
     case DC_SIGCHAR_BOOL:
     {
-      int* Bp = (int*) C_dataptr(ptr_x, offset, sizeof(Rboolean));
+      Rboolean Bv;
       switch(type_of)
       {
-        case LGLSXP:  *Bp = (int) LOGICAL(value_x)[0]; break;
-        case INTSXP:  *Bp = (int) ( INTEGER(value_x)[0] == 0) ? 0 : 1; break;
-        case REALSXP: *Bp = (int) ( REAL(value_x)[0] == 0.0) ? 0 : 1; break;
-        case RAWSXP:  *Bp = (int) ( RAW(value_x)[0] == 0) ? 0 : 1; break;
+        case LGLSXP:  Bv = (Rboolean) LOGICAL(value_x)[0]; break;
+        case INTSXP:  Bv = (Rboolean) ((INTEGER(value_x)[0] == 0) ? 0 : 1); break;
+        case REALSXP: Bv = (Rboolean) ((REAL(value_x)[0] == 0.0) ? 0 : 1); break;
+        case RAWSXP:  Bv = (Rboolean) ((RAW(value_x)[0] == 0) ? 0 : 1); break;
 	default: error("value mismatch with 'B' pack type");
       }
+      C_store(ptr_x, offset, &Bv, sizeof(Bv));
     }
     break;
     case DC_SIGCHAR_CHAR:
     {
-      char* cp = (char*) C_dataptr(ptr_x, offset, sizeof(char));
+      char cv;
 	  switch(type_of)
 	  {
-	  case LGLSXP:  *cp = (char) LOGICAL(value_x)[0]; break;
-	  case INTSXP:  *cp = (char) INTEGER(value_x)[0]; break;
-	  case REALSXP: *cp = (char) REAL(value_x)[0];    break;
-	  case RAWSXP:  *cp = (char) RAW(value_x)[0];     break;
+	  case LGLSXP:  cv = (char) LOGICAL(value_x)[0]; break;
+	  case INTSXP:  cv = (char) INTEGER(value_x)[0]; break;
+	  case REALSXP: cv = (char) REAL(value_x)[0];    break;
+	  case RAWSXP:  cv = (char) RAW(value_x)[0];     break;
 	  default: error("value mismatch with 'c' pack type");
 	  }
+      C_store(ptr_x, offset, &cv, sizeof(cv));
 	}
 	break;
 	case DC_SIGCHAR_UCHAR:
 	{
-	  unsigned char* cp = (unsigned char*) C_dataptr(ptr_x,offset,sizeof(unsigned char));
+	  unsigned char cv;
 	  switch(type_of)
 	  {
-	  case LGLSXP:  *cp = (unsigned char) LOGICAL(value_x)[0]; break;
-	  case INTSXP:  *cp = (unsigned char) INTEGER(value_x)[0]; break;
-	  case REALSXP: *cp = (unsigned char) REAL(value_x)[0];    break;
-	  case RAWSXP:  *cp = (unsigned char) RAW(value_x)[0];     break;
+	  case LGLSXP:  cv = (unsigned char) LOGICAL(value_x)[0]; break;
+	  case INTSXP:  cv = (unsigned char) INTEGER(value_x)[0]; break;
+	  case REALSXP: cv = (unsigned char) REAL(value_x)[0];    break;
+	  case RAWSXP:  cv = (unsigned char) RAW(value_x)[0];     break;
 	  default: error("value mismatch with 'C' pack type");
 	  }
+      C_store(ptr_x, offset, &cv, sizeof(cv));
 	}
 	break;
 	case DC_SIGCHAR_SHORT:
 	{
-	  short* sp = (short*) C_dataptr(ptr_x,offset,sizeof(short));
+	  short sv;
 	  switch(type_of)
 	  {
-	  case LGLSXP:  *sp = (short) LOGICAL(value_x)[0]; break;
-	  case INTSXP:  *sp = (short) INTEGER(value_x)[0]; break;
-	  case REALSXP: *sp = (short) REAL(value_x)[0];    break;
-	  case RAWSXP:  *sp = (short) RAW(value_x)[0];     break;
+	  case LGLSXP:  sv = (short) LOGICAL(value_x)[0]; break;
+	  case INTSXP:  sv = (short) INTEGER(value_x)[0]; break;
+	  case REALSXP: sv = (short) REAL(value_x)[0];    break;
+	  case RAWSXP:  sv = (short) RAW(value_x)[0];     break;
 	  default: error("value mismatch with 's' pack type");
 	  }
+      C_store(ptr_x, offset, &sv, sizeof(sv));
 	}
 	break;
 	case DC_SIGCHAR_USHORT:
 	{
-	  unsigned short* sp = (unsigned short*) C_dataptr(ptr_x,offset,sizeof(unsigned short));
+	  unsigned short sv;
 	  switch(type_of)
 	  {
-	  case LGLSXP:  *sp = (unsigned short) LOGICAL(value_x)[0]; break;
-	  case INTSXP:  *sp = (unsigned short) INTEGER(value_x)[0]; break;
-	  case REALSXP: *sp = (unsigned short) REAL(value_x)[0];    break;
-	  case RAWSXP:  *sp = (unsigned short) RAW(value_x)[0];     break;
+	  case LGLSXP:  sv = (unsigned short) LOGICAL(value_x)[0]; break;
+	  case INTSXP:  sv = (unsigned short) INTEGER(value_x)[0]; break;
+	  case REALSXP: sv = (unsigned short) REAL(value_x)[0];    break;
+	  case RAWSXP:  sv = (unsigned short) RAW(value_x)[0];     break;
 	  default: error("value mismatch with 'S' pack type");
 	  }
+      C_store(ptr_x, offset, &sv, sizeof(sv));
 	}
 	break;
 	case DC_SIGCHAR_INT:
 	{
-	  int* ip = (int*) C_dataptr(ptr_x,offset,sizeof(int));
+	  int iv;
 	  switch(type_of)
 	  {
-	  case LGLSXP:  *ip = (int) LOGICAL(value_x)[0]; break;
-	  case INTSXP:  *ip = (int) INTEGER(value_x)[0]; break;
-	  case REALSXP: *ip = (int) REAL(value_x)[0];    break;
-	  case RAWSXP:  *ip = (int) RAW(value_x)[0];     break;
+	  case LGLSXP:  iv = (int) LOGICAL(value_x)[0]; break;
+	  case INTSXP:  iv = (int) INTEGER(value_x)[0]; break;
+	  case REALSXP: iv = (int) REAL(value_x)[0];    break;
+	  case RAWSXP:  iv = (int) RAW(value_x)[0];     break;
 	  default: error("value mismatch with 'i' pack type");
 	  }
+      C_store(ptr_x, offset, &iv, sizeof(iv));
 	}
 	break;
 	case DC_SIGCHAR_UINT:
 	{
-	  unsigned int* ip = (unsigned int*) C_dataptr(ptr_x,offset,sizeof(unsigned int));
+	  unsigned int iv;
 	  switch(type_of)
 	  {
-	  case LGLSXP:  *ip = (unsigned int) LOGICAL(value_x)[0]; break;
-	  case INTSXP:  *ip = (unsigned int) INTEGER(value_x)[0]; break;
-	  case REALSXP: *ip = (unsigned int) REAL(value_x)[0];    break;
-	  case RAWSXP:  *ip = (unsigned int) RAW(value_x)[0];     break;
+	  case LGLSXP:  iv = (unsigned int) LOGICAL(value_x)[0]; break;
+	  case INTSXP:  iv = (unsigned int) INTEGER(value_x)[0]; break;
+	  case REALSXP: iv = (unsigned int) REAL(value_x)[0];    break;
+	  case RAWSXP:  iv = (unsigned int) RAW(value_x)[0];     break;
 	  default: error("value mismatch with 'I' pack type");
 	  }
+      C_store(ptr_x, offset, &iv, sizeof(iv));
 	}
 	break;
 	case DC_SIGCHAR_LONG:
 	{
-	  long* ip = (long*) C_dataptr(ptr_x,offset,sizeof(long));
+	  long lv;
 	  switch(type_of)
 	  {
-	  case LGLSXP:  *ip = (long) LOGICAL(value_x)[0]; break;
-	  case INTSXP:  *ip = (long) INTEGER(value_x)[0]; break;
-	  case REALSXP: *ip = (long) REAL(value_x)[0];    break;
-	  case RAWSXP:  *ip = (long) RAW(value_x)[0];     break;
+	  case LGLSXP:  lv = (long) LOGICAL(value_x)[0]; break;
+	  case INTSXP:  lv = (long) INTEGER(value_x)[0]; break;
+	  case REALSXP: lv = (long) REAL(value_x)[0];    break;
+	  case RAWSXP:  lv = (long) RAW(value_x)[0];     break;
 	  default: error("value mismatch with 'j' pack type");
 	  }
+      C_store(ptr_x, offset, &lv, sizeof(lv));
 	}
 	break;
 	case DC_SIGCHAR_ULONG:
 	{
-	  unsigned long* ip = (unsigned long*) C_dataptr(ptr_x,offset,sizeof(unsigned long));
+	  unsigned long lv;
 	  switch(type_of)
 	  {
-	  case LGLSXP:  *ip = (unsigned long) LOGICAL(value_x)[0]; break;
-	  case INTSXP:  *ip = (unsigned long) INTEGER(value_x)[0]; break;
-	  case REALSXP: *ip = (unsigned long) REAL(value_x)[0];    break;
-	  case RAWSXP:  *ip = (unsigned long) RAW(value_x)[0];     break;
+	  case LGLSXP:  lv = (unsigned long) LOGICAL(value_x)[0]; break;
+	  case INTSXP:  lv = (unsigned long) INTEGER(value_x)[0]; break;
+	  case REALSXP: lv = (unsigned long) REAL(value_x)[0];    break;
+	  case RAWSXP:  lv = (unsigned long) RAW(value_x)[0];     break;
 	  default: error("value mismatch with 'J' pack type");
 	  }
+      C_store(ptr_x, offset, &lv, sizeof(lv));
 	}
 	break;
 	case DC_SIGCHAR_LONGLONG:
 	{
-	  long long* Lp = (long long*) C_dataptr(ptr_x,offset,sizeof(long long));
+	  long long lv;
 	  switch(type_of)
 	  {
-	  case LGLSXP:  *Lp = (long long) LOGICAL(value_x)[0]; break;
-	  case INTSXP:  *Lp = (long long) INTEGER(value_x)[0]; break;
-	  case REALSXP: *Lp = (long long) REAL(value_x)[0];    break;
-	  case RAWSXP:  *Lp = (long long) RAW(value_x)[0];     break;
+	  case LGLSXP:  lv = (long long) LOGICAL(value_x)[0]; break;
+	  case INTSXP:  lv = (long long) INTEGER(value_x)[0]; break;
+	  case REALSXP: lv = (long long) REAL(value_x)[0];    break;
+	  case RAWSXP:  lv = (long long) RAW(value_x)[0];     break;
 	  default: error("value mismatch with 'l' pack type");
 	  }
+      C_store(ptr_x, offset, &lv, sizeof(lv));
 	}
 	break;
 	case DC_SIGCHAR_ULONGLONG:
 	{
-	  unsigned long long* Lp = (unsigned long long*) C_dataptr(ptr_x,offset,sizeof(unsigned long long));
+	  unsigned long long lv;
 	  switch(type_of)
 	  {
-	  case LGLSXP:  *Lp = (unsigned long long) LOGICAL(value_x)[0]; break;
-	  case INTSXP:  *Lp = (unsigned long long) INTEGER(value_x)[0]; break;
-	  case REALSXP: *Lp = (unsigned long long) REAL(value_x)[0];    break;
-	  case RAWSXP:  *Lp = (unsigned long long) RAW(value_x)[0];     break;
+	  case LGLSXP:  lv = (unsigned long long) LOGICAL(value_x)[0]; break;
+	  case INTSXP:  lv = (unsigned long long) INTEGER(value_x)[0]; break;
+	  case REALSXP: lv = (unsigned long long) REAL(value_x)[0];    break;
+	  case RAWSXP:  lv = (unsigned long long) RAW(value_x)[0];     break;
 	  default: error("value mismatch with 'L' pack type");
 	  }
+      C_store(ptr_x, offset, &lv, sizeof(lv));
 	}
 	break;
 	case DC_SIGCHAR_FLOAT:
 	{
-	  float* fp = (float*) C_dataptr(ptr_x,offset,sizeof(float));
+	  float fv;
 	  switch(type_of)
 	  {
-	  case LGLSXP:  *fp = (float) LOGICAL(value_x)[0]; break;
-	  case INTSXP:  *fp = (float) INTEGER(value_x)[0]; break;
-	  case REALSXP: *fp = (float) REAL(value_x)[0];    break;
-	  case RAWSXP:  *fp = (float) RAW(value_x)[0];     break;
+	  case LGLSXP:  fv = (float) LOGICAL(value_x)[0]; break;
+	  case INTSXP:  fv = (float) INTEGER(value_x)[0]; break;
+	  case REALSXP: fv = (float) REAL(value_x)[0];    break;
+	  case RAWSXP:  fv = (float) RAW(value_x)[0];     break;
 	  default: error("value mismatch with 'f' pack type");
 	  }
+      C_store(ptr_x, offset, &fv, sizeof(fv));
 	}
 	break;
 	case DC_SIGCHAR_DOUBLE:
 	{
-	  double* dp = (double*) C_dataptr(ptr_x,offset,sizeof(double));
+	  double dv;
 	  switch(type_of)
 	  {
-	  case LGLSXP:  *dp = (double) LOGICAL(value_x)[0]; break;
-	  case INTSXP:  *dp = (double) INTEGER(value_x)[0]; break;
-	  case REALSXP: *dp = (double) REAL(value_x)[0];    break;
-	  case RAWSXP:  *dp = (double) RAW(value_x)[0];     break;
+	  case LGLSXP:  dv = (double) LOGICAL(value_x)[0]; break;
+	  case INTSXP:  dv = (double) INTEGER(value_x)[0]; break;
+	  case REALSXP: dv = (double) REAL(value_x)[0];    break;
+	  case RAWSXP:  dv = (double) RAW(value_x)[0];     break;
 	  default: error("value mismatch with 'd' pack type");
 	  }
+      C_store(ptr_x, offset, &dv, sizeof(dv));
 	}
 	break;
 	case DC_SIGCHAR_POINTER:
 	case '*':
 	{
-	  void** pp = (void**) C_dataptr(ptr_x,offset,sizeof(void*));
+	  void* pv;
 	  switch(type_of)
 	  {
-	  case NILSXP:   *pp = (void*) 0; break;
-	  case CHARSXP:  *pp = (void*) CHAR(value_x); break;
-	  case LGLSXP:   *pp = (void*) LOGICAL(value_x); break;
-	  case INTSXP:   *pp = (void*) INTEGER(value_x); break;
-	  case REALSXP:  *pp = (void*) REAL(value_x); break;
-	  case CPLXSXP:  *pp = (void*) COMPLEX(value_x); break;
-	  case STRSXP:   *pp = (void*) CHAR( STRING_ELT(value_x,0) ); break;
-	  case EXTPTRSXP:*pp = (void*) R_ExternalPtrAddr(value_x); break;
-	  case RAWSXP:   *pp = (void*) RAW(value_x); break;
+	  case NILSXP:   pv = (void*) 0; break;
+	  case CHARSXP:  pv = (void*) CHAR(value_x); break;
+	  case LGLSXP:   pv = (void*) LOGICAL(value_x); break;
+	  case INTSXP:   pv = (void*) INTEGER(value_x); break;
+	  case REALSXP:  pv = (void*) REAL(value_x); break;
+	  case CPLXSXP:  pv = (void*) COMPLEX(value_x); break;
+	  case STRSXP:   pv = (void*) CHAR( STRING_ELT(value_x,0) ); break;
+	  case EXTPTRSXP:pv = (void*) R_ExternalPtrAddr(value_x); break;
+	  case RAWSXP:   pv = (void*) RAW(value_x); break;
 	  default: error("value type mismatch with 'p' pack type");
 	  }
+      C_store(ptr_x, offset, &pv, sizeof(pv));
 	}
 	break;
 	case DC_SIGCHAR_STRING:
 	{
-	  char** Sp = (char**) C_dataptr(ptr_x,offset,sizeof(char*));
+	  char* sv;
 	  switch(type_of)
 	  {
-	  case NILSXP:   *Sp = (char*) NULL; break;
-	  case CHARSXP:  *Sp = (char*) CHAR(value_x); break;
-	  case STRSXP:   *Sp = (char*) CHAR( STRING_ELT(value_x,0) ); break;
-	  case EXTPTRSXP:*Sp = (char*) R_ExternalPtrAddr(value_x); break;
+	  case NILSXP:   sv = (char*) NULL; break;
+	  case CHARSXP:  sv = (char*) CHAR(value_x); break;
+	  case STRSXP:   sv = (char*) CHAR( STRING_ELT(value_x,0) ); break;
+	  case EXTPTRSXP:sv = (char*) R_ExternalPtrAddr(value_x); break;
 	  default: error("value type mismatch with 'Z' pack type");
 	  }
+      C_store(ptr_x, offset, &sv, sizeof(sv));
 	}
 	break;
 	case DC_SIGCHAR_SEXP:
 	{
-	  SEXP* px = (SEXP*) C_dataptr(ptr_x,offset,sizeof(SEXP*));
-	  *px = value_x;
+      C_store(ptr_x, offset, &value_x, sizeof(value_x));
 	}
 	break;
 	default: error("invalid signature");
@@ -275,61 +442,91 @@ SEXP C_pack(SEXP ptr_x, SEXP offset, SEXP sig_x, SEXP value_x)
  **/
 SEXP C_unpack(SEXP ptr_x, SEXP offset, SEXP sig_x)
 {
-  char* ptr = NULL;
   const char* sig = CHAR(STRING_ELT(sig_x,0) );
   switch(sig[0])
   {
-    case DC_SIGCHAR_BOOL:
-      ptr = C_dataptr(ptr_x,offset,sizeof(Rboolean));
-      return ScalarLogical( ((int*)ptr)[0] );
-    case DC_SIGCHAR_CHAR:     
-      ptr = C_dataptr(ptr_x,offset,sizeof(char));
-      return ScalarInteger( ( (char*)ptr)[0] );
-    case DC_SIGCHAR_UCHAR:
-      ptr = C_dataptr(ptr_x,offset,sizeof(unsigned char));
-      return ScalarInteger( ( (unsigned char*)ptr)[0] );
-    case DC_SIGCHAR_SHORT:
-      ptr = C_dataptr(ptr_x,offset,sizeof(short));
-      return ScalarInteger( ( (short*)ptr)[0] );
-    case DC_SIGCHAR_USHORT:
-      ptr = C_dataptr(ptr_x,offset,sizeof(unsigned short));
-      return ScalarInteger( ( (unsigned short*)ptr)[0] );
-    case DC_SIGCHAR_INT:
-      ptr = C_dataptr(ptr_x,offset,sizeof(int));
-      return ScalarInteger( ( (int*)ptr )[0] );
-    case DC_SIGCHAR_UINT:
-      ptr = C_dataptr(ptr_x,offset,sizeof(unsigned int));
-      return ScalarReal( (double) ( (unsigned int*)ptr )[0] );
-    case DC_SIGCHAR_LONG:
-      ptr = C_dataptr(ptr_x,offset,sizeof(long));
-      return ScalarReal( (double) ( (long*)ptr )[0] );
-    case DC_SIGCHAR_ULONG:
-      ptr = C_dataptr(ptr_x,offset,sizeof(unsigned long));
-      return ScalarReal( (double) ( (unsigned long*) ptr )[0] );
-    case DC_SIGCHAR_FLOAT:
-      ptr = C_dataptr(ptr_x,offset,sizeof(float));
-      return ScalarReal( (double) ( (float*) ptr )[0] );
-    case DC_SIGCHAR_DOUBLE:
-      ptr = C_dataptr(ptr_x,offset,sizeof(double));
-      return ScalarReal( ((double*)ptr)[0] );
-    case DC_SIGCHAR_LONGLONG:
-      ptr = C_dataptr(ptr_x,offset,sizeof(long long));
-      return ScalarReal( (double) ( ((long long*)ptr)[0] ) );
-    case DC_SIGCHAR_ULONGLONG:
-      ptr = C_dataptr(ptr_x,offset,sizeof(unsigned long long));
-      return ScalarReal( (double) ( ((unsigned long long*)ptr)[0] ) );
-    case '*':
-    case DC_SIGCHAR_POINTER:  
-      ptr = C_dataptr(ptr_x,offset,sizeof(void*));
-      return R_MakeExternalPtr( ((void**)ptr)[0] , R_NilValue, R_NilValue );
-    case DC_SIGCHAR_STRING:   {
-      ptr = C_dataptr(ptr_x,offset,sizeof(char*));
-    	char* s = ( (char**) ptr )[0];
-		if (s == NULL) return R_MakeExternalPtr( 0, R_NilValue, R_NilValue );
-		return mkString(s);
+    case DC_SIGCHAR_BOOL: {
+      Rboolean v;
+      C_load(ptr_x, offset, &v, sizeof(v));
+      return ScalarLogical(v);
     }
-    case DC_SIGCHAR_SEXP:     
-      return (SEXP) ptr;
+    case DC_SIGCHAR_CHAR: {
+      char v;
+      C_load(ptr_x, offset, &v, sizeof(v));
+      return ScalarInteger(v);
+    }
+    case DC_SIGCHAR_UCHAR: {
+      unsigned char v;
+      C_load(ptr_x, offset, &v, sizeof(v));
+      return ScalarInteger(v);
+    }
+    case DC_SIGCHAR_SHORT: {
+      short v;
+      C_load(ptr_x, offset, &v, sizeof(v));
+      return ScalarInteger(v);
+    }
+    case DC_SIGCHAR_USHORT: {
+      unsigned short v;
+      C_load(ptr_x, offset, &v, sizeof(v));
+      return ScalarInteger(v);
+    }
+    case DC_SIGCHAR_INT: {
+      int v;
+      C_load(ptr_x, offset, &v, sizeof(v));
+      return ScalarInteger(v);
+    }
+    case DC_SIGCHAR_UINT: {
+      unsigned int v;
+      C_load(ptr_x, offset, &v, sizeof(v));
+      return ScalarReal((double) v);
+    }
+    case DC_SIGCHAR_LONG: {
+      long v;
+      C_load(ptr_x, offset, &v, sizeof(v));
+      return ScalarReal((double) v);
+    }
+    case DC_SIGCHAR_ULONG: {
+      unsigned long v;
+      C_load(ptr_x, offset, &v, sizeof(v));
+      return ScalarReal((double) v);
+    }
+    case DC_SIGCHAR_FLOAT: {
+      float v;
+      C_load(ptr_x, offset, &v, sizeof(v));
+      return ScalarReal((double) v);
+    }
+    case DC_SIGCHAR_DOUBLE: {
+      double v;
+      C_load(ptr_x, offset, &v, sizeof(v));
+      return ScalarReal(v);
+    }
+    case DC_SIGCHAR_LONGLONG: {
+      long long v;
+      C_load(ptr_x, offset, &v, sizeof(v));
+      return ScalarReal((double) v);
+    }
+    case DC_SIGCHAR_ULONGLONG: {
+      unsigned long long v;
+      C_load(ptr_x, offset, &v, sizeof(v));
+      return ScalarReal((double) v);
+    }
+    case '*':
+    case DC_SIGCHAR_POINTER: {
+      void* v;
+      C_load(ptr_x, offset, &v, sizeof(v));
+      return R_MakeExternalPtr(v, R_NilValue, R_NilValue);
+    }
+    case DC_SIGCHAR_STRING:   {
+      char* s;
+      C_load(ptr_x, offset, &s, sizeof(s));
+      if (s == NULL) return R_MakeExternalPtr(0, R_NilValue, R_NilValue);
+      return mkString(s);
+    }
+    case DC_SIGCHAR_SEXP: {
+      SEXP v;
+      C_load(ptr_x, offset, &v, sizeof(v));
+      return v;
+    }
     default: error("invalid signature");
   }
   return R_NilValue;

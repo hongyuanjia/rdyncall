@@ -29,8 +29,9 @@ get_typeinfo(name, envir = parent.frame())
 
 \item{basetype}{character string, base type of 'pointer' types.}
 
-\item{fields}{data frame with name, type and offset information that
-specifies aggregate struct and union types.}
+\item{fields}{data frame with name, type, offset and optional array or
+bitfield layout information that specifies aggregate struct and union
+types.}
 
 \item{signature}{character string specifying the struct/union type
 \link[=type-signature]{signature}.}
@@ -47,6 +48,11 @@ List object tagged as S3 class \code{typeinfo} with the following named entries
 \code{name} \tab field name\cr
 \code{type} \tab type name\cr
 \code{offset} \tab byte offset (starts counted from 0)\cr
+\code{array_len} \tab fixed array length, or 1 for scalar fields\cr
+\code{bit_offset} \tab bitfield offset, or \code{NA} for ordinary fields\cr
+\code{bit_width} \tab bitfield width, or \code{NA} for ordinary fields\cr
+\code{storage_offset} \tab bitfield storage-unit byte offset\cr
+\code{storage_size} \tab bitfield storage-unit size in bytes\cr
 }
 }
 }
