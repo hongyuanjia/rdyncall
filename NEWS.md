@@ -23,6 +23,7 @@
 - Support fixed-size array fields in `struct` and `union` type signatures via the `type[N]` suffix.
 - Add `@packed`, `@pack(n)` and `@align(n)` layout directives for `cstruct()`, `cunion()` and DynPort aggregate definitions.
 - Refresh roxygen-generated documentation and package metadata for renewed development.
+- Generate `NAMESPACE` from roxygen2 metadata instead of maintaining it by hand.
 - Modernize GitHub Actions checks across Linux, macOS, and Windows, with an optional R-hub workflow for extended platform checks.
 
 # rdyncall 0.9

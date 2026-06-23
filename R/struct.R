@@ -81,7 +81,6 @@
 #'
 #' @aliases type-information
 #' @rdname typeinfo
-#' @export
 typeinfo <- function(name, type = c("base", "pointer", "struct", "union"),
                      size = NA, align = NA, basetype = NA, fields = NA,
                      signature = NA) {
@@ -100,7 +99,6 @@ is.typeinfo <- function(x) {
 }
 
 #' @rdname typeinfo
-#' @export
 get_typeinfo <- function(name, envir = parent.frame()) {
     if (is.character(name)) {
         get_typeinfo_by_name(name, envir)

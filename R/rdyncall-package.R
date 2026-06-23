@@ -95,5 +95,6 @@
 #' dynport(SDL2)
 #' dyn.SDL2::SDL_GetPlatform()
 #' }
+#' @useDynLib rdyncall
 #' @keywords internal
 "_PACKAGE"
