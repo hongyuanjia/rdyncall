@@ -107,8 +107,12 @@ The following gives a list of currently supported DCF \emph{DynPorts}:\tabular{l
 
 The DCF format records the following binding metadata:
 \itemize{
-\item Functions (and pointer-to-function variables) are mapped via \code{\link[=dynbind]{dynbind()}}
-and a description of the C library using a \emph{library signatures}.
+\item Fixed-arity functions are mapped via \code{\link[=dynbind]{dynbind()}} and a description of the
+C library using a \emph{library signatures}.
+\item Variadic functions are recorded separately from fixed-arity functions and
+require call-site vararg signatures.
+\item Function pointer type declarations are parsed as \code{FuncPtr} metadata but are
+not exported as callable symbols.
 \item Symbolic names are assigned to its values for object-like macro defines and
 C enum types.
 \item Run-time type-information objects for aggregate C data types (struct and

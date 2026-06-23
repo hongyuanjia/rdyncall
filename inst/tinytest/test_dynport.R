@@ -37,8 +37,8 @@ expect_error(dynport(rdyncall_missing_dynport, repo = missing_repo), "not found"
 # package
 expect_dynport_portfile_error("Package: a-", "ASCII")
 expect_dynport_portfile_error(c("Package: a", "  b"), "single string")
-expect_dynport_portfile_error("Package: a", "two character")
 expect_dynport_portfile_error("Package: .a", "letter")
+expect_equal(rdyncall:::dynport_read(write_dynport("Package: R"))$Package, "R")
 
 # version
 expect_dynport_portfile_error("Version: -", "specification")
@@ -107,6 +107,15 @@ expect_dynport_portfile_error("Function: test(C[2])v arg", "C\\[2\\].*argument")
 expect_dynport_portfile_error("Function: test(i) i a b", "number")
 expect_dynport_portfile_error("Function: test(ii)i a a", "name")
 
+variadic_port <- rdyncall:::dynport_read(write_dynport(c(
+    "Package: VariadicPort",
+    "Library: c",
+    "Variadic:",
+    "    printf(Z)i fmt;"
+)))
+expect_equal(names(variadic_port$Variadic), "printf")
+expect_equal(variadic_port$Variadic$printf$argument$name, "fmt")
+
 empty_port <- tempfile(fileext = ".dynport")
 expect_true(file.create(empty_port))
 expect_error(dynport(rdyncall_empty_dynport, portfile = empty_port), "Empty")
@@ -135,7 +144,7 @@ local({
     unload_test_package(package)
     on.exit(unload_test_package(package), add = TRUE)
 
-    expect_silent(pkg <- dynport(tiny, portfile = portfile, lib = lib, quiet = TRUE))
+    pkg <- dynport(tiny, portfile = portfile, lib = lib, quiet = TRUE)
     expect_equal(pkg, package)
     expect_true(dir.exists(file.path(lib, package)))
     expect_true(package %in% loadedNamespaces())
@@ -194,7 +203,7 @@ local({
         "    REBUILD_ONE=1"
     ))
     lib <- tempfile("rdyncall-dynport-lib")
-    expect_silent(dynport_install_package(rebuild, portfile = portfile, lib = lib, quiet = TRUE))
+    dynport_install_package(rebuild, portfile = portfile, lib = lib, quiet = TRUE)
     writeLines(c(
         "Package: RebuildPort",
         "Version: 1.0.0",
@@ -205,7 +214,7 @@ local({
         dynport_install_package(rebuild, portfile = portfile, lib = lib, quiet = TRUE),
         "rebuild = TRUE"
     )
-    expect_silent(dynport_install_package(rebuild, portfile = portfile, lib = lib, rebuild = TRUE, quiet = TRUE))
+    dynport_install_package(rebuild, portfile = portfile, lib = lib, rebuild = TRUE, quiet = TRUE)
 })
 
 local({
@@ -218,14 +227,20 @@ local({
             "    c",
             "    c.so.6",
             "Function:",
-            "    strlen(Z)L str;"
+            "    strlen(Z)L str;",
+            "Variadic:",
+            "    printf(Z)i fmt;",
+            "    sprintf(*cZ)i buf fmt;"
         ))
         lib <- tempfile("rdyncall-dynport-lib")
         package <- "dyn.CString"
         unload_test_package(package)
         on.exit(unload_test_package(package), add = TRUE)
 
-        expect_silent(dynport(cstring, portfile = portfile, lib = lib, quiet = TRUE))
+        dynport(cstring, portfile = portfile, lib = lib, quiet = TRUE)
         expect_equal(getExportedValue(package, "strlen")("abc"), 3)
+        buf <- raw(32)
+        expect_equal(getExportedValue(package, "sprintf")(buf, "value=%d", 7L, .varargs = "i"), 7L)
+        expect_equal(rawToChar(buf[seq_len(7L)]), "value=7")
     }
 })

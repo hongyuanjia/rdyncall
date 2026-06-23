@@ -33,8 +33,12 @@
 #'
 #' The DCF format records the following binding metadata:
 #'
-#' - Functions (and pointer-to-function variables) are mapped via [dynbind()]
-#'   and a description of the C library using a _library signatures_.
+#' - Fixed-arity functions are mapped via [dynbind()] and a description of the
+#'   C library using a _library signatures_.
+#' - Variadic functions are recorded separately from fixed-arity functions and
+#'   require call-site vararg signatures.
+#' - Function pointer type declarations are parsed as `FuncPtr` metadata but are
+#'   not exported as callable symbols.
 #' - Symbolic names are assigned to its values for object-like macro defines and
 #'   C enum types.
 #' - Run-time type-information objects for aggregate C data types (struct and
@@ -229,6 +233,7 @@ dynport_parse_field <- function(key, value, lnum, envir = parent.frame()) {
             "Version"  = dynport_parse_version(value,  lnum),
             "Library"  = dynport_parse_library(value,  lnum),
             "Function" = dynport_parse_function(value, lnum, envir),
+            "Variadic" = dynport_parse_variadic(value, lnum, envir),
             "FuncPtr"  = dynport_parse_funcptr(value,  lnum, envir),
             "Struct"   = dynport_parse_struct(value,   lnum, envir),
             "Union"    = dynport_parse_union(value,    lnum, envir),
@@ -258,8 +263,8 @@ dynport_parse_package <- function(value, lnum = 1L) {
         dynport_issue_error("Package", NULL, lnum, val, "Only contain ASCII letters, numbers and dots are allowed")
     }
 
-    if (nchar(val) < 2L) {
-        dynport_issue_error("Package", NULL, lnum, val, "At least two character long is required")
+    if (!nchar(val)) {
+        dynport_issue_error("Package", NULL, lnum, val, "Non-empty string is required")
     }
 
     if (!grepl("^[a-zA-z]", val)) {
@@ -312,11 +317,10 @@ dynport_parse_library <- function(value, lnum = 1L) {
     windows_reserved <- "^(con|prn|aux|nul|com[0-9]|lpt[0-9])([.].*)?$"
     windows_trailing <- "[. ]+$"
 
-    invld <- vapply(
+    invld <- Reduce(`|`, lapply(
         c(illegal, control, reserved, windows_reserved, windows_trailing),
-        grepl, logical(length(vals)), x = vals, ignore.case = TRUE
-    )
-    invld <- vapply(seq_len(nrow(invld)), function(i) Reduce(`||`, invld[i, ]), logical(1L))
+        grepl, x = vals, ignore.case = TRUE
+    ))
 
     if (any(invld)) {
         dynport_issue_error("Library", NULL, lnum[invld], vals[invld], "Invalid file name found")
@@ -426,6 +430,10 @@ dynport_parse_function <- function(value, lnum = 1L, envir = parent.frame()) {
 }
 
 dynport_parse_funcptr <- function(value, lnum = 1L, envir = parent.frame()) {
+    dynport_parse_function(value, lnum, envir)
+}
+
+dynport_parse_variadic <- function(value, lnum = 1L, envir = parent.frame()) {
     dynport_parse_function(value, lnum, envir)
 }
 
@@ -680,7 +688,7 @@ dynport_load_into <- function(portfile, envir) {
     dynport_assign_typeinfos(port[["Union"]], envir)
     dynport_assign_enums(port[["Enum"]], envir)
     dynport_assign_functions(port, "Function", envir, funcptr = FALSE)
-    dynport_assign_functions(port, "FuncPtr", envir, funcptr = TRUE)
+    dynport_assign_functions(port, "Variadic", envir, variadic = TRUE)
 
     invisible(envir)
 }
@@ -765,7 +773,7 @@ dynport_validate_package_name <- function(package) {
 dynport_export_names <- function(port) {
     exports <- character()
     exports <- c(exports, names(port[["Function"]]))
-    exports <- c(exports, names(port[["FuncPtr"]]))
+    exports <- c(exports, names(port[["Variadic"]]))
     exports <- c(exports, names(port[["Struct"]]))
     exports <- c(exports, names(port[["Union"]]))
 
@@ -817,7 +825,7 @@ dynport_assign_enums <- function(enums, envir) {
     invisible()
 }
 
-dynport_assign_functions <- function(port, field, envir, funcptr = FALSE) {
+dynport_assign_functions <- function(port, field, envir, funcptr = FALSE, variadic = FALSE) {
     functions <- port[[field]]
     if (!length(functions)) return(invisible())
 
@@ -828,7 +836,7 @@ dynport_assign_functions <- function(port, field, envir, funcptr = FALSE) {
 
     report <- dynbind(
         libraries, dynport_compact_signature(functions),
-        envir = envir, funcptr = funcptr
+        envir = envir, funcptr = funcptr, variadic = variadic
     )
     dynport_assign_unresolved(report$unresolved.symbols, envir)
     invisible(report)
@@ -842,12 +850,11 @@ dynport_compact_signature <- function(functions) {
 
 dynport_assign_unresolved <- function(symbols, envir) {
     for (symbol in symbols) {
-        f <- local({
-            unresolved <- symbol
-            function(...) {
-                stop("Unresolved DynPort symbol '", unresolved, "'.", call. = FALSE)
-            }
-        })
+        f <- function(...) NULL
+        body(f) <- substitute(
+            stop("Unresolved DynPort symbol '", unresolved, "'.", call. = FALSE),
+            list(unresolved = symbol)
+        )
         environment(f) <- envir
         assign(symbol, f, envir = envir)
     }

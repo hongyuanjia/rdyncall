@@ -8,6 +8,8 @@
 - Add `dyncall_variadic()` for calling C variadic functions with explicit
   call-site vararg signatures.
 - Allow `dynbind()` to generate wrappers for C variadic functions.
+- Support `Variadic` DynPort entries and keep function pointer declarations as
+  metadata.
 - Allow `dynbind()` to accept direct library paths and existing external
   pointer handles in addition to short library names.
 - Improve `dynfind()` discovery for libraries installed by common package
