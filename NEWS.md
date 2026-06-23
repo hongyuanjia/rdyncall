@@ -11,6 +11,8 @@
   pointer handles in addition to short library names.
 - Improve `dynfind()` discovery for libraries installed by common package
   managers, including Homebrew, MacPorts, Linuxbrew and Scoop.
+- Improve `dynfind()` discovery of the current R runtime library and avoid
+  treating same-named directories as direct `dynbind()` library paths.
 - Return nested aggregate fields from `$` as raw-backed `struct` objects so
   they can be reused for field access and aggregate by-value calls.
 - Fix `cstruct()` and `cunion()` field parsing when whitespace follows the type signature.

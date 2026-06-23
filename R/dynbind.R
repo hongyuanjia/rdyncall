@@ -201,7 +201,7 @@ dynbind_resolve_libhandle <- function(libnames) {
 }
 
 dynbind_is_library_path <- function(libname) {
-    !is.na(libname) && (grepl("[/\\\\]", libname) || file.exists(libname))
+    !is.na(libname) && (grepl("[/\\\\]", libname) || (file.exists(libname) && !dir.exists(libname)))
 }
 
 dynbind_libnames_label <- function(libnames) {
