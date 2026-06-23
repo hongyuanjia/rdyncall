@@ -4,6 +4,7 @@
 \alias{dyncall}
 \alias{call-signature}
 \alias{type-signature}
+\alias{dyncall_variadic}
 \alias{dyncall.cdecl}
 \alias{dyncall.default}
 \alias{dyncall.stdcall}
@@ -16,6 +17,14 @@
 \title{Foreign Function Interface with support for almost all C types}
 \usage{
 dyncall(address, signature, ..., callmode = "default")
+
+dyncall_variadic(
+  address,
+  signature,
+  varargs = "",
+  ...,
+  callmode = c("default", "cdecl")
+)
 
 dyncall.cdecl(address, signature, ...)
 
@@ -48,6 +57,11 @@ details.}
 \item{callmode}{character string specifying the \emph{calling convention}. This
 argument has no effect on most platforms, but on Microsoft Windows
 32-Bit Intel/x86 platforms. See details.}
+
+\item{varargs}{character string specifying the type signatures for the
+arguments passed through the C \code{...} portion of a variadic function.
+This string contains argument types only, without \verb{)} and without a
+return type.}
 }
 \value{
 Functions return the received C return value converted to an R value. See
@@ -96,6 +110,12 @@ resize already-created CallVM objects.
 
 Arguments passed via \code{...} are converted to C according to \code{signature}; see
 below for details.
+
+\code{dyncall_variadic()} calls C functions declared with \code{...}. The \code{signature}
+argument describes the fixed parameter prefix and return type, while
+\code{varargs} describes the actual argument types passed through \code{...} at this
+specific call site. C default promotions are the caller's responsibility; for
+example, pass promoted variadic \code{float} values as \code{double} (\code{"d"}).
 
 Given that the \code{signature} matches the foreign function type, the FFI
 provides a certain level of type-safety to users, when exposing foreign
