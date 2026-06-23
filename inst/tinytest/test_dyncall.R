@@ -187,12 +187,18 @@ pack(nested_vec2, nested_base + field_offset(Vec2, "x"), "f", 5.5)
 pack(nested_vec2, nested_base + field_offset(Vec2, "y"), "f", 6.25)
 nested_sum <- dynsym(aggregate_fixture, "rdyncall_test_nested_vec2_sum")
 expect_equal(dyncall(nested_sum, "<NestedVec2>)d", nested_vec2), 11.75)
+nested_xy <- nested_vec2$xy
+expect_struct_raw(nested_xy, "Vec2")
+expect_equal(dyncall(vec2_sum, "<Vec2>)d", nested_xy), 11.75)
 
 make_nested_vec2 <- dynsym(aggregate_fixture, "rdyncall_test_make_nested_vec2")
 nested_ret <- dyncall(make_nested_vec2, "ff)<NestedVec2>", 7.5, 8.25)
 expect_struct_raw(nested_ret, "NestedVec2")
 expect_equal(unpack(nested_ret, nested_base + field_offset(Vec2, "x"), "f"), 7.5)
 expect_equal(unpack(nested_ret, nested_base + field_offset(Vec2, "y"), "f"), 8.25)
+nested_ret_xy <- nested_ret$xy
+expect_struct_raw(nested_ret_xy, "Vec2")
+expect_equal(dyncall(vec2_sum, "<Vec2>)d", nested_ret_xy), 15.75)
 
 # Three-double HFA aggregate return stays in FP return registers even though size is over 16 bytes.
 cstruct("ThreeDouble{ddd}a b c;")

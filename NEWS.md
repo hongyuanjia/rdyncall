@@ -9,6 +9,8 @@
   pointer handles in addition to short library names.
 - Improve `dynfind()` discovery for libraries installed by common package
   managers, including Homebrew, MacPorts, Linuxbrew and Scoop.
+- Return nested aggregate fields from `$` as raw-backed `struct` objects so
+  they can be reused for field access and aggregate by-value calls.
 - Fix `cstruct()` and `cunion()` field parsing when whitespace follows the type signature.
 - Store aggregate field names in the explicit `typeinfo$fields$name` column.
 - Add `struct` and `union` bitfield layout, access, DynPort parsing, and by-value aggregate support.
