@@ -2,7 +2,7 @@
 output: github_document
 ---
 
-# rdyncall
+# rdyncall <img src="man/figures/logo.svg" align="right" height="138" />
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/hongyuanjia/rdyncall/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hongyuanjia/rdyncall/actions/workflows/R-CMD-check.yaml)
