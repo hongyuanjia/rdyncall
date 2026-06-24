@@ -83,6 +83,21 @@ rect
 The object returned by `cdata()` is a raw vector with class metadata. Field
 access is translated into byte-level reads and writes.
 
+You can inspect the registered layout before passing data to C:
+
+```{r rect-layout}
+c(
+    size = DocRect$size,
+    align = DocRect$align
+)
+
+DocRect$fields[, c("name", "type", "offset", "array_len")]
+```
+
+The field offsets are byte offsets in the aggregate. If values appear shifted
+or truncated after a foreign call, compare this table with the C compiler's
+layout for the same type.
+
 ## Fixed-size array fields
 
 Array lengths are written after the field type.
@@ -140,6 +155,9 @@ c(
     mode = bits$mode,
     code = bits$code
 )
+
+DocBits$fields[, c("name", "type", "offset", "bit_offset", "bit_width",
+                   "storage_offset", "storage_size")]
 ```
 
 Unnamed bitfields such as `:4` reserve padding bits. A zero-width unnamed
@@ -160,6 +178,8 @@ c(
     pack4_align = DocPack4$align,
     aligned_align = DocAligned$align
 )
+
+DocPacked$fields[, c("name", "type", "offset")]
 ```
 
 `@packed` is equivalent to `@pack(1)`. `@pack(n)` caps member alignment at `n`,
