@@ -18,11 +18,3 @@ article_eval_external <- function(libnames, label = paste(libnames, collapse = "
 
     enabled && available
 }
-
-article_expect_symbols <- function(info, label = "foreign library") {
-    unresolved <- info$unresolved.symbols
-    if (length(unresolved)) {
-        stop(label, " has unresolved symbols: ", paste(unresolved, collapse = ", "), call. = FALSE)
-    }
-    invisible(info)
-}
