@@ -27,7 +27,8 @@ library.
 The generation boundary is:
 
 1. Install or locate the C library headers.
-2. Run porter against a small umbrella header.
+2. Run [porter](https://github.com/hongyuanjia/porter) against a small umbrella
+   header.
 3. Set DynPort metadata such as `Package`, `Version`, and `Library`.
 4. Write a DCF `.dynport` file.
 5. Let rdyncall load that file with `dynport()`.
@@ -85,9 +86,9 @@ sdl3 <- port_set(
 port_write(sdl3, "inst/dynports/SDL3.dynport")
 ```
 
-Keep generated output reviewed in git. A changed header, porter release, or SDL3
-version can legitimately change function, constant, enum, and aggregate
-metadata.
+Keep generated output reviewed in git. A changed header,
+[porter](https://github.com/hongyuanjia/porter) release, or SDL3 version can
+legitimately change function, constant, enum, and aggregate metadata.
 
 ## Validate on the rdyncall side
 
@@ -110,7 +111,7 @@ prove the generated package can resolve and call at least one real symbol.
 
 | Concern | Home |
 |:--|:--|
-| Header parsing and metadata generation | porter |
+| Header parsing and metadata generation | [porter](https://github.com/hongyuanjia/porter) |
 | Bundled DCF file | `inst/dynports/SDL3.dynport` |
 | Loading generated packages | `dynport()` |
 | Real function calls | generated package wrappers |

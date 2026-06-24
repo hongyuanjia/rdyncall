@@ -29,10 +29,11 @@ The three layers have different jobs:
 | `dyncall()` | a function pointer and one call signature | one foreign call | probes and one-off calls |
 | `dynbind()` | library candidates and hand-written signatures | R wrappers in an environment | small, explicit bindings |
 | `dynport()` | a DCF `.dynport` file | a generated R package | repeatable bindings from metadata |
-| `porter` | C headers | a `.dynport` file | generating metadata outside rdyncall |
+| [porter](https://github.com/hongyuanjia/porter) | C headers | a `.dynport` file | generating metadata outside rdyncall |
 
-`porter` is not required at run time by rdyncall. It is the tool used to
-generate DynPort files from headers before `dynport()` loads those files.
+[porter](https://github.com/hongyuanjia/porter) is not required at run time by
+rdyncall. It is the tool used to generate DynPort files from headers before
+`dynport()` loads those files.
 
 ## Bind a small function set
 
@@ -131,9 +132,10 @@ realistic, non-toy binding example.
 The supported in-package example is SDL3. For other libraries, generate a fresh
 DCF file for the headers and library version you want to bind.
 
-For other C libraries, generate a `.dynport` file with porter and pass it to
-`dynport(portfile = ...)`. A regeneration script for SDL3 follows this shape
-once the SDL3 header directory is known:
+For other C libraries, generate a `.dynport` file with
+[porter](https://github.com/hongyuanjia/porter) and pass it to
+`dynport(portfile = ...)`. A regeneration script for SDL3 follows this shape once
+the SDL3 header directory is known:
 
 ```{r porter-sdl3, eval=FALSE}
 library(porter)
@@ -171,8 +173,8 @@ external-library execution switch, generated package loading, and real
   wrappers in one environment.
 - Use `dynport()` when the binding metadata should live in a data file and load
   as a generated R package.
-- Use porter when the metadata should come from C headers rather than from
-  hand-written signatures.
+- Use [porter](https://github.com/hongyuanjia/porter) when the metadata should
+  come from C headers rather than from hand-written signatures.
 
 All three layers use the same underlying signatures, so start by getting the C
 declarations and signatures correct.
