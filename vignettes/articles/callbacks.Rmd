@@ -67,8 +67,9 @@ The comparison callback receives pointers to two elements. The R callback reads
 the `double` values with `unpack()`.
 
 ```{r qsort}
+libc_names <- c("msvcrt", "c", "c.so.6")
 libc <- new.env(parent = globalenv())
-info <- dynbind(article_libc_names, "qsort(piip)v;", envir = libc)
+info <- dynbind(libc_names, "qsort(pLLp)v;", envir = libc)
 article_expect_symbols(info, "C runtime")
 
 compare_double <- function(px, py) {
@@ -95,6 +96,20 @@ all.equal(x, expected)
 The callback object must remain assigned to `compare_ptr` until `qsort()`
 returns. For APIs that store callbacks beyond the registration call, store the
 callback object somewhere with the same lifetime as the foreign registration.
+
+## Immediate and stored callbacks
+
+Callback lifetime depends on whether C calls the pointer during the current
+function call or stores it for later.
+
+| C API pattern | Example | R-side lifetime rule |
+|:--|:--|:--|
+| Immediate callback | `qsort()` | keep the callback object alive until the call returns |
+| Stored callback | GUI, audio, event, or async APIs | keep the callback object alive until the foreign registration is removed |
+
+`qsort()` is comparatively safe because it finishes before control returns to
+R. Event loops are riskier because C may call the pointer long after the
+registration function has returned.
 
 ## Error and lifetime rules
 

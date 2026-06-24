@@ -39,7 +39,8 @@ The corresponding rdyncall call signature is `"d)d"`: one `double` argument,
 then `)`, then a `double` return value.
 
 ```{r sqrt}
-mathlib <- dynfind(article_math_names)
+math_names <- c("msvcrt", "m", "m.so.6")
+mathlib <- dynfind(math_names)
 sqrt_addr <- dynsym(mathlib, "sqrt")
 dyncall(sqrt_addr, "d)d", 144)
 ```
@@ -55,7 +56,7 @@ ordinary R code.
 
 ```{r dynbind-sqrt}
 math <- new.env(parent = globalenv())
-info <- dynbind(article_math_names, "sqrt(d)d;", envir = math)
+info <- dynbind(math_names, "sqrt(d)d;", envir = math)
 article_expect_symbols(info, "math library")
 
 math$sqrt(625)

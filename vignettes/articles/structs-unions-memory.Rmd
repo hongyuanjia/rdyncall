@@ -35,6 +35,18 @@ c(
 
 Offsets are byte offsets starting at 0.
 
+## Choosing a memory interface
+
+Use the highest-level interface that still matches the C API you are binding.
+
+| Need | Use |
+|:--|:--|
+| Read or write a named aggregate field | `$` and `$<-` on a `cdata()` object |
+| Fill an output buffer or scalar field by byte offset | `pack()` |
+| Read a value from a pointer or raw buffer by byte offset | `unpack()` |
+| Treat existing raw memory as a registered aggregate | `as.ctype()` |
+| Pass an aggregate by value | `cdata()` with a registered `cstruct()` or `cunion()` |
+
 ## Register a struct
 
 This C type:

@@ -1,7 +1,3 @@
-article_math_names <- c("msvcrt", "m", "m.so.6")
-article_libc_names <- c("msvcrt", "c", "c.so.6")
-article_sdl2_names <- c("SDL2", "SDL2-2.0", "SDL2-2.0.so.0", "SDL2-2", "SDL2-0")
-
 article_external_enabled <- function() {
     value <- tolower(Sys.getenv("RDYNCALL_ARTICLE_EXTERNAL", "false"))
     value %in% c("1", "true", "yes", "on")

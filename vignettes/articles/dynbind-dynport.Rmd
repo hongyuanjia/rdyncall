@@ -23,9 +23,10 @@ where `dynbind()` and `dynport()` fit.
 thin R wrappers in an environment.
 
 ```{r dynbind-math}
+math_names <- c("msvcrt", "m", "m.so.6")
 math <- new.env(parent = globalenv())
 info <- dynbind(
-    article_math_names,
+    math_names,
     paste(
         "sqrt(d)d",
         "cos(d)d",
@@ -64,7 +65,8 @@ Character library names that look like file paths are loaded directly.
 Other character values are resolved with `dynfind()`.
 
 ```{r dynfind}
-libc_handle <- dynfind(article_libc_names)
+libc_names <- c("msvcrt", "c", "c.so.6")
+libc_handle <- dynfind(libc_names)
 is.nullptr(libc_handle)
 ```
 
@@ -94,49 +96,79 @@ A minimal DynPort file records the package name, library candidates, function
 bindings, and optionally constants and aggregate types.
 
 ```text
-Package: SDL2
-Version: 2.28.0
+Package: SDL3
+Version: 3.4.10
 Library:
-    SDL
-    SDL-2.28
-    SDL-2.28.so.0
+    SDL3
+    SDL3-0
+    SDL3-3
 Function:
     SDL_GetPlatform()Z;
 ```
 
-The source tree includes `inst/dynports/SDL2.dynport` as a DCF-style example.
-The executable example below writes a minimal temporary DynPort so it can use
-modern SDL2 library names commonly seen on development machines and CI images.
+The package ships one current-format DynPort file:
+`inst/dynports/SDL3.dynport`. It is generated from SDL3 headers with
+[porter](https://github.com/hongyuanjia/porter) and kept in the package as a
+realistic, non-toy binding example.
 
-## A non-GUI SDL2 probe
+For other C libraries, generate a `.dynport` file with porter and pass it to
+`dynport(portfile = ...)`. A regeneration script for SDL3 follows this shape
+once the SDL3 header directory is known:
 
-When `RDYNCALL_ARTICLE_EXTERNAL=true` and SDL2 is available, this article builds
-and loads the generated package, then calls a non-GUI platform query. The chunk
-does not open a window or enter an event loop.
+```{r porter-sdl3, eval=FALSE}
+library(porter)
 
-```{r sdl2-dynport, eval=article_eval_external(article_sdl2_names, "SDL2")}
-portfile <- tempfile("SDL2Article-", fileext = ".dynport")
-writeLines(c(
-    "Package: SDL2Article",
-    "Version: 2.0.0",
-    "Library:",
-    "    SDL2",
-    "    SDL2-2.0",
-    "    SDL2-2.0.so.0",
-    "    SDL2-2",
-    "    SDL2-0",
-    "Function:",
-    "    SDL_GetPlatform()Z;"
-), portfile)
+sdl3_header <- "/path/to/include/SDL3/SDL.h"
+sdl3_include <- dirname(dirname(sdl3_header))
 
-generated <- dynport(portfile = portfile, package = "dyn.SDL2Article",
-                     rebuild = TRUE, quiet = TRUE)
-generated
+header <- tempfile(fileext = ".h")
+writeLines("#include <SDL3/SDL.h>", header)
 
-dyn.SDL2Article::SDL_GetPlatform()
+sdl3 <- port(header,
+    limit = dirname(sdl3_header),
+    cflags = paste0("-I", sdl3_include)
+)
+sdl3 <- port_set(sdl3,
+    Package = "SDL3",
+    Version = "3.4.10",
+    Library = c("SDL3", "SDL3-0", "SDL3-3")
+)
+
+port_write(sdl3, "inst/dynports/SDL3.dynport")
 ```
 
-If SDL2 is not installed, the code remains visible in the article but is skipped
+## A non-GUI SDL3 probe
+
+When `RDYNCALL_ARTICLE_EXTERNAL=true` and SDL3 is available, this article builds
+and loads a generated package from the bundled DynPort, then calls a non-GUI
+platform query. The chunk does not open a window or enter an event loop.
+
+```{r sdl3-names}
+sdl3_names <- c("SDL3", "SDL3-0", "SDL3-3")
+```
+
+During normal local rendering, `RDYNCALL_ARTICLE_EXTERNAL` can stay unset or
+`false`; the SDL3 code is shown but skipped. The pkgdown workflow sets it to
+`true`, installs SDL3 system libraries, and therefore executes this non-GUI
+probe in CI.
+
+```{r external-control, eval=FALSE}
+Sys.setenv(RDYNCALL_ARTICLE_EXTERNAL = "true")
+```
+
+```{r sdl3-dynport, eval=article_eval_external(sdl3_names, "SDL3")}
+portfile <- system.file("dynports", "SDL3.dynport",
+                        package = "rdyncall", mustWork = TRUE)
+lib <- tempfile("rdyncall-dynport-lib")
+
+generated <- dynport(portfile = portfile, package = "dyn.SDL3Article",
+                     lib = lib, rebuild = TRUE, quiet = TRUE)
+generated
+
+getExportedValue(generated, "SDL_GetPlatform")()
+```
+
+If SDL3 is not installed, the code remains visible in the article but is skipped
 unless external article execution is explicitly requested.
 
 ## When to choose each layer

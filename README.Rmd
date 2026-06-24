@@ -62,6 +62,21 @@ rect$h <- 15
 rect$w
 ```
 
+## Learn rdyncall
+
+The pkgdown articles are organized as a short learning path:
+
+- [Getting started](articles/getting-started.html) introduces the basic
+  load-resolve-call workflow.
+- [Signatures for C calls](articles/signatures.html) shows how to translate C
+  declarations into rdyncall signatures.
+- [Structs, unions, and memory](articles/structs-unions-memory.html) covers
+  raw buffers, aggregate layouts, bitfields, and packed/aligned data.
+- [Callbacks from C to R](articles/callbacks.html) explains callback pointers
+  and lifetime rules.
+- [dynbind and DynPort bindings](articles/dynbind-dynport.html) shows how to
+  move from one-off calls to generated binding packages.
+
 ## API Map
 
 - `dynload()`, `dynunload()`, `dynsym()`, `dynpath()`, `dyncount()` and
@@ -99,16 +114,17 @@ returns.
 The current implementation supports DCF `.dynport` files and generates ordinary
 on-disk R packages whose namespace is populated from the DynPort metadata.
 
-The bundled current-format example is `inst/dynports/SDL2.dynport`:
+The package ships one current-format DynPort, `inst/dynports/SDL3.dynport`,
+generated from SDL3 headers with
+[`porter`](https://github.com/hongyuanjia/porter):
 
 ```r
-dynport(SDL2)
-dyn.SDL2::SDL_GetPlatform()
+dynport(SDL3)
+dyn.SDL3::SDL_GetPlatform()
 ```
 
-The source tree also contains older `inst/dynports/*.R` binding resources from
-previous rdyncall releases. They are kept as legacy material and examples of the
-older binding style, not as the current DCF DynPort format.
+For other C libraries, generate a DCF `.dynport` file with porter or another
+header-processing workflow and pass it to `dynport(portfile = ...)`.
 
 ## Demos
 
