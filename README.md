@@ -79,8 +79,8 @@ The pkgdown articles are the main documentation path:
   R](https://hongyuanjia.github.io/rdyncall/articles/callbacks.html).
 - Build larger bindings with [dynbind and DynPort
   bindings](https://hongyuanjia.github.io/rdyncall/articles/dynbind-dynport.html),
-  [Porter and SDL3
-  DynPort](https://hongyuanjia.github.io/rdyncall/articles/porter-sdl3.html),
+  [Creating DynPort
+  files](https://hongyuanjia.github.io/rdyncall/articles/creating-dynports.html),
   and [SDL3 non-GUI
   probing](https://hongyuanjia.github.io/rdyncall/articles/sdl3-non-gui.html).
 - Use
@@ -131,8 +131,8 @@ the DynPort metadata.
 The package ships one maintained DynPort example,
 `inst/dynports/SDL3.dynport`, generated from SDL3 headers with
 [`porter`](https://github.com/hongyuanjia/porter). See the
-generated-binding articles for how to regenerate the metadata, load it
-with `dynport()`, and run a non-GUI SDL3 smoke test.
+generated-binding articles for how to create DynPort metadata for a C
+library, load it with `dynport()`, and run a non-GUI SDL3 smoke test.
 
 ## Demos
 

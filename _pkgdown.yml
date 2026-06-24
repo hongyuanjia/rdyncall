@@ -15,7 +15,7 @@ articles:
   navbar: Generated bindings
   contents:
   - articles/dynbind-dynport
-  - articles/porter-sdl3
+  - articles/creating-dynports
   - articles/sdl3-non-gui
 - title: Diagnostics
   navbar: Diagnostics

@@ -89,8 +89,9 @@ without GUI state.
 
 ## Next steps
 
-- Use [Porter and SDL3 DynPort](porter-sdl3.html) to regenerate the bundled
-  metadata from SDL3 headers.
+- Use [Creating DynPort files with porter](creating-dynports.html) to
+  regenerate the bundled metadata from SDL3 headers or create a DynPort file
+  for another library.
 - Use [dynbind and DynPort bindings](dynbind-dynport.html) to understand how
   generated packages relate to hand-written wrappers.
 - Use [callbacks](callbacks.html) before binding SDL3 APIs that store function

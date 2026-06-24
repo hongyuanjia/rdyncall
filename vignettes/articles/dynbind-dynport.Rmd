@@ -137,7 +137,7 @@ For other C libraries, generate a `.dynport` file with
 `dynport(portfile = ...)`. A regeneration script for SDL3 follows this shape once
 the SDL3 header directory is known:
 
-```{r porter-sdl3, eval=FALSE}
+```{r creating-dynports-sdl3, eval=FALSE}
 library(porter)
 
 sdl3_header <- "/path/to/include/SDL3/SDL.h"
@@ -183,8 +183,9 @@ declarations and signatures correct.
 
 - Use [signatures](signatures.html) before writing library signatures or
   DynPort `Function` entries.
-- Use [Porter and SDL3 DynPort](porter-sdl3.html) for the SDL3 generation
-  workflow that produces the bundled DynPort file.
+- Use [Creating DynPort files with porter](creating-dynports.html) for the
+  header-to-DynPort workflow, including the SDL3 example that produces the
+  bundled DynPort file.
 - Use [SDL3 non-GUI probing](sdl3-non-gui.html) for a real external library
   example that can run in CI without opening windows.
 - Use [troubleshooting](troubleshooting.html) when generated packages fail to
