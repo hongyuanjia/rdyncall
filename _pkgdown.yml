@@ -19,6 +19,7 @@ articles:
   navbar: Diagnostics
   contents:
   - articles/troubleshooting
+  - articles/ffi-safety
 reference:
 - title: Find and load shared libraries
   desc: Locate libraries, open dynamic library handles, and resolve C symbols.
