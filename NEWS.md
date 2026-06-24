@@ -1,4 +1,4 @@
-# rdyncall 0.9.0.9000
+# rdyncall 0.10.0
 
 - Restore package compilation on current R toolchains.
 - Update the bundled dyncall source and stop tracking generated static libraries.

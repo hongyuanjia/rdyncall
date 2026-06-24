@@ -89,4 +89,13 @@ Useful links:
 }
 
 }
+\author{
+\strong{Maintainer}: Hongyuan Jia \email{hongyuanjia@cqust.edu.cn} [copyright holder]
+
+Authors:
+\itemize{
+  \item Daniel Adler \email{dadler@uni-goettingen.de} [copyright holder]
+}
+
+}
 \keyword{internal}

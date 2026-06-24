@@ -146,12 +146,12 @@ Ikits, M. and Magallon, M. (2002).  The OpenGL Extension Wrangler Library.
 \url{https://glew.sourceforge.net}
 
 Latinga, S. (1998). The Simple DirectMedia Layer Library.
-\url{http://www.libsdl.org}
+\url{https://www.libsdl.org/}
 
 Segal, M. and Akeley, K. (1992). The OpenGL Graphics System. A Specification,
-Version 1.0. \url{http://www.opengl.org}
+Version 1.0. \url{https://www.opengl.org}
 
-Smith, R. (2001). Open Dynamics Engine. \url{http://www.ode.org}
+Smith, R. (2001). Open Dynamics Engine. \url{https://ode.org/}
 }
 \author{
 Daniel Adler \href{mailto:dadler@uni-goettingen.de}{dadler@uni-goettingen.de}

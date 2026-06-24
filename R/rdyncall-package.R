@@ -73,5 +73,6 @@
 #' cb <- ccallback("ii)i", function(x, y) x + y)
 #' dyncall(cb, "ii)i", 20L, 3L)
 #' }
+#' @useDynLib rdyncall
 #' @keywords internal
 "_PACKAGE"

@@ -22,15 +22,15 @@ required for some rdyncall demos:
 
 \tabular{lll}{
 \strong{Lib}     \tab \strong{Description} \tab \strong{URL} \cr
-\code{expat}     \tab XML Parser \tab \url{http://www.libexpat.org} \cr
-\code{GL}        \tab Open Graphics Library \tab \url{http://opengl.org}, \url{http://www.mesa3d.org} \cr
+\code{expat}     \tab XML Parser \tab \url{https://libexpat.github.io/} \cr
+\code{GL}        \tab Open Graphics Library \tab \url{https://www.opengl.org}, \url{https://www.mesa3d.org/} \cr
 \code{GLU}       \tab OpenGL Utility Library \tab see links above\cr
 \code{glew}      \tab OpenGL Extension Wrangler Library \tab \url{https://glew.sourceforge.net/} \cr
-\code{SDL}       \tab Multimedia Framework \tab \url{http://libsdl.org/} \cr
-\code{SDL_mixer} \tab Music Format playing \tab \url{http://www.libsdl.org/projects/SDL_mixer/} \cr
-\code{SDL_image} \tab Image Format loading \tab \url{http://www.libsdl.org/projects/SDL_image/}  \cr
-\code{SDL_ttf}   \tab True Type Font rendering \tab \url{http://www.libsdl.org/projects/SDL_ttf/} \cr
-\code{SDL_net}   \tab Network I/O \tab \url{http://www.libsdl.org/projects/SDL_net/} \cr 
+\code{SDL}       \tab Multimedia Framework \tab \url{https://www.libsdl.org/} \cr
+\code{SDL_mixer} \tab Music Format playing \tab \url{https://www.libsdl.org/projects/SDL_mixer/} \cr
+\code{SDL_image} \tab Image Format loading \tab \url{https://www.libsdl.org/projects/SDL_image/}  \cr
+\code{SDL_ttf}   \tab True Type Font rendering \tab \url{https://www.libsdl.org/projects/SDL_ttf/} \cr
+\code{SDL_net}   \tab Network I/O \tab \url{https://www.libsdl.org/projects/SDL_net/} \cr
 }
 
 In short: Place the shared libraries ( \code{*.DLL}, \code{*.so} or \code{*.dylib}) in a \emph{standard location} or
@@ -51,12 +51,12 @@ Download the \code{*.zip} files, unpack them and place the \code{*.DLL} files to
 \code{expat}     \tab \url{https://expat.sourceforge.net} (TODO:test installer) \cr
 \code{GL}        \tab pre-installed \cr
 \code{GLU}       \tab pre-installed \cr
-\code{glew}      \tab \url{http://sourceforge.net/projects/glew/files/glew/1.7.0/glew-1.7.0-win32.zip/download} \cr
-\code{SDL}       \tab \url{http://www.libsdl.org/release/SDL-1.2.14-win32.zip} \cr
-\code{SDL_image} \tab \url{http://www.libsdl.org/projects/SDL_image/release/SDL_image-1.2.10-win32.zip} \cr
-\code{SDL_mixer} \tab \url{http://www.libsdl.org/projects/SDL_mixer/release/SDL_mixer-1.2.11-win32.zip} \cr
-\code{SDL_ttf}   \tab \url{http://www.libsdl.org/projects/SDL_ttf/release/SDL_ttf-2.0.10-win32.zip} \cr
-\code{SDL_net}   \tab \url{http://www.libsdl.org/projects/SDL_net/release/SDL_net-1.2.7-win32.zip} \cr
+\code{glew}      \tab \url{https://sourceforge.net/projects/glew/files/glew/1.7.0/glew-1.7.0-win32.zip/download} \cr
+\code{SDL}       \tab \url{https://www.libsdl.org/release/SDL-1.2.14-win32.zip} \cr
+\code{SDL_image} \tab \url{https://www.libsdl.org/projects/SDL_image/release/SDL_image-1.2.10-win32.zip} \cr
+\code{SDL_mixer} \tab \url{https://www.libsdl.org/projects/SDL_mixer/release/SDL_mixer-1.2.11-win32.zip} \cr
+\code{SDL_ttf}   \tab \url{https://www.libsdl.org/projects/SDL_ttf/release/SDL_ttf-2.0.10-win32.zip} \cr
+\code{SDL_net}   \tab \url{https://www.libsdl.org/projects/SDL_net/release/SDL_net-1.2.7-win32.zip} \cr
 }
 
 64-Bit version:
@@ -66,15 +66,15 @@ Download the \code{*.zip} files, unpack them and place the \code{*.DLL} files to
 \code{expat}     \tab no prebuilt found (TODO: build) \cr
 \code{GL}        \tab pre-installed \cr
 \code{GLU}       \tab pre-installed \cr
-\code{glew}      \tab \url{http://sourceforge.net/projects/glew/files/glew/1.7.0/glew-1.7.0-win64.zip/download} \cr
-\code{SDL}       \tab \url{http://mamedev.org/tools/20100102/sdl-1.2.14-r5428-w64.zip} \cr
+\code{glew}      \tab \url{https://sourceforge.net/projects/glew/files/glew/1.7.0/glew-1.7.0-win64.zip/download} \cr
+\code{SDL}       \tab no current prebuilt link verified \cr
 \code{SDL_image} \tab pre-built n/a \cr
 \code{SDL_mixer} \tab pre-built n/a \cr
 \code{SDL_ttf}   \tab pre-built n/a \cr
 \code{SDL_net}   \tab pre-built n/a \cr
 }
 
-The prebuilt version of SDL from \url{http://www.drangon.org/mingw} did not work (exiting with OpenGL errors).
+An older prebuilt MinGW version of SDL tested at the time did not work (exiting with OpenGL errors).
 If you know of other resources for prebuilt 64-bit packages for SDL and expat, please report.
 }
 \section{Mac OS X Installation Notes}{
@@ -85,11 +85,11 @@ Download the \code{*.dmg} files, mount them (by double-click) and copy \code{*.f
 \code{GL}        \tab pre-installed \cr
 \code{GLU}       \tab pre-installed \cr
 \code{glew}      \tab \code{port install glew} \cr
-\code{SDL}       \tab \url{http://www.libsdl.org/release/SDL-1.2.14.dmg} \cr
-\code{SDL_image} \tab \url{http://www.libsdl.org/projects/SDL_image/release/SDL_image-1.2.10.dmg} \cr
-\code{SDL_mixer} \tab \url{http://www.libsdl.org/projects/SDL_mixer/release/SDL_mixer-1.2.11.dmg} \cr
-\code{SDL_ttf}   \tab \url{http://www.libsdl.org/projects/SDL_ttf/release/SDL_ttf-2.0.10.dmg} \cr
-\code{SDL_net}   \tab \url{http://www.libsdl.org/projects/SDL_net/release/SDL_net-1.2.7.dmg} \cr
+\code{SDL}       \tab \url{https://www.libsdl.org/release/SDL-1.2.14.dmg} \cr
+\code{SDL_image} \tab \url{https://www.libsdl.org/projects/SDL_image/release/SDL_image-1.2.10.dmg} \cr
+\code{SDL_mixer} \tab \url{https://www.libsdl.org/projects/SDL_mixer/release/SDL_mixer-1.2.11.dmg} \cr
+\code{SDL_ttf}   \tab \url{https://www.libsdl.org/projects/SDL_ttf/release/SDL_ttf-2.0.10.dmg} \cr
+\code{SDL_net}   \tab \url{https://www.libsdl.org/projects/SDL_net/release/SDL_net-1.2.7.dmg} \cr
 }
 }
 \section{Linux/Debian Installation Notes}{
@@ -204,7 +204,7 @@ The installation of OpenCSW packages is done via \code{pkgutil}.
 
 \preformatted{pkgutil -i <pkgname>..}
 
-See \url{http://www.opencsw.org} for details on the OpenCSW project.
+Consult current OpenCSW documentation for details on the OpenCSW project.
 
 \tabular{ll}{
 \strong{Lib} \tab \strong{pkgname} \cr

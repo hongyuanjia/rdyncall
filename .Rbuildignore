@@ -7,6 +7,7 @@
 ^src/dyncall/test$
 ^src/dyncall/\.hg$
 ^\.github$
+^cran-comments\.md$
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
