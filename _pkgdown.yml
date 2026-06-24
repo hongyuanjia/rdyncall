@@ -16,6 +16,7 @@ articles:
   contents:
   - articles/dynbind-dynport
   - articles/porter-sdl3
+  - articles/sdl3-non-gui
 - title: Diagnostics
   navbar: Diagnostics
   contents:
