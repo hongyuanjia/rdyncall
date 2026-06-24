@@ -17,6 +17,11 @@ Direct `dyncall()` calls are useful for one-off experiments. Larger bindings
 usually need names, wrappers, constants, types, and repeatable loading. That is
 where `dynbind()` and `dynport()` fit.
 
+Use this article when you already know several function signatures and want to
+move beyond address-by-address calls. It shows when to keep a small binding in
+an environment with `dynbind()`, and when to put binding metadata in a DynPort
+file so `dynport()` can generate and load an R package.
+
 ## Bind a small function set
 
 `dynbind()` takes a library name or handle and a library signature. It installs
@@ -180,3 +185,14 @@ unless external article execution is explicitly requested.
 
 All three layers use the same underlying signatures, so start by getting the C
 declarations and signatures correct.
+
+## Next steps
+
+- Use [signatures](signatures.html) before writing library signatures or
+  DynPort `Function` entries.
+- Use [Porter and SDL3 DynPort](porter-sdl3.html) for the SDL3 generation
+  workflow that produces the bundled DynPort file.
+- Use [SDL3 non-GUI probing](sdl3-non-gui.html) for a real external library
+  example that can run in CI without opening windows.
+- Use [troubleshooting](troubleshooting.html) when generated packages fail to
+  find a library, resolve a symbol, or load into the current session.

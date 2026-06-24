@@ -17,6 +17,11 @@ Many C APIs exchange data through structs, unions, arrays, and pointers.
 `rdyncall` models those layouts at run time so R code can read and write the
 same memory shape that C expects.
 
+Use this article when a C function takes a struct, fills an output buffer,
+returns a pointer to memory, or expects fields with C-specific alignment,
+packing, arrays, bitfields, or unions. The goal is to choose the highest-level
+rdyncall memory interface that still matches the C API exactly.
+
 ## Raw memory with `pack()` and `unpack()`
 
 The lowest-level tools are `pack()` and `unpack()`. They write and read C values
@@ -182,3 +187,14 @@ field reads from the same bytes.
 - Be careful with platform-dependent layout, especially packing and bitfields.
 - Treat external pointers as borrowed memory unless the C API explicitly says
   that R owns or must free the pointer.
+
+## Next steps
+
+- Use [signatures](signatures.html) to connect these memory layouts to function
+  call signatures.
+- Use [callbacks](callbacks.html) when a struct or pointer is passed into an R
+  callback from C.
+- Use [FFI safety](ffi-safety.html) before passing ownership-sensitive pointers
+  or memory allocated by a foreign library.
+- Use [troubleshooting](troubleshooting.html) when field values look shifted,
+  truncated, or platform-dependent.

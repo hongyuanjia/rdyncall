@@ -17,6 +17,11 @@ library(rdyncall)
 The signature is the contract between R and the foreign function. It must match
 the C declaration.
 
+Use this article when you have a C prototype, header declaration, or manual
+page and need to turn it into an rdyncall type, call, callback, or library
+signature. Most binding bugs start as translation bugs, so this is the article
+to keep open while writing wrappers.
+
 ## Type signatures
 
 Type signatures describe individual C values. The most common ones are:
@@ -168,3 +173,13 @@ argument should be passed as a promoted `double`.
 - Keep callback and struct lifetimes explicit.
 - Test with tiny inputs before calling code that allocates, frees, opens files,
   or enters an event loop.
+
+## Next steps
+
+- Use [getting started](rdyncall.html) for the shortest load-resolve-call path.
+- Use [structs, unions, and memory](structs-unions-memory.html) when a signature
+  includes aggregate values, raw buffers, or output pointers.
+- Use [callbacks](callbacks.html) when a signature contains a C function
+  pointer.
+- Use [troubleshooting](troubleshooting.html) to diagnose unresolved symbols,
+  wrong return values, crashes, and platform differences.

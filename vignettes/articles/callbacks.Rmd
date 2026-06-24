@@ -17,6 +17,11 @@ Some C APIs do not just call functions immediately. They store a function
 pointer and call it later. `ccallback()` creates a C function pointer that
 enters R when the foreign code invokes it.
 
+Use this article when a C API asks for an `int (*)(...)`, event handler,
+comparison function, completion hook, or any other callback pointer. The main
+task is not just creating the pointer; it is also keeping the R function and
+its state alive for exactly as long as C can call it.
+
 ## A minimal callback
 
 This callback has the C shape:
@@ -201,3 +206,14 @@ make_registration <- function(handle) {
 
 The important part is not the exact wrapper shape; it is that the callback
 pointer remains reachable for at least as long as the C library can use it.
+
+## Next steps
+
+- Use [signatures](signatures.html) to translate callback prototypes and
+  callback pointer arguments.
+- Use [structs, unions, and memory](structs-unions-memory.html) when callback
+  arguments are raw pointers to C data.
+- Use [FFI safety](ffi-safety.html) before registering callbacks that may be
+  called asynchronously or from foreign event loops.
+- Use [troubleshooting](troubleshooting.html) when a callback crashes, returns
+  nonsense, or is called after R state has been cleaned up.
