@@ -13,6 +13,7 @@
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Improved Foreign Function Interface and Dynamic Bindings to C Libraries">
 <meta name="description" content="Provides a cross-platform framework for dynamic binding of C libraries using a flexible Foreign Function Interface (FFI). The FFI supports almost all fundamental C types, multiple calling conventions, symbolic access to foreign C struct/union data types and wrapping of R functions as C callback function pointers. Dynamic bindings to shared C libraries are data-driven by cross-platform binding specifications using a compact plain text format; the package includes an SDL3 DynPort generated from current headers with porter. The package includes a variety of technology demos and OS-specific notes for installation of shared libraries.">
 <meta property="og:description" content="Provides a cross-platform framework for dynamic binding of C libraries using a flexible Foreign Function Interface (FFI). The FFI supports almost all fundamental C types, multiple calling conventions, symbolic access to foreign C struct/union data types and wrapping of R functions as C callback function pointers. Dynamic bindings to shared C libraries are data-driven by cross-platform binding specifications using a compact plain text format; the package includes an SDL3 DynPort generated from current headers with porter. The package includes a variety of technology demos and OS-specific notes for installation of shared libraries.">
+<meta property="og:image" content="https://hongyuanjia.github.io/rdyncall/logo.svg">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -57,8 +58,10 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="rdyncall">rdyncall<a class="anchor" aria-label="anchor" href="#rdyncall"></a>
-</h1></div>
+<div class="page-header">
+<img src="logo.svg" class="logo" alt=""><h1 id="rdyncall-">rdyncall <a class="anchor" aria-label="anchor" href="#rdyncall-"></a>
+</h1>
+</div>
 <!-- badges: start -->
 
 <p><code>rdyncall</code> provides an R interface to the <a href="https://dyncall.org" class="external-link">DynCall</a> libraries. It is a low-level Foreign Function Interface (FFI) for loading shared C libraries, resolving symbols, calling C functions from R by signature, working with C <code>struct</code> and <code>union</code> data, and exposing R functions as C callback pointers.</p>
