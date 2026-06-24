@@ -22,10 +22,12 @@ sdl_info <- tryCatch(
             "SDL_SetRenderDrawColor(pCCCC)B",
             "SDL_RenderClear(p)B",
             "SDL_RenderFillRect(p*<SDL_FRect>)B",
+            "SDL_RenderDebugText(pffZ)B",
             "SDL_RenderPresent(p)B",
             "SDL_GetKeyboardState(p)p",
             "SDL_PollEvent(p)B",
             "SDL_Delay(I)v",
+            "SDL_SetWindowTitle(pZ)B",
             sep = ";"
         ),
         envir = sdl
@@ -164,7 +166,7 @@ run_sdl_demo <- function() {
         game
     }
 
-    render_game <- function(game) {
+    render_game <- function(game, fps) {
         set_color(10L, 12L, 16L)
         sdl$SDL_RenderClear(renderer)
 
@@ -174,6 +176,8 @@ run_sdl_demo <- function() {
             draw_cell(game$snake$x[[i]], game$snake$y[[i]], color)
         }
 
+        set_color(255L, 255L, 255L)
+        sdl$SDL_RenderDebugText(renderer, 8, 8, sprintf("FPS %.0f  Score %d", fps, game$score))
         sdl$SDL_RenderPresent(renderer)
     }
 
@@ -181,6 +185,9 @@ run_sdl_demo <- function() {
     event <- raw(128L)
     last_step <- proc.time()[["elapsed"]]
     started <- last_step
+    last_fps <- last_step
+    frames <- 0L
+    fps <- 0
     duration <- as.numeric(Sys.getenv("SDL_SNAKE_DEMO_SECONDS", "20"))
     if (!is.finite(duration) || duration <= 0) {
         duration <- 20
@@ -216,7 +223,14 @@ run_sdl_demo <- function() {
             game <- step_game(game)
             last_step <- now
         }
-        render_game(game)
+        frames <- frames + 1L
+        if (now - last_fps >= 0.5) {
+            fps <- frames / (now - last_fps)
+            frames <- 0L
+            last_fps <- now
+            sdl$SDL_SetWindowTitle(window, sprintf("rdyncall SDL3 Snake - %.0f FPS", fps))
+        }
+        render_game(game, fps)
 
         if (now - started >= duration) {
             return(invisible(TRUE))
