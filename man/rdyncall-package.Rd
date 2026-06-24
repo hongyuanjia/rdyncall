@@ -33,8 +33,9 @@ R functions can be wrapped as C function pointers with \code{\link[=ccallback]{c
 R reference to callback objects for as long as foreign code may call them.
 
 \code{\link[=dynport]{dynport()}} builds and loads generated R packages from DCF \code{.dynport} binding
-specifications. The source tree also carries older \verb{inst/dynports/*.R}
-resources from previous rdyncall releases as legacy binding material.
+specifications. The package ships an SDL3 DynPort generated from current
+headers with porter; other libraries can be bound by generating and loading
+additional \code{.dynport} files.
 }
 \section{Overview}{
 \itemize{

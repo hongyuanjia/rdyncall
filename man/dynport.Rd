@@ -96,12 +96,12 @@ When \code{dynport()} processes a \emph{DynPort} file, it generates and installs
 R package whose namespace is populated at load time from the DynPort metadata.
 By default, generated package names use the prefix given by option
 \code{rdyncall.dynport.package.prefix}, which defaults to \code{"dyn."}. For example,
-a DynPort with \code{Package: SDL2} is installed as \code{dyn.SDL2} unless a package
+a DynPort with \code{Package: SDL3} is installed as \code{dyn.SDL3} unless a package
 name is explicitly supplied.
 
-The following gives a list of currently supported DCF \emph{DynPorts}:\tabular{ll}{
+The package ships the following current-format DCF \emph{DynPort}:\tabular{ll}{
    \strong{DynPort name/C library} \tab \strong{Description} \cr
-   \code{SDL2} \tab Simple DirectMedia Layer 2 \cr
+   \code{SDL3} \tab Simple DirectMedia Layer 3 \cr
 }
 
 
@@ -116,19 +116,18 @@ union) are registered via \code{\link[=cstruct]{cstruct()}} and \code{\link[=cun
 }
 
 The file path to the \emph{DynPort} file is derived from \code{portname} per default.
-This would refer to \code{"<repo>/<portname>.dynport"} where \code{repo} usually refers
-to the initial \emph{DynPort} repository located at the sub-folder \code{"dynports/"}
-of the package.
+This would refer to \code{"<repo>/<portname>.dynport"} where \code{repo} defaults to
+the package's \code{"dynports/"} sub-folder.
 If \code{portfile} is given, then this value is taken as file path.
 
-A tool suite, comprising AWK (was boost wave), GCC Preprocessor, GCC-XML and
-XSLT, was used to generate the available \emph{DynPort} files automatically
-by extracting type information from C library header files.
+The bundled SDL3 DynPort is generated from SDL3 headers with porter. For
+other libraries, generate a DCF \code{.dynport} file externally and pass it with
+\code{portfile}.
 }
 \examples{
 \dontrun{
-dynport(SDL2)
-dyn.SDL2::SDL_GetPlatform()
+dynport(SDL3)
+dyn.SDL3::SDL_GetPlatform()
 }
 }
 \references{
@@ -139,19 +138,8 @@ Adler, D. (2012) \dQuote{Foreign Library Interface}, \emph{The R Journal},
 Adler, D., Philipp, T. (2008) \emph{DynCall Project}.
 \url{https://dyncall.org}
 
-Clark, J. (1998). expat - XML Parser Toolkit.
-\url{https://expat.sourceforge.net}
-
-Ikits, M. and Magallon, M. (2002).  The OpenGL Extension Wrangler Library.
-\url{https://glew.sourceforge.net}
-
 Latinga, S. (1998). The Simple DirectMedia Layer Library.
 \url{https://www.libsdl.org/}
-
-Segal, M. and Akeley, K. (1992). The OpenGL Graphics System. A Specification,
-Version 1.0. \url{https://www.opengl.org}
-
-Smith, R. (2001). Open Dynamics Engine. \url{https://ode.org/}
 }
 \author{
 Daniel Adler \href{mailto:dadler@uni-goettingen.de}{dadler@uni-goettingen.de}

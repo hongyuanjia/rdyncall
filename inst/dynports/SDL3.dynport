@@ -1,0 +1,2204 @@
+Package: SDL3
+Version: 3.4.10
+Library: 
+    SDL3
+    SDL3-0
+    SDL3-3
+Function: 
+    SDL_malloc(J)p size;
+    SDL_calloc(JJ)p nmemb size;
+    SDL_realloc(pJ)p mem size;
+    SDL_free(p)v mem;
+    SDL_GetOriginalMemoryFunctions(pppp)v malloc_func calloc_func realloc_func free_func;
+    SDL_GetMemoryFunctions(pppp)v malloc_func calloc_func realloc_func free_func;
+    SDL_aligned_alloc(JJ)p alignment size;
+    SDL_aligned_free(p)v mem;
+    SDL_GetNumAllocations()i;
+    SDL_GetEnvironment()*<SDL_Environment>;
+    SDL_GetEnvironmentVariable(*<SDL_Environment>Z)Z env name;
+    SDL_GetEnvironmentVariables(*<SDL_Environment>)p env;
+    SDL_DestroyEnvironment(*<SDL_Environment>)v env;
+    SDL_getenv(Z)Z name;
+    SDL_getenv_unsafe(Z)Z name;
+    SDL_setenv_unsafe(ZZi)i name value overwrite;
+    SDL_unsetenv_unsafe(Z)i name;
+    SDL_qsort(pJJp)v base nmemb size compare;
+    SDL_bsearch(ppJJp)p key base nmemb size compare;
+    SDL_qsort_r(pJJpp)v base nmemb size compare userdata;
+    SDL_bsearch_r(ppJJpp)p key base nmemb size compare userdata;
+    SDL_abs(i)i x;
+    SDL_isalpha(i)i x;
+    SDL_isalnum(i)i x;
+    SDL_isblank(i)i x;
+    SDL_iscntrl(i)i x;
+    SDL_isdigit(i)i x;
+    SDL_isxdigit(i)i x;
+    SDL_ispunct(i)i x;
+    SDL_isspace(i)i x;
+    SDL_isupper(i)i x;
+    SDL_islower(i)i x;
+    SDL_isprint(i)i x;
+    SDL_isgraph(i)i x;
+    SDL_toupper(i)i x;
+    SDL_tolower(i)i x;
+    SDL_crc16(SpJ)S crc data len;
+    SDL_crc32(IpJ)I crc data len;
+    SDL_murmur3_32(pJI)I data len seed;
+    SDL_memcpy(ppJ)p dst src len;
+    SDL_memmove(ppJ)p dst src len;
+    SDL_memset(piJ)p dst c len;
+    SDL_memset4(pIJ)p dst val dwords;
+    SDL_memcmp(ppJ)i s1 s2 len;
+    SDL_wcslen(p)J wstr;
+    SDL_wcsnlen(pJ)J wstr maxlen;
+    SDL_wcslcpy(*ipJ)J dst src maxlen;
+    SDL_wcslcat(*ipJ)J dst src maxlen;
+    SDL_wcsdup(p)*i wstr;
+    SDL_wcsstr(pp)*i haystack needle;
+    SDL_wcsnstr(ppJ)*i haystack needle maxlen;
+    SDL_wcscmp(pp)i str1 str2;
+    SDL_wcsncmp(ppJ)i str1 str2 maxlen;
+    SDL_wcscasecmp(pp)i str1 str2;
+    SDL_wcsncasecmp(ppJ)i str1 str2 maxlen;
+    SDL_wcstol(ppi)j str endp base;
+    SDL_strlen(Z)J str;
+    SDL_strnlen(ZJ)J str maxlen;
+    SDL_strlcpy(*cZJ)J dst src maxlen;
+    SDL_utf8strlcpy(*cZJ)J dst src dst_bytes;
+    SDL_strlcat(*cZJ)J dst src maxlen;
+    SDL_strdup(Z)*c str;
+    SDL_strndup(ZJ)*c str maxlen;
+    SDL_strrev(*c)*c str;
+    SDL_strupr(*c)*c str;
+    SDL_strlwr(*c)*c str;
+    SDL_strchr(Zi)*c str c;
+    SDL_strrchr(Zi)*c str c;
+    SDL_strstr(ZZ)*c haystack needle;
+    SDL_strnstr(ZZJ)*c haystack needle maxlen;
+    SDL_strcasestr(ZZ)*c haystack needle;
+    SDL_strtok_r(*cZp)*c str delim saveptr;
+    SDL_utf8strlen(Z)J str;
+    SDL_utf8strnlen(ZJ)J str bytes;
+    SDL_itoa(i*ci)*c value str radix;
+    SDL_uitoa(I*ci)*c value str radix;
+    SDL_ltoa(j*ci)*c value str radix;
+    SDL_ultoa(J*ci)*c value str radix;
+    SDL_lltoa(l*ci)*c value str radix;
+    SDL_ulltoa(L*ci)*c value str radix;
+    SDL_atoi(Z)i str;
+    SDL_atof(Z)d str;
+    SDL_strtol(Zpi)j str endp base;
+    SDL_strtoul(Zpi)J str endp base;
+    SDL_strtoll(Zpi)l str endp base;
+    SDL_strtoull(Zpi)L str endp base;
+    SDL_strtod(Zp)d str endp;
+    SDL_strcmp(ZZ)i str1 str2;
+    SDL_strncmp(ZZJ)i str1 str2 maxlen;
+    SDL_strcasecmp(ZZ)i str1 str2;
+    SDL_strncasecmp(ZZJ)i str1 str2 maxlen;
+    SDL_strpbrk(ZZ)*c str breakset;
+    SDL_StepUTF8(p*J)I pstr pslen;
+    SDL_StepBackUTF8(Zp)I start pstr;
+    SDL_UCS4ToUTF8(I*c)*c codepoint dst;
+    SDL_vsscanf(ZZ*c)i text fmt ap;
+    SDL_vsnprintf(*cJZ*c)i text maxlen fmt ap;
+    SDL_vswprintf(*iJp*c)i text maxlen fmt ap;
+    SDL_vasprintf(pZ*c)i strp fmt ap;
+    SDL_srand(L)v seed;
+    SDL_rand(i)i n;
+    SDL_randf()f;
+    SDL_rand_bits()I;
+    SDL_rand_r(*Li)i state n;
+    SDL_randf_r(*L)f state;
+    SDL_rand_bits_r(*L)I state;
+    SDL_acos(d)d x;
+    SDL_acosf(f)f x;
+    SDL_asin(d)d x;
+    SDL_asinf(f)f x;
+    SDL_atan(d)d x;
+    SDL_atanf(f)f x;
+    SDL_atan2(dd)d y x;
+    SDL_atan2f(ff)f y x;
+    SDL_ceil(d)d x;
+    SDL_ceilf(f)f x;
+    SDL_copysign(dd)d x y;
+    SDL_copysignf(ff)f x y;
+    SDL_cos(d)d x;
+    SDL_cosf(f)f x;
+    SDL_exp(d)d x;
+    SDL_expf(f)f x;
+    SDL_fabs(d)d x;
+    SDL_fabsf(f)f x;
+    SDL_floor(d)d x;
+    SDL_floorf(f)f x;
+    SDL_trunc(d)d x;
+    SDL_truncf(f)f x;
+    SDL_fmod(dd)d x y;
+    SDL_fmodf(ff)f x y;
+    SDL_isinf(d)i x;
+    SDL_isinff(f)i x;
+    SDL_isnan(d)i x;
+    SDL_isnanf(f)i x;
+    SDL_log(d)d x;
+    SDL_logf(f)f x;
+    SDL_log10(d)d x;
+    SDL_log10f(f)f x;
+    SDL_modf(d*d)d x y;
+    SDL_modff(f*f)f x y;
+    SDL_pow(dd)d x y;
+    SDL_powf(ff)f x y;
+    SDL_round(d)d x;
+    SDL_roundf(f)f x;
+    SDL_lround(d)j x;
+    SDL_lroundf(f)j x;
+    SDL_scalbn(di)d x n;
+    SDL_scalbnf(fi)f x n;
+    SDL_sin(d)d x;
+    SDL_sinf(f)f x;
+    SDL_sqrt(d)d x;
+    SDL_sqrtf(f)f x;
+    SDL_tan(d)d x;
+    SDL_tanf(f)f x;
+    SDL_iconv_open(ZZ)*<SDL_iconv_data_t> tocode fromcode;
+    SDL_iconv_close(*<SDL_iconv_data_t>)i cd;
+    SDL_iconv(*<SDL_iconv_data_t>p*Jp*J)J cd inbuf inbytesleft outbuf outbytesleft;
+    SDL_iconv_string(ZZZJ)*c tocode fromcode inbuf inbytesleft;
+    SDL_ReportAssertion(*<SDL_AssertData>ZZi)<SDL_AssertState> data func file line;
+    SDL_SetAssertionHandler(pp)v handler userdata;
+    SDL_GetDefaultAssertionHandler()p;
+    SDL_GetAssertionHandler(p)p puserdata;
+    SDL_GetAssertionReport()*<SDL_AssertData>;
+    SDL_ResetAssertionReport()v;
+    SDL_AsyncIOFromFile(ZZ)*<SDL_AsyncIO> file mode;
+    SDL_GetAsyncIOSize(*<SDL_AsyncIO>)l asyncio;
+    SDL_CreateAsyncIOQueue()*<SDL_AsyncIOQueue>;
+    SDL_DestroyAsyncIOQueue(*<SDL_AsyncIOQueue>)v queue;
+    SDL_SignalAsyncIOQueue(*<SDL_AsyncIOQueue>)v queue;
+    SDL_LockSpinlock(*i)v lock;
+    SDL_UnlockSpinlock(*i)v lock;
+    SDL_MemoryBarrierReleaseFunction()v;
+    SDL_MemoryBarrierAcquireFunction()v;
+    SDL_SetAtomicInt(*<SDL_AtomicInt>i)i a v;
+    SDL_GetAtomicInt(*<SDL_AtomicInt>)i a;
+    SDL_AddAtomicInt(*<SDL_AtomicInt>i)i a v;
+    SDL_SetAtomicU32(*<SDL_AtomicU32>I)I a v;
+    SDL_GetAtomicU32(*<SDL_AtomicU32>)I a;
+    SDL_AddAtomicU32(*<SDL_AtomicU32>i)I a v;
+    SDL_SetAtomicPointer(pp)p a v;
+    SDL_GetAtomicPointer(p)p a;
+    SDL_GetError()Z;
+    SDL_GetGlobalProperties()I;
+    SDL_CreateProperties()I;
+    SDL_UnlockProperties(I)v props;
+    SDL_GetPropertyType(IZ)<SDL_PropertyType> props name;
+    SDL_GetPointerProperty(IZp)p props name default_value;
+    SDL_GetStringProperty(IZZ)Z props name default_value;
+    SDL_GetNumberProperty(IZl)l props name default_value;
+    SDL_GetFloatProperty(IZf)f props name default_value;
+    SDL_DestroyProperties(I)v props;
+    SDL_CreateThreadRuntime(pZppp)*<SDL_Thread> fn name data pfnBeginThread pfnEndThread;
+    SDL_CreateThreadWithPropertiesRuntime(Ipp)*<SDL_Thread> props pfnBeginThread pfnEndThread;
+    SDL_GetThreadName(*<SDL_Thread>)Z thread;
+    SDL_GetCurrentThreadID()L;
+    SDL_GetThreadID(*<SDL_Thread>)L thread;
+    SDL_WaitThread(*<SDL_Thread>*i)v thread status;
+    SDL_GetThreadState(*<SDL_Thread>)<SDL_ThreadState> thread;
+    SDL_DetachThread(*<SDL_Thread>)v thread;
+    SDL_GetTLS(*<SDL_AtomicInt>)p id;
+    SDL_CleanupTLS()v;
+    SDL_CreateMutex()*<SDL_Mutex>;
+    SDL_LockMutex(*<SDL_Mutex>)v mutex;
+    SDL_UnlockMutex(*<SDL_Mutex>)v mutex;
+    SDL_DestroyMutex(*<SDL_Mutex>)v mutex;
+    SDL_CreateRWLock()*<SDL_RWLock>;
+    SDL_LockRWLockForReading(*<SDL_RWLock>)v rwlock;
+    SDL_LockRWLockForWriting(*<SDL_RWLock>)v rwlock;
+    SDL_UnlockRWLock(*<SDL_RWLock>)v rwlock;
+    SDL_DestroyRWLock(*<SDL_RWLock>)v rwlock;
+    SDL_CreateSemaphore(I)*<SDL_Semaphore> initial_value;
+    SDL_DestroySemaphore(*<SDL_Semaphore>)v sem;
+    SDL_WaitSemaphore(*<SDL_Semaphore>)v sem;
+    SDL_SignalSemaphore(*<SDL_Semaphore>)v sem;
+    SDL_GetSemaphoreValue(*<SDL_Semaphore>)I sem;
+    SDL_CreateCondition()*<SDL_Condition>;
+    SDL_DestroyCondition(*<SDL_Condition>)v cond;
+    SDL_SignalCondition(*<SDL_Condition>)v cond;
+    SDL_BroadcastCondition(*<SDL_Condition>)v cond;
+    SDL_WaitCondition(*<SDL_Condition>*<SDL_Mutex>)v cond mutex;
+    SDL_IOFromFile(ZZ)*<SDL_IOStream> file mode;
+    SDL_IOFromMem(pJ)*<SDL_IOStream> mem size;
+    SDL_IOFromConstMem(pJ)*<SDL_IOStream> mem size;
+    SDL_IOFromDynamicMem()*<SDL_IOStream>;
+    SDL_OpenIO(*<SDL_IOStreamInterface>p)*<SDL_IOStream> iface userdata;
+    SDL_GetIOProperties(*<SDL_IOStream>)I context;
+    SDL_GetIOStatus(*<SDL_IOStream>)<SDL_IOStatus> context;
+    SDL_GetIOSize(*<SDL_IOStream>)l context;
+    SDL_SeekIO(*<SDL_IOStream>l<SDL_IOWhence>)l context offset whence;
+    SDL_TellIO(*<SDL_IOStream>)l context;
+    SDL_ReadIO(*<SDL_IOStream>pJ)J context ptr size;
+    SDL_WriteIO(*<SDL_IOStream>pJ)J context ptr size;
+    SDL_IOvprintf(*<SDL_IOStream>Z*c)J context fmt ap;
+    SDL_LoadFile(Z*J)p file datasize;
+    SDL_GetNumAudioDrivers()i;
+    SDL_GetAudioDriver(i)Z index;
+    SDL_GetCurrentAudioDriver()Z;
+    SDL_GetAudioPlaybackDevices(*i)*I count;
+    SDL_GetAudioRecordingDevices(*i)*I count;
+    SDL_GetAudioDeviceName(I)Z devid;
+    SDL_GetAudioDeviceChannelMap(I*i)*i devid count;
+    SDL_OpenAudioDevice(I*<SDL_AudioSpec>)I devid spec;
+    SDL_GetAudioDeviceGain(I)f devid;
+    SDL_CloseAudioDevice(I)v devid;
+    SDL_UnbindAudioStream(*<SDL_AudioStream>)v stream;
+    SDL_GetAudioStreamDevice(*<SDL_AudioStream>)I stream;
+    SDL_CreateAudioStream(*<SDL_AudioSpec>*<SDL_AudioSpec>)*<SDL_AudioStream> src_spec dst_spec;
+    SDL_GetAudioStreamProperties(*<SDL_AudioStream>)I stream;
+    SDL_GetAudioStreamFrequencyRatio(*<SDL_AudioStream>)f stream;
+    SDL_GetAudioStreamGain(*<SDL_AudioStream>)f stream;
+    SDL_GetAudioStreamInputChannelMap(*<SDL_AudioStream>*i)*i stream count;
+    SDL_GetAudioStreamOutputChannelMap(*<SDL_AudioStream>*i)*i stream count;
+    SDL_GetAudioStreamData(*<SDL_AudioStream>pi)i stream buf len;
+    SDL_GetAudioStreamAvailable(*<SDL_AudioStream>)i stream;
+    SDL_GetAudioStreamQueued(*<SDL_AudioStream>)i stream;
+    SDL_DestroyAudioStream(*<SDL_AudioStream>)v stream;
+    SDL_OpenAudioDeviceStream(I*<SDL_AudioSpec>pp)*<SDL_AudioStream> devid spec callback userdata;
+    SDL_GetAudioFormatName(<SDL_AudioFormat>)Z format;
+    SDL_GetSilenceValueForFormat(<SDL_AudioFormat>)i format;
+    SDL_ComposeCustomBlendMode(<SDL_BlendFactor><SDL_BlendFactor><SDL_BlendOperation><SDL_BlendFactor><SDL_BlendFactor><SDL_BlendOperation>)I srcColorFactor dstColorFactor colorOperation srcAlphaFactor dstAlphaFactor alphaOperation;
+    SDL_GetPixelFormatName(<SDL_PixelFormat>)Z format;
+    SDL_GetPixelFormatForMasks(iIIII)<SDL_PixelFormat> bpp Rmask Gmask Bmask Amask;
+    SDL_GetPixelFormatDetails(<SDL_PixelFormat>)*<SDL_PixelFormatDetails> format;
+    SDL_CreatePalette(i)*<SDL_Palette> ncolors;
+    SDL_DestroyPalette(*<SDL_Palette>)v palette;
+    SDL_MapRGB(*<SDL_PixelFormatDetails>*<SDL_Palette>CCC)I format palette r g b;
+    SDL_MapRGBA(*<SDL_PixelFormatDetails>*<SDL_Palette>CCCC)I format palette r g b a;
+    SDL_GetRGB(I*<SDL_PixelFormatDetails>*<SDL_Palette>*C*C*C)v pixelvalue format palette r g b;
+    SDL_GetRGBA(I*<SDL_PixelFormatDetails>*<SDL_Palette>*C*C*C*C)v pixelvalue format palette r g b a;
+    SDL_CreateSurface(ii<SDL_PixelFormat>)*<SDL_Surface> width height format;
+    SDL_CreateSurfaceFrom(ii<SDL_PixelFormat>pi)*<SDL_Surface> width height format pixels pitch;
+    SDL_DestroySurface(*<SDL_Surface>)v surface;
+    SDL_GetSurfaceProperties(*<SDL_Surface>)I surface;
+    SDL_GetSurfaceColorspace(*<SDL_Surface>)<SDL_Colorspace> surface;
+    SDL_CreateSurfacePalette(*<SDL_Surface>)*<SDL_Palette> surface;
+    SDL_GetSurfacePalette(*<SDL_Surface>)*<SDL_Palette> surface;
+    SDL_GetSurfaceImages(*<SDL_Surface>*i)p surface count;
+    SDL_RemoveSurfaceAlternateImages(*<SDL_Surface>)v surface;
+    SDL_UnlockSurface(*<SDL_Surface>)v surface;
+    SDL_LoadSurface(Z)*<SDL_Surface> file;
+    SDL_LoadBMP(Z)*<SDL_Surface> file;
+    SDL_LoadPNG(Z)*<SDL_Surface> file;
+    SDL_RotateSurface(*<SDL_Surface>f)*<SDL_Surface> surface angle;
+    SDL_DuplicateSurface(*<SDL_Surface>)*<SDL_Surface> surface;
+    SDL_ScaleSurface(*<SDL_Surface>ii<SDL_ScaleMode>)*<SDL_Surface> surface width height scaleMode;
+    SDL_ConvertSurface(*<SDL_Surface><SDL_PixelFormat>)*<SDL_Surface> surface format;
+    SDL_ConvertSurfaceAndColorspace(*<SDL_Surface><SDL_PixelFormat>*<SDL_Palette><SDL_Colorspace>I)*<SDL_Surface> surface format palette colorspace props;
+    SDL_MapSurfaceRGB(*<SDL_Surface>CCC)I surface r g b;
+    SDL_MapSurfaceRGBA(*<SDL_Surface>CCCC)I surface r g b a;
+    SDL_GetNumCameraDrivers()i;
+    SDL_GetCameraDriver(i)Z index;
+    SDL_GetCurrentCameraDriver()Z;
+    SDL_GetCameras(*i)*I count;
+    SDL_GetCameraSupportedFormats(I*i)p instance_id count;
+    SDL_GetCameraName(I)Z instance_id;
+    SDL_GetCameraPosition(I)<SDL_CameraPosition> instance_id;
+    SDL_OpenCamera(I*<SDL_CameraSpec>)*<SDL_Camera> instance_id spec;
+    SDL_GetCameraPermissionState(*<SDL_Camera>)<SDL_CameraPermissionState> camera;
+    SDL_GetCameraID(*<SDL_Camera>)I camera;
+    SDL_GetCameraProperties(*<SDL_Camera>)I camera;
+    SDL_AcquireCameraFrame(*<SDL_Camera>*L)*<SDL_Surface> camera timestampNS;
+    SDL_ReleaseCameraFrame(*<SDL_Camera>*<SDL_Surface>)v camera frame;
+    SDL_CloseCamera(*<SDL_Camera>)v camera;
+    SDL_GetClipboardText()*c;
+    SDL_GetPrimarySelectionText()*c;
+    SDL_GetClipboardData(Z*J)p mime_type size;
+    SDL_GetClipboardMimeTypes(*J)p num_mime_types;
+    SDL_GetNumLogicalCPUCores()i;
+    SDL_GetCPUCacheLineSize()i;
+    SDL_GetSystemRAM()i;
+    SDL_GetSIMDAlignment()J;
+    SDL_GetSystemPageSize()i;
+    SDL_GetNumVideoDrivers()i;
+    SDL_GetVideoDriver(i)Z index;
+    SDL_GetCurrentVideoDriver()Z;
+    SDL_GetSystemTheme()<SDL_SystemTheme>;
+    SDL_GetDisplays(*i)*I count;
+    SDL_GetPrimaryDisplay()I;
+    SDL_GetDisplayProperties(I)I displayID;
+    SDL_GetDisplayName(I)Z displayID;
+    SDL_GetNaturalDisplayOrientation(I)<SDL_DisplayOrientation> displayID;
+    SDL_GetCurrentDisplayOrientation(I)<SDL_DisplayOrientation> displayID;
+    SDL_GetDisplayContentScale(I)f displayID;
+    SDL_GetFullscreenDisplayModes(I*i)p displayID count;
+    SDL_GetDesktopDisplayMode(I)*<SDL_DisplayMode> displayID;
+    SDL_GetCurrentDisplayMode(I)*<SDL_DisplayMode> displayID;
+    SDL_GetDisplayForPoint(*<SDL_Point>)I point;
+    SDL_GetDisplayForRect(*<SDL_Rect>)I rect;
+    SDL_GetDisplayForWindow(*<SDL_Window>)I window;
+    SDL_GetWindowPixelDensity(*<SDL_Window>)f window;
+    SDL_GetWindowDisplayScale(*<SDL_Window>)f window;
+    SDL_GetWindowFullscreenMode(*<SDL_Window>)*<SDL_DisplayMode> window;
+    SDL_GetWindowICCProfile(*<SDL_Window>*J)p window size;
+    SDL_GetWindowPixelFormat(*<SDL_Window>)<SDL_PixelFormat> window;
+    SDL_GetWindows(*i)p count;
+    SDL_CreateWindow(ZiiL)*<SDL_Window> title w h flags;
+    SDL_CreatePopupWindow(*<SDL_Window>iiiiL)*<SDL_Window> parent offset_x offset_y w h flags;
+    SDL_CreateWindowWithProperties(I)*<SDL_Window> props;
+    SDL_GetWindowID(*<SDL_Window>)I window;
+    SDL_GetWindowFromID(I)*<SDL_Window> id;
+    SDL_GetWindowParent(*<SDL_Window>)*<SDL_Window> window;
+    SDL_GetWindowProperties(*<SDL_Window>)I window;
+    SDL_GetWindowFlags(*<SDL_Window>)L window;
+    SDL_GetWindowTitle(*<SDL_Window>)Z window;
+    SDL_GetWindowSurface(*<SDL_Window>)*<SDL_Surface> window;
+    SDL_GetGrabbedWindow()*<SDL_Window>;
+    SDL_GetWindowMouseRect(*<SDL_Window>)*<SDL_Rect> window;
+    SDL_GetWindowOpacity(*<SDL_Window>)f window;
+    SDL_GetWindowProgressState(*<SDL_Window>)<SDL_ProgressState> window;
+    SDL_GetWindowProgressValue(*<SDL_Window>)f window;
+    SDL_DestroyWindow(*<SDL_Window>)v window;
+    SDL_GL_GetProcAddress(Z)p proc;
+    SDL_EGL_GetProcAddress(Z)p proc;
+    SDL_GL_UnloadLibrary()v;
+    SDL_GL_ResetAttributes()v;
+    SDL_GL_CreateContext(*<SDL_Window>)*<SDL_GLContextState> window;
+    SDL_GL_GetCurrentWindow()*<SDL_Window>;
+    SDL_GL_GetCurrentContext()*<SDL_GLContextState>;
+    SDL_EGL_GetCurrentDisplay()p;
+    SDL_EGL_GetCurrentConfig()p;
+    SDL_EGL_GetWindowSurface(*<SDL_Window>)p window;
+    SDL_EGL_SetAttributeCallbacks(pppp)v platformAttribCallback surfaceAttribCallback contextAttribCallback userdata;
+    SDL_ShowSaveFileDialog(pp*<SDL_Window>*<SDL_DialogFileFilter>iZ)v callback userdata window filters nfilters default_location;
+    SDL_ShowFileDialogWithProperties(<SDL_FileDialogType>ppI)v type callback userdata props;
+    SDL_GUIDToString(<SDL_GUID>*ci)v guid pszGUID cbGUID;
+    SDL_StringToGUID(Z)<SDL_GUID> pchGUID;
+    SDL_GetPowerInfo(*i*i)<SDL_PowerState> seconds percent;
+    SDL_GetSensors(*i)*I count;
+    SDL_GetSensorNameForID(I)Z instance_id;
+    SDL_GetSensorTypeForID(I)<SDL_SensorType> instance_id;
+    SDL_GetSensorNonPortableTypeForID(I)i instance_id;
+    SDL_OpenSensor(I)*<SDL_Sensor> instance_id;
+    SDL_GetSensorFromID(I)*<SDL_Sensor> instance_id;
+    SDL_GetSensorProperties(*<SDL_Sensor>)I sensor;
+    SDL_GetSensorName(*<SDL_Sensor>)Z sensor;
+    SDL_GetSensorType(*<SDL_Sensor>)<SDL_SensorType> sensor;
+    SDL_GetSensorNonPortableType(*<SDL_Sensor>)i sensor;
+    SDL_GetSensorID(*<SDL_Sensor>)I sensor;
+    SDL_CloseSensor(*<SDL_Sensor>)v sensor;
+    SDL_UpdateSensors()v;
+    SDL_LockJoysticks()v;
+    SDL_UnlockJoysticks()v;
+    SDL_GetJoysticks(*i)*I count;
+    SDL_GetJoystickNameForID(I)Z instance_id;
+    SDL_GetJoystickPathForID(I)Z instance_id;
+    SDL_GetJoystickPlayerIndexForID(I)i instance_id;
+    SDL_GetJoystickGUIDForID(I)<SDL_GUID> instance_id;
+    SDL_GetJoystickVendorForID(I)S instance_id;
+    SDL_GetJoystickProductForID(I)S instance_id;
+    SDL_GetJoystickProductVersionForID(I)S instance_id;
+    SDL_GetJoystickTypeForID(I)<SDL_JoystickType> instance_id;
+    SDL_OpenJoystick(I)*<SDL_Joystick> instance_id;
+    SDL_GetJoystickFromID(I)*<SDL_Joystick> instance_id;
+    SDL_GetJoystickFromPlayerIndex(i)*<SDL_Joystick> player_index;
+    SDL_AttachVirtualJoystick(*<SDL_VirtualJoystickDesc>)I desc;
+    SDL_GetJoystickProperties(*<SDL_Joystick>)I joystick;
+    SDL_GetJoystickName(*<SDL_Joystick>)Z joystick;
+    SDL_GetJoystickPath(*<SDL_Joystick>)Z joystick;
+    SDL_GetJoystickPlayerIndex(*<SDL_Joystick>)i joystick;
+    SDL_GetJoystickGUID(*<SDL_Joystick>)<SDL_GUID> joystick;
+    SDL_GetJoystickVendor(*<SDL_Joystick>)S joystick;
+    SDL_GetJoystickProduct(*<SDL_Joystick>)S joystick;
+    SDL_GetJoystickProductVersion(*<SDL_Joystick>)S joystick;
+    SDL_GetJoystickFirmwareVersion(*<SDL_Joystick>)S joystick;
+    SDL_GetJoystickSerial(*<SDL_Joystick>)Z joystick;
+    SDL_GetJoystickType(*<SDL_Joystick>)<SDL_JoystickType> joystick;
+    SDL_GetJoystickGUIDInfo(<SDL_GUID>*S*S*S*S)v guid vendor product version crc16;
+    SDL_GetJoystickID(*<SDL_Joystick>)I joystick;
+    SDL_GetNumJoystickAxes(*<SDL_Joystick>)i joystick;
+    SDL_GetNumJoystickBalls(*<SDL_Joystick>)i joystick;
+    SDL_GetNumJoystickHats(*<SDL_Joystick>)i joystick;
+    SDL_GetNumJoystickButtons(*<SDL_Joystick>)i joystick;
+    SDL_UpdateJoysticks()v;
+    SDL_GetJoystickAxis(*<SDL_Joystick>i)s joystick axis;
+    SDL_GetJoystickHat(*<SDL_Joystick>i)C joystick hat;
+    SDL_CloseJoystick(*<SDL_Joystick>)v joystick;
+    SDL_GetJoystickConnectionState(*<SDL_Joystick>)<SDL_JoystickConnectionState> joystick;
+    SDL_GetJoystickPowerInfo(*<SDL_Joystick>*i)<SDL_PowerState> joystick percent;
+    SDL_AddGamepadMapping(Z)i mapping;
+    SDL_AddGamepadMappingsFromFile(Z)i file;
+    SDL_GetGamepadMappings(*i)p count;
+    SDL_GetGamepadMappingForGUID(<SDL_GUID>)*c guid;
+    SDL_GetGamepadMapping(*<SDL_Gamepad>)*c gamepad;
+    SDL_GetGamepads(*i)*I count;
+    SDL_GetGamepadNameForID(I)Z instance_id;
+    SDL_GetGamepadPathForID(I)Z instance_id;
+    SDL_GetGamepadPlayerIndexForID(I)i instance_id;
+    SDL_GetGamepadGUIDForID(I)<SDL_GUID> instance_id;
+    SDL_GetGamepadVendorForID(I)S instance_id;
+    SDL_GetGamepadProductForID(I)S instance_id;
+    SDL_GetGamepadProductVersionForID(I)S instance_id;
+    SDL_GetGamepadTypeForID(I)<SDL_GamepadType> instance_id;
+    SDL_GetRealGamepadTypeForID(I)<SDL_GamepadType> instance_id;
+    SDL_GetGamepadMappingForID(I)*c instance_id;
+    SDL_OpenGamepad(I)*<SDL_Gamepad> instance_id;
+    SDL_GetGamepadFromID(I)*<SDL_Gamepad> instance_id;
+    SDL_GetGamepadFromPlayerIndex(i)*<SDL_Gamepad> player_index;
+    SDL_GetGamepadProperties(*<SDL_Gamepad>)I gamepad;
+    SDL_GetGamepadID(*<SDL_Gamepad>)I gamepad;
+    SDL_GetGamepadName(*<SDL_Gamepad>)Z gamepad;
+    SDL_GetGamepadPath(*<SDL_Gamepad>)Z gamepad;
+    SDL_GetGamepadType(*<SDL_Gamepad>)<SDL_GamepadType> gamepad;
+    SDL_GetRealGamepadType(*<SDL_Gamepad>)<SDL_GamepadType> gamepad;
+    SDL_GetGamepadPlayerIndex(*<SDL_Gamepad>)i gamepad;
+    SDL_GetGamepadVendor(*<SDL_Gamepad>)S gamepad;
+    SDL_GetGamepadProduct(*<SDL_Gamepad>)S gamepad;
+    SDL_GetGamepadProductVersion(*<SDL_Gamepad>)S gamepad;
+    SDL_GetGamepadFirmwareVersion(*<SDL_Gamepad>)S gamepad;
+    SDL_GetGamepadSerial(*<SDL_Gamepad>)Z gamepad;
+    SDL_GetGamepadSteamHandle(*<SDL_Gamepad>)L gamepad;
+    SDL_GetGamepadConnectionState(*<SDL_Gamepad>)<SDL_JoystickConnectionState> gamepad;
+    SDL_GetGamepadPowerInfo(*<SDL_Gamepad>*i)<SDL_PowerState> gamepad percent;
+    SDL_GetGamepadJoystick(*<SDL_Gamepad>)*<SDL_Joystick> gamepad;
+    SDL_GetGamepadBindings(*<SDL_Gamepad>*i)p gamepad count;
+    SDL_UpdateGamepads()v;
+    SDL_GetGamepadTypeFromString(Z)<SDL_GamepadType> str;
+    SDL_GetGamepadStringForType(<SDL_GamepadType>)Z type;
+    SDL_GetGamepadAxisFromString(Z)<SDL_GamepadAxis> str;
+    SDL_GetGamepadStringForAxis(<SDL_GamepadAxis>)Z axis;
+    SDL_GetGamepadAxis(*<SDL_Gamepad><SDL_GamepadAxis>)s gamepad axis;
+    SDL_GetGamepadButtonFromString(Z)<SDL_GamepadButton> str;
+    SDL_GetGamepadStringForButton(<SDL_GamepadButton>)Z button;
+    SDL_GetGamepadButtonLabelForType(<SDL_GamepadType><SDL_GamepadButton>)<SDL_GamepadButtonLabel> type button;
+    SDL_GetGamepadButtonLabel(*<SDL_Gamepad><SDL_GamepadButton>)<SDL_GamepadButtonLabel> gamepad button;
+    SDL_GetNumGamepadTouchpads(*<SDL_Gamepad>)i gamepad;
+    SDL_GetNumGamepadTouchpadFingers(*<SDL_Gamepad>i)i gamepad touchpad;
+    SDL_GetGamepadSensorDataRate(*<SDL_Gamepad><SDL_SensorType>)f gamepad type;
+    SDL_CloseGamepad(*<SDL_Gamepad>)v gamepad;
+    SDL_GetGamepadAppleSFSymbolsNameForButton(*<SDL_Gamepad><SDL_GamepadButton>)Z gamepad button;
+    SDL_GetGamepadAppleSFSymbolsNameForAxis(*<SDL_Gamepad><SDL_GamepadAxis>)Z gamepad axis;
+    SDL_GetKeyboards(*i)*I count;
+    SDL_GetKeyboardNameForID(I)Z instance_id;
+    SDL_GetKeyboardFocus()*<SDL_Window>;
+    SDL_GetKeyboardState(*i)p numkeys;
+    SDL_ResetKeyboard()v;
+    SDL_GetModState()S;
+    SDL_SetModState(S)v modstate;
+    SDL_GetScancodeFromKey(I*S)<SDL_Scancode> key modstate;
+    SDL_GetScancodeName(<SDL_Scancode>)Z scancode;
+    SDL_GetScancodeFromName(Z)<SDL_Scancode> name;
+    SDL_GetKeyName(I)Z key;
+    SDL_GetKeyFromName(Z)I name;
+    SDL_GetMice(*i)*I count;
+    SDL_GetMouseNameForID(I)Z instance_id;
+    SDL_GetMouseFocus()*<SDL_Window>;
+    SDL_GetMouseState(*f*f)I x y;
+    SDL_GetGlobalMouseState(*f*f)I x y;
+    SDL_GetRelativeMouseState(*f*f)I x y;
+    SDL_WarpMouseInWindow(*<SDL_Window>ff)v window x y;
+    SDL_CreateCursor(ppiiii)*<SDL_Cursor> data mask w h hot_x hot_y;
+    SDL_CreateColorCursor(*<SDL_Surface>ii)*<SDL_Cursor> surface hot_x hot_y;
+    SDL_CreateAnimatedCursor(*<SDL_CursorFrameInfo>iii)*<SDL_Cursor> frames frame_count hot_x hot_y;
+    SDL_CreateSystemCursor(<SDL_SystemCursor>)*<SDL_Cursor> id;
+    SDL_GetCursor()*<SDL_Cursor>;
+    SDL_GetDefaultCursor()*<SDL_Cursor>;
+    SDL_DestroyCursor(*<SDL_Cursor>)v cursor;
+    SDL_GetTouchDevices(*i)*L count;
+    SDL_GetTouchDeviceName(L)Z touchID;
+    SDL_GetTouchDeviceType(L)<SDL_TouchDeviceType> touchID;
+    SDL_GetTouchFingers(L*i)p touchID count;
+    SDL_GetPenDeviceType(I)<SDL_PenDeviceType> instance_id;
+    SDL_PumpEvents()v;
+    SDL_PeepEvents(*<SDL_Event>i<SDL_EventAction>II)i events numevents action minType maxType;
+    SDL_FlushEvent(I)v type;
+    SDL_FlushEvents(II)v minType maxType;
+    SDL_SetEventFilter(pp)v filter userdata;
+    SDL_RemoveEventWatch(pp)v filter userdata;
+    SDL_FilterEvents(pp)v filter userdata;
+    SDL_RegisterEvents(i)I numevents;
+    SDL_GetWindowFromEvent(*<SDL_Event>)*<SDL_Window> event;
+    SDL_GetEventDescription(*<SDL_Event>*ci)i event buf buflen;
+    SDL_GetBasePath()Z;
+    SDL_GetPrefPath(ZZ)*c org app;
+    SDL_GetUserFolder(<SDL_Folder>)Z folder;
+    SDL_GlobDirectory(ZZI*i)p path pattern flags count;
+    SDL_GetCurrentDirectory()*c;
+    SDL_CreateGPUDeviceWithProperties(I)*<SDL_GPUDevice> props;
+    SDL_DestroyGPUDevice(*<SDL_GPUDevice>)v device;
+    SDL_GetNumGPUDrivers()i;
+    SDL_GetGPUDriver(i)Z index;
+    SDL_GetGPUDeviceDriver(*<SDL_GPUDevice>)Z device;
+    SDL_GetGPUShaderFormats(*<SDL_GPUDevice>)I device;
+    SDL_GetGPUDeviceProperties(*<SDL_GPUDevice>)I device;
+    SDL_CreateGPUComputePipeline(*<SDL_GPUDevice>*<SDL_GPUComputePipelineCreateInfo>)*<SDL_GPUComputePipeline> device createinfo;
+    SDL_CreateGPUGraphicsPipeline(*<SDL_GPUDevice>*<SDL_GPUGraphicsPipelineCreateInfo>)*<SDL_GPUGraphicsPipeline> device createinfo;
+    SDL_CreateGPUSampler(*<SDL_GPUDevice>*<SDL_GPUSamplerCreateInfo>)*<SDL_GPUSampler> device createinfo;
+    SDL_CreateGPUShader(*<SDL_GPUDevice>*<SDL_GPUShaderCreateInfo>)*<SDL_GPUShader> device createinfo;
+    SDL_CreateGPUTexture(*<SDL_GPUDevice>*<SDL_GPUTextureCreateInfo>)*<SDL_GPUTexture> device createinfo;
+    SDL_CreateGPUBuffer(*<SDL_GPUDevice>*<SDL_GPUBufferCreateInfo>)*<SDL_GPUBuffer> device createinfo;
+    SDL_CreateGPUTransferBuffer(*<SDL_GPUDevice>*<SDL_GPUTransferBufferCreateInfo>)*<SDL_GPUTransferBuffer> device createinfo;
+    SDL_SetGPUBufferName(*<SDL_GPUDevice>*<SDL_GPUBuffer>Z)v device buffer text;
+    SDL_SetGPUTextureName(*<SDL_GPUDevice>*<SDL_GPUTexture>Z)v device texture text;
+    SDL_InsertGPUDebugLabel(*<SDL_GPUCommandBuffer>Z)v command_buffer text;
+    SDL_PushGPUDebugGroup(*<SDL_GPUCommandBuffer>Z)v command_buffer name;
+    SDL_PopGPUDebugGroup(*<SDL_GPUCommandBuffer>)v command_buffer;
+    SDL_ReleaseGPUTexture(*<SDL_GPUDevice>*<SDL_GPUTexture>)v device texture;
+    SDL_ReleaseGPUSampler(*<SDL_GPUDevice>*<SDL_GPUSampler>)v device sampler;
+    SDL_ReleaseGPUBuffer(*<SDL_GPUDevice>*<SDL_GPUBuffer>)v device buffer;
+    SDL_ReleaseGPUTransferBuffer(*<SDL_GPUDevice>*<SDL_GPUTransferBuffer>)v device transfer_buffer;
+    SDL_ReleaseGPUComputePipeline(*<SDL_GPUDevice>*<SDL_GPUComputePipeline>)v device compute_pipeline;
+    SDL_ReleaseGPUShader(*<SDL_GPUDevice>*<SDL_GPUShader>)v device shader;
+    SDL_ReleaseGPUGraphicsPipeline(*<SDL_GPUDevice>*<SDL_GPUGraphicsPipeline>)v device graphics_pipeline;
+    SDL_AcquireGPUCommandBuffer(*<SDL_GPUDevice>)*<SDL_GPUCommandBuffer> device;
+    SDL_PushGPUVertexUniformData(*<SDL_GPUCommandBuffer>IpI)v command_buffer slot_index data length;
+    SDL_PushGPUFragmentUniformData(*<SDL_GPUCommandBuffer>IpI)v command_buffer slot_index data length;
+    SDL_PushGPUComputeUniformData(*<SDL_GPUCommandBuffer>IpI)v command_buffer slot_index data length;
+    SDL_BeginGPURenderPass(*<SDL_GPUCommandBuffer>*<SDL_GPUColorTargetInfo>I*<SDL_GPUDepthStencilTargetInfo>)*<SDL_GPURenderPass> command_buffer color_target_infos num_color_targets depth_stencil_target_info;
+    SDL_BindGPUGraphicsPipeline(*<SDL_GPURenderPass>*<SDL_GPUGraphicsPipeline>)v render_pass graphics_pipeline;
+    SDL_SetGPUViewport(*<SDL_GPURenderPass>*<SDL_GPUViewport>)v render_pass viewport;
+    SDL_SetGPUScissor(*<SDL_GPURenderPass>*<SDL_Rect>)v render_pass scissor;
+    SDL_SetGPUBlendConstants(*<SDL_GPURenderPass><SDL_FColor>)v render_pass blend_constants;
+    SDL_SetGPUStencilReference(*<SDL_GPURenderPass>C)v render_pass reference;
+    SDL_BindGPUVertexBuffers(*<SDL_GPURenderPass>I*<SDL_GPUBufferBinding>I)v render_pass first_slot bindings num_bindings;
+    SDL_BindGPUIndexBuffer(*<SDL_GPURenderPass>*<SDL_GPUBufferBinding><SDL_GPUIndexElementSize>)v render_pass binding index_element_size;
+    SDL_BindGPUVertexSamplers(*<SDL_GPURenderPass>I*<SDL_GPUTextureSamplerBinding>I)v render_pass first_slot texture_sampler_bindings num_bindings;
+    SDL_BindGPUFragmentSamplers(*<SDL_GPURenderPass>I*<SDL_GPUTextureSamplerBinding>I)v render_pass first_slot texture_sampler_bindings num_bindings;
+    SDL_DrawGPUIndexedPrimitives(*<SDL_GPURenderPass>IIIiI)v render_pass num_indices num_instances first_index vertex_offset first_instance;
+    SDL_DrawGPUPrimitives(*<SDL_GPURenderPass>IIII)v render_pass num_vertices num_instances first_vertex first_instance;
+    SDL_DrawGPUPrimitivesIndirect(*<SDL_GPURenderPass>*<SDL_GPUBuffer>II)v render_pass buffer offset draw_count;
+    SDL_DrawGPUIndexedPrimitivesIndirect(*<SDL_GPURenderPass>*<SDL_GPUBuffer>II)v render_pass buffer offset draw_count;
+    SDL_EndGPURenderPass(*<SDL_GPURenderPass>)v render_pass;
+    SDL_BeginGPUComputePass(*<SDL_GPUCommandBuffer>*<SDL_GPUStorageTextureReadWriteBinding>I*<SDL_GPUStorageBufferReadWriteBinding>I)*<SDL_GPUComputePass> command_buffer storage_texture_bindings num_storage_texture_bindings storage_buffer_bindings num_storage_buffer_bindings;
+    SDL_BindGPUComputePipeline(*<SDL_GPUComputePass>*<SDL_GPUComputePipeline>)v compute_pass compute_pipeline;
+    SDL_BindGPUComputeSamplers(*<SDL_GPUComputePass>I*<SDL_GPUTextureSamplerBinding>I)v compute_pass first_slot texture_sampler_bindings num_bindings;
+    SDL_DispatchGPUCompute(*<SDL_GPUComputePass>III)v compute_pass groupcount_x groupcount_y groupcount_z;
+    SDL_DispatchGPUComputeIndirect(*<SDL_GPUComputePass>*<SDL_GPUBuffer>I)v compute_pass buffer offset;
+    SDL_EndGPUComputePass(*<SDL_GPUComputePass>)v compute_pass;
+    SDL_UnmapGPUTransferBuffer(*<SDL_GPUDevice>*<SDL_GPUTransferBuffer>)v device transfer_buffer;
+    SDL_BeginGPUCopyPass(*<SDL_GPUCommandBuffer>)*<SDL_GPUCopyPass> command_buffer;
+    SDL_DownloadFromGPUTexture(*<SDL_GPUCopyPass>*<SDL_GPUTextureRegion>*<SDL_GPUTextureTransferInfo>)v copy_pass source destination;
+    SDL_DownloadFromGPUBuffer(*<SDL_GPUCopyPass>*<SDL_GPUBufferRegion>*<SDL_GPUTransferBufferLocation>)v copy_pass source destination;
+    SDL_EndGPUCopyPass(*<SDL_GPUCopyPass>)v copy_pass;
+    SDL_GenerateMipmapsForGPUTexture(*<SDL_GPUCommandBuffer>*<SDL_GPUTexture>)v command_buffer texture;
+    SDL_BlitGPUTexture(*<SDL_GPUCommandBuffer>*<SDL_GPUBlitInfo>)v command_buffer info;
+    SDL_ReleaseWindowFromGPUDevice(*<SDL_GPUDevice>*<SDL_Window>)v device window;
+    SDL_GetGPUSwapchainTextureFormat(*<SDL_GPUDevice>*<SDL_Window>)<SDL_GPUTextureFormat> device window;
+    SDL_SubmitGPUCommandBufferAndAcquireFence(*<SDL_GPUCommandBuffer>)*<SDL_GPUFence> command_buffer;
+    SDL_ReleaseGPUFence(*<SDL_GPUDevice>*<SDL_GPUFence>)v device fence;
+    SDL_GPUTextureFormatTexelBlockSize(<SDL_GPUTextureFormat>)I format;
+    SDL_CalculateGPUTextureFormatSize(<SDL_GPUTextureFormat>III)I format width height depth_or_layer_count;
+    SDL_GetPixelFormatFromGPUTextureFormat(<SDL_GPUTextureFormat>)<SDL_PixelFormat> format;
+    SDL_GetGPUTextureFormatFromPixelFormat(<SDL_PixelFormat>)<SDL_GPUTextureFormat> format;
+    SDL_GetHaptics(*i)*I count;
+    SDL_GetHapticNameForID(I)Z instance_id;
+    SDL_OpenHaptic(I)*<SDL_Haptic> instance_id;
+    SDL_GetHapticFromID(I)*<SDL_Haptic> instance_id;
+    SDL_GetHapticID(*<SDL_Haptic>)I haptic;
+    SDL_GetHapticName(*<SDL_Haptic>)Z haptic;
+    SDL_OpenHapticFromMouse()*<SDL_Haptic>;
+    SDL_OpenHapticFromJoystick(*<SDL_Joystick>)*<SDL_Haptic> joystick;
+    SDL_CloseHaptic(*<SDL_Haptic>)v haptic;
+    SDL_GetMaxHapticEffects(*<SDL_Haptic>)i haptic;
+    SDL_GetMaxHapticEffectsPlaying(*<SDL_Haptic>)i haptic;
+    SDL_GetHapticFeatures(*<SDL_Haptic>)I haptic;
+    SDL_GetNumHapticAxes(*<SDL_Haptic>)i haptic;
+    SDL_CreateHapticEffect(*<SDL_Haptic>*<SDL_HapticEffect>)i haptic effect;
+    SDL_DestroyHapticEffect(*<SDL_Haptic>i)v haptic effect;
+    SDL_hid_init()i;
+    SDL_hid_exit()i;
+    SDL_hid_device_change_count()I;
+    SDL_hid_enumerate(SS)*<SDL_hid_device_info> vendor_id product_id;
+    SDL_hid_free_enumeration(*<SDL_hid_device_info>)v devs;
+    SDL_hid_open(SSp)*<SDL_hid_device> vendor_id product_id serial_number;
+    SDL_hid_open_path(Z)*<SDL_hid_device> path;
+    SDL_hid_get_properties(*<SDL_hid_device>)I dev;
+    SDL_hid_write(*<SDL_hid_device>pJ)i dev data length;
+    SDL_hid_read_timeout(*<SDL_hid_device>*CJi)i dev data length milliseconds;
+    SDL_hid_read(*<SDL_hid_device>*CJ)i dev data length;
+    SDL_hid_set_nonblocking(*<SDL_hid_device>i)i dev nonblock;
+    SDL_hid_send_feature_report(*<SDL_hid_device>pJ)i dev data length;
+    SDL_hid_get_feature_report(*<SDL_hid_device>*CJ)i dev data length;
+    SDL_hid_get_input_report(*<SDL_hid_device>*CJ)i dev data length;
+    SDL_hid_close(*<SDL_hid_device>)i dev;
+    SDL_hid_get_manufacturer_string(*<SDL_hid_device>*iJ)i dev string maxlen;
+    SDL_hid_get_product_string(*<SDL_hid_device>*iJ)i dev string maxlen;
+    SDL_hid_get_serial_number_string(*<SDL_hid_device>*iJ)i dev string maxlen;
+    SDL_hid_get_indexed_string(*<SDL_hid_device>i*iJ)i dev string_index string maxlen;
+    SDL_hid_get_device_info(*<SDL_hid_device>)*<SDL_hid_device_info> dev;
+    SDL_hid_get_report_descriptor(*<SDL_hid_device>*CJ)i dev buf buf_size;
+    SDL_ResetHints()v;
+    SDL_GetHint(Z)Z name;
+    SDL_RemoveHintCallback(Zpp)v name callback userdata;
+    SDL_QuitSubSystem(I)v flags;
+    SDL_WasInit(I)I flags;
+    SDL_Quit()v;
+    SDL_GetAppMetadataProperty(Z)Z name;
+    SDL_LoadObject(Z)*<SDL_SharedObject> sofile;
+    SDL_LoadFunction(*<SDL_SharedObject>Z)p handle name;
+    SDL_UnloadObject(*<SDL_SharedObject>)v handle;
+    SDL_GetPreferredLocales(*i)p count;
+    SDL_SetLogPriorities(<SDL_LogPriority>)v priority;
+    SDL_SetLogPriority(i<SDL_LogPriority>)v category priority;
+    SDL_GetLogPriority(i)<SDL_LogPriority> category;
+    SDL_ResetLogPriorities()v;
+    SDL_LogMessageV(i<SDL_LogPriority>Z*c)v category priority fmt ap;
+    SDL_GetDefaultLogOutputFunction()p;
+    SDL_GetLogOutputFunction(pp)v callback userdata;
+    SDL_SetLogOutputFunction(pp)v callback userdata;
+    SDL_Metal_CreateView(*<SDL_Window>)p window;
+    SDL_Metal_DestroyView(p)v view;
+    SDL_Metal_GetLayer(p)p view;
+    SDL_GetPlatform()Z;
+    SDL_CreateProcessWithProperties(I)*<SDL_Process> props;
+    SDL_GetProcessProperties(*<SDL_Process>)I process;
+    SDL_ReadProcess(*<SDL_Process>*J*i)p process datasize exitcode;
+    SDL_GetProcessInput(*<SDL_Process>)*<SDL_IOStream> process;
+    SDL_GetProcessOutput(*<SDL_Process>)*<SDL_IOStream> process;
+    SDL_DestroyProcess(*<SDL_Process>)v process;
+    SDL_GetNumRenderDrivers()i;
+    SDL_GetRenderDriver(i)Z index;
+    SDL_CreateRenderer(*<SDL_Window>Z)*<SDL_Renderer> window name;
+    SDL_CreateRendererWithProperties(I)*<SDL_Renderer> props;
+    SDL_CreateGPURenderer(*<SDL_GPUDevice>*<SDL_Window>)*<SDL_Renderer> device window;
+    SDL_GetGPURendererDevice(*<SDL_Renderer>)*<SDL_GPUDevice> renderer;
+    SDL_CreateSoftwareRenderer(*<SDL_Surface>)*<SDL_Renderer> surface;
+    SDL_GetRenderer(*<SDL_Window>)*<SDL_Renderer> window;
+    SDL_GetRenderWindow(*<SDL_Renderer>)*<SDL_Window> renderer;
+    SDL_GetRendererName(*<SDL_Renderer>)Z renderer;
+    SDL_GetRendererProperties(*<SDL_Renderer>)I renderer;
+    SDL_CreateTexture(*<SDL_Renderer><SDL_PixelFormat><SDL_TextureAccess>ii)*<SDL_Texture> renderer format access w h;
+    SDL_CreateTextureFromSurface(*<SDL_Renderer>*<SDL_Surface>)*<SDL_Texture> renderer surface;
+    SDL_CreateTextureWithProperties(*<SDL_Renderer>I)*<SDL_Texture> renderer props;
+    SDL_GetTextureProperties(*<SDL_Texture>)I texture;
+    SDL_GetRendererFromTexture(*<SDL_Texture>)*<SDL_Renderer> texture;
+    SDL_GetTexturePalette(*<SDL_Texture>)*<SDL_Palette> texture;
+    SDL_UnlockTexture(*<SDL_Texture>)v texture;
+    SDL_GetRenderTarget(*<SDL_Renderer>)*<SDL_Texture> renderer;
+    SDL_RenderReadPixels(*<SDL_Renderer>*<SDL_Rect>)*<SDL_Surface> renderer rect;
+    SDL_DestroyTexture(*<SDL_Texture>)v texture;
+    SDL_DestroyRenderer(*<SDL_Renderer>)v renderer;
+    SDL_GetRenderMetalLayer(*<SDL_Renderer>)p renderer;
+    SDL_GetRenderMetalCommandEncoder(*<SDL_Renderer>)p renderer;
+    SDL_CreateGPURenderState(*<SDL_Renderer>*<SDL_GPURenderStateCreateInfo>)*<SDL_GPURenderState> renderer createinfo;
+    SDL_DestroyGPURenderState(*<SDL_GPURenderState>)v state;
+    SDL_OpenTitleStorage(ZI)*<SDL_Storage> override props;
+    SDL_OpenUserStorage(ZZI)*<SDL_Storage> org app props;
+    SDL_OpenFileStorage(Z)*<SDL_Storage> path;
+    SDL_OpenStorage(*<SDL_StorageInterface>p)*<SDL_Storage> iface userdata;
+    SDL_GetStorageSpaceRemaining(*<SDL_Storage>)L storage;
+    SDL_GlobStorageDirectory(*<SDL_Storage>ZZI*i)p storage path pattern flags count;
+    SDL_SetX11EventHook(pp)v callback userdata;
+    SDL_GetSandbox()<SDL_Sandbox>;
+    SDL_OnApplicationWillTerminate()v;
+    SDL_OnApplicationDidReceiveMemoryWarning()v;
+    SDL_OnApplicationWillEnterBackground()v;
+    SDL_OnApplicationDidEnterBackground()v;
+    SDL_OnApplicationWillEnterForeground()v;
+    SDL_OnApplicationDidEnterForeground()v;
+    SDL_TimeToWindows(l*I*I)v ticks dwLowDateTime dwHighDateTime;
+    SDL_TimeFromWindows(II)l dwLowDateTime dwHighDateTime;
+    SDL_GetDaysInMonth(ii)i year month;
+    SDL_GetDayOfYear(iii)i year month day;
+    SDL_GetDayOfWeek(iii)i year month day;
+    SDL_GetTicks()L;
+    SDL_GetTicksNS()L;
+    SDL_GetPerformanceCounter()L;
+    SDL_GetPerformanceFrequency()L;
+    SDL_Delay(I)v ms;
+    SDL_DelayNS(L)v ns;
+    SDL_DelayPrecise(L)v ns;
+    SDL_AddTimer(Ipp)I interval callback userdata;
+    SDL_AddTimerNS(Lpp)I interval callback userdata;
+    SDL_CreateTray(*<SDL_Surface>Z)*<SDL_Tray> icon tooltip;
+    SDL_SetTrayIcon(*<SDL_Tray>*<SDL_Surface>)v tray icon;
+    SDL_SetTrayTooltip(*<SDL_Tray>Z)v tray tooltip;
+    SDL_CreateTrayMenu(*<SDL_Tray>)*<SDL_TrayMenu> tray;
+    SDL_CreateTraySubmenu(*<SDL_TrayEntry>)*<SDL_TrayMenu> entry;
+    SDL_GetTrayMenu(*<SDL_Tray>)*<SDL_TrayMenu> tray;
+    SDL_GetTraySubmenu(*<SDL_TrayEntry>)*<SDL_TrayMenu> entry;
+    SDL_RemoveTrayEntry(*<SDL_TrayEntry>)v entry;
+    SDL_InsertTrayEntryAt(*<SDL_TrayMenu>iZI)*<SDL_TrayEntry> menu pos label flags;
+    SDL_SetTrayEntryLabel(*<SDL_TrayEntry>Z)v entry label;
+    SDL_GetTrayEntryLabel(*<SDL_TrayEntry>)Z entry;
+    SDL_SetTrayEntryCallback(*<SDL_TrayEntry>pp)v entry callback userdata;
+    SDL_ClickTrayEntry(*<SDL_TrayEntry>)v entry;
+    SDL_DestroyTray(*<SDL_Tray>)v tray;
+    SDL_GetTrayEntryParent(*<SDL_TrayEntry>)*<SDL_TrayMenu> entry;
+    SDL_GetTrayMenuParentEntry(*<SDL_TrayMenu>)*<SDL_TrayEntry> menu;
+    SDL_GetTrayMenuParentTray(*<SDL_TrayMenu>)*<SDL_Tray> menu;
+    SDL_UpdateTrays()v;
+    SDL_GetVersion()i;
+    SDL_GetRevision()Z;
+Variadic: 
+    SDL_sscanf(ZZ)i text fmt;
+    SDL_snprintf(*cJZ)i text maxlen fmt;
+    SDL_swprintf(*iJp)i text maxlen fmt;
+    SDL_asprintf(pZ)i strp fmt;
+    SDL_IOprintf(*<SDL_IOStream>Z)J context fmt;
+    SDL_Log(Z)v fmt;
+    SDL_LogTrace(iZ)v category fmt;
+    SDL_LogVerbose(iZ)v category fmt;
+    SDL_LogDebug(iZ)v category fmt;
+    SDL_LogInfo(iZ)v category fmt;
+    SDL_LogWarn(iZ)v category fmt;
+    SDL_LogError(iZ)v category fmt;
+    SDL_LogCritical(iZ)v category fmt;
+    SDL_LogMessage(i<SDL_LogPriority>Z)v category priority fmt;
+FuncPtr: 
+    SDL_ThreadFunction(p)i;
+    SDL_malloc_func(J)p;
+    SDL_calloc_func(JJ)p;
+    SDL_realloc_func(pJ)p;
+    SDL_free_func(p)v;
+    SDL_CompareCallback(pp)i;
+    SDL_CompareCallback_r(ppp)i;
+    SDL_FunctionPointer()v;
+    SDL_AssertionHandler(*<SDL_AssertData>p)<SDL_AssertState>;
+    SDL_CleanupPropertyCallback(pp)v;
+    SDL_EnumeratePropertiesCallback(pIZ)v;
+    SDL_AudioStreamDataCompleteCallback(ppi)v;
+    SDL_AudioStreamCallback(p*<SDL_AudioStream>ii)v;
+    SDL_AudioPostmixCallback(p*<SDL_AudioSpec>*fi)v;
+    SDL_ClipboardDataCallback(pZ*J)p;
+    SDL_EGLAttribArrayCallback(p)*j;
+    SDL_EGLIntArrayCallback(ppp)*i;
+    SDL_HitTest(*<SDL_Window>*<SDL_Point>p)<SDL_HitTestResult>;
+    SDL_MouseMotionTransformCallback(pL*<SDL_Window>I*f*f)v;
+    SDL_EnumerateDirectoryCallback(pZZ)<SDL_EnumerationResult>;
+    SDL_HintCallback(pZZZ)v;
+    SDL_AppInit_func(pip)<SDL_AppResult>;
+    SDL_AppIterate_func(p)<SDL_AppResult>;
+    SDL_AppEvent_func(p*<SDL_Event>)<SDL_AppResult>;
+    SDL_AppQuit_func(p<SDL_AppResult>)v;
+    SDL_LogOutputFunction(pi<SDL_LogPriority>Z)v;
+    SDL_TimerCallback(pII)I;
+    SDL_NSTimerCallback(pIL)L;
+    SDL_TrayCallback(p*<SDL_TrayEntry>)v;
+    size(p)l;
+    seek(pl<SDL_IOWhence>)l;
+    read(ppJ*<SDL_IOStatus>)J;
+    write(ppJ*<SDL_IOStatus>)J;
+    SetPlayerIndex(pi)v;
+    space_remaining(p)L;
+Enum/SDL_DUMMY_ENUM: DUMMY_ENUM_VALUE=0
+Enum/SDL_AssertState: 
+    SDL_ASSERTION_RETRY=0
+    SDL_ASSERTION_BREAK=1
+    SDL_ASSERTION_ABORT=2
+    SDL_ASSERTION_IGNORE=3
+    SDL_ASSERTION_ALWAYS_IGNORE=4
+Enum/SDL_AsyncIOTaskType: 
+    SDL_ASYNCIO_TASK_READ=0
+    SDL_ASYNCIO_TASK_WRITE=1
+    SDL_ASYNCIO_TASK_CLOSE=2
+Enum/SDL_AsyncIOResult: 
+    SDL_ASYNCIO_COMPLETE=0
+    SDL_ASYNCIO_FAILURE=1
+    SDL_ASYNCIO_CANCELED=2
+Enum/SDL_PropertyType: 
+    SDL_PROPERTY_TYPE_INVALID=0
+    SDL_PROPERTY_TYPE_POINTER=1
+    SDL_PROPERTY_TYPE_STRING=2
+    SDL_PROPERTY_TYPE_NUMBER=3
+    SDL_PROPERTY_TYPE_FLOAT=4
+    SDL_PROPERTY_TYPE_BOOLEAN=5
+Enum/SDL_ThreadPriority: 
+    SDL_THREAD_PRIORITY_LOW=0
+    SDL_THREAD_PRIORITY_NORMAL=1
+    SDL_THREAD_PRIORITY_HIGH=2
+    SDL_THREAD_PRIORITY_TIME_CRITICAL=3
+Enum/SDL_ThreadState: 
+    SDL_THREAD_UNKNOWN=0
+    SDL_THREAD_ALIVE=1
+    SDL_THREAD_DETACHED=2
+    SDL_THREAD_COMPLETE=3
+Enum/SDL_InitStatus: 
+    SDL_INIT_STATUS_UNINITIALIZED=0
+    SDL_INIT_STATUS_INITIALIZING=1
+    SDL_INIT_STATUS_INITIALIZED=2
+    SDL_INIT_STATUS_UNINITIALIZING=3
+Enum/SDL_IOStatus: 
+    SDL_IO_STATUS_READY=0
+    SDL_IO_STATUS_ERROR=1
+    SDL_IO_STATUS_EOF=2
+    SDL_IO_STATUS_NOT_READY=3
+    SDL_IO_STATUS_READONLY=4
+    SDL_IO_STATUS_WRITEONLY=5
+Enum/SDL_IOWhence: 
+    SDL_IO_SEEK_SET=0
+    SDL_IO_SEEK_CUR=1
+    SDL_IO_SEEK_END=2
+Enum/SDL_AudioFormat: 
+    SDL_AUDIO_UNKNOWN=0
+    SDL_AUDIO_U8=8
+    SDL_AUDIO_S8=32776
+    SDL_AUDIO_S16LE=32784
+    SDL_AUDIO_S16BE=36880
+    SDL_AUDIO_S32LE=32800
+    SDL_AUDIO_S32BE=36896
+    SDL_AUDIO_F32LE=33056
+    SDL_AUDIO_F32BE=37152
+    SDL_AUDIO_S16=32784
+    SDL_AUDIO_S32=32800
+    SDL_AUDIO_F32=33056
+Enum/SDL_BlendOperation: 
+    SDL_BLENDOPERATION_ADD=1
+    SDL_BLENDOPERATION_SUBTRACT=2
+    SDL_BLENDOPERATION_REV_SUBTRACT=3
+    SDL_BLENDOPERATION_MINIMUM=4
+    SDL_BLENDOPERATION_MAXIMUM=5
+Enum/SDL_BlendFactor: 
+    SDL_BLENDFACTOR_ZERO=1
+    SDL_BLENDFACTOR_ONE=2
+    SDL_BLENDFACTOR_SRC_COLOR=3
+    SDL_BLENDFACTOR_ONE_MINUS_SRC_COLOR=4
+    SDL_BLENDFACTOR_SRC_ALPHA=5
+    SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA=6
+    SDL_BLENDFACTOR_DST_COLOR=7
+    SDL_BLENDFACTOR_ONE_MINUS_DST_COLOR=8
+    SDL_BLENDFACTOR_DST_ALPHA=9
+    SDL_BLENDFACTOR_ONE_MINUS_DST_ALPHA=10
+Enum/SDL_PixelType: 
+    SDL_PIXELTYPE_UNKNOWN=0
+    SDL_PIXELTYPE_INDEX1=1
+    SDL_PIXELTYPE_INDEX4=2
+    SDL_PIXELTYPE_INDEX8=3
+    SDL_PIXELTYPE_PACKED8=4
+    SDL_PIXELTYPE_PACKED16=5
+    SDL_PIXELTYPE_PACKED32=6
+    SDL_PIXELTYPE_ARRAYU8=7
+    SDL_PIXELTYPE_ARRAYU16=8
+    SDL_PIXELTYPE_ARRAYU32=9
+    SDL_PIXELTYPE_ARRAYF16=10
+    SDL_PIXELTYPE_ARRAYF32=11
+    SDL_PIXELTYPE_INDEX2=12
+Enum/SDL_BitmapOrder: 
+    SDL_BITMAPORDER_NONE=0
+    SDL_BITMAPORDER_4321=1
+    SDL_BITMAPORDER_1234=2
+Enum/SDL_PackedOrder: 
+    SDL_PACKEDORDER_NONE=0
+    SDL_PACKEDORDER_XRGB=1
+    SDL_PACKEDORDER_RGBX=2
+    SDL_PACKEDORDER_ARGB=3
+    SDL_PACKEDORDER_RGBA=4
+    SDL_PACKEDORDER_XBGR=5
+    SDL_PACKEDORDER_BGRX=6
+    SDL_PACKEDORDER_ABGR=7
+    SDL_PACKEDORDER_BGRA=8
+Enum/SDL_ArrayOrder: 
+    SDL_ARRAYORDER_NONE=0
+    SDL_ARRAYORDER_RGB=1
+    SDL_ARRAYORDER_RGBA=2
+    SDL_ARRAYORDER_ARGB=3
+    SDL_ARRAYORDER_BGR=4
+    SDL_ARRAYORDER_BGRA=5
+    SDL_ARRAYORDER_ABGR=6
+Enum/SDL_PackedLayout: 
+    SDL_PACKEDLAYOUT_NONE=0
+    SDL_PACKEDLAYOUT_332=1
+    SDL_PACKEDLAYOUT_4444=2
+    SDL_PACKEDLAYOUT_1555=3
+    SDL_PACKEDLAYOUT_5551=4
+    SDL_PACKEDLAYOUT_565=5
+    SDL_PACKEDLAYOUT_8888=6
+    SDL_PACKEDLAYOUT_2101010=7
+    SDL_PACKEDLAYOUT_1010102=8
+Enum/SDL_PixelFormat: 
+    SDL_PIXELFORMAT_UNKNOWN=0
+    SDL_PIXELFORMAT_INDEX1LSB=286261504
+    SDL_PIXELFORMAT_INDEX1MSB=287310080
+    SDL_PIXELFORMAT_INDEX2LSB=470811136
+    SDL_PIXELFORMAT_INDEX2MSB=471859712
+    SDL_PIXELFORMAT_INDEX4LSB=303039488
+    SDL_PIXELFORMAT_INDEX4MSB=304088064
+    SDL_PIXELFORMAT_INDEX8=318769153
+    SDL_PIXELFORMAT_RGB332=336660481
+    SDL_PIXELFORMAT_XRGB4444=353504258
+    SDL_PIXELFORMAT_XBGR4444=357698562
+    SDL_PIXELFORMAT_XRGB1555=353570562
+    SDL_PIXELFORMAT_XBGR1555=357764866
+    SDL_PIXELFORMAT_ARGB4444=355602434
+    SDL_PIXELFORMAT_RGBA4444=356651010
+    SDL_PIXELFORMAT_ABGR4444=359796738
+    SDL_PIXELFORMAT_BGRA4444=360845314
+    SDL_PIXELFORMAT_ARGB1555=355667970
+    SDL_PIXELFORMAT_RGBA5551=356782082
+    SDL_PIXELFORMAT_ABGR1555=359862274
+    SDL_PIXELFORMAT_BGRA5551=360976386
+    SDL_PIXELFORMAT_RGB565=353701890
+    SDL_PIXELFORMAT_BGR565=357896194
+    SDL_PIXELFORMAT_RGB24=386930691
+    SDL_PIXELFORMAT_BGR24=390076419
+    SDL_PIXELFORMAT_XRGB8888=370546692
+    SDL_PIXELFORMAT_RGBX8888=371595268
+    SDL_PIXELFORMAT_XBGR8888=374740996
+    SDL_PIXELFORMAT_BGRX8888=375789572
+    SDL_PIXELFORMAT_ARGB8888=372645892
+    SDL_PIXELFORMAT_RGBA8888=373694468
+    SDL_PIXELFORMAT_ABGR8888=376840196
+    SDL_PIXELFORMAT_BGRA8888=377888772
+    SDL_PIXELFORMAT_XRGB2101010=370614276
+    SDL_PIXELFORMAT_XBGR2101010=374808580
+    SDL_PIXELFORMAT_ARGB2101010=372711428
+    SDL_PIXELFORMAT_ABGR2101010=376905732
+    SDL_PIXELFORMAT_RGB48=403714054
+    SDL_PIXELFORMAT_BGR48=406859782
+    SDL_PIXELFORMAT_RGBA64=404766728
+    SDL_PIXELFORMAT_ARGB64=405815304
+    SDL_PIXELFORMAT_BGRA64=407912456
+    SDL_PIXELFORMAT_ABGR64=408961032
+    SDL_PIXELFORMAT_RGB48_FLOAT=437268486
+    SDL_PIXELFORMAT_BGR48_FLOAT=440414214
+    SDL_PIXELFORMAT_RGBA64_FLOAT=438321160
+    SDL_PIXELFORMAT_ARGB64_FLOAT=439369736
+    SDL_PIXELFORMAT_BGRA64_FLOAT=441466888
+    SDL_PIXELFORMAT_ABGR64_FLOAT=442515464
+    SDL_PIXELFORMAT_RGB96_FLOAT=454057996
+    SDL_PIXELFORMAT_BGR96_FLOAT=457203724
+    SDL_PIXELFORMAT_RGBA128_FLOAT=455114768
+    SDL_PIXELFORMAT_ARGB128_FLOAT=456163344
+    SDL_PIXELFORMAT_BGRA128_FLOAT=458260496
+    SDL_PIXELFORMAT_ABGR128_FLOAT=459309072
+    SDL_PIXELFORMAT_YV12=842094169
+    SDL_PIXELFORMAT_IYUV=1448433993
+    SDL_PIXELFORMAT_YUY2=844715353
+    SDL_PIXELFORMAT_UYVY=1498831189
+    SDL_PIXELFORMAT_YVYU=1431918169
+    SDL_PIXELFORMAT_NV12=842094158
+    SDL_PIXELFORMAT_NV21=825382478
+    SDL_PIXELFORMAT_P010=808530000
+    SDL_PIXELFORMAT_EXTERNAL_OES=542328143
+    SDL_PIXELFORMAT_MJPG=1196444237
+    SDL_PIXELFORMAT_RGBA32=376840196
+    SDL_PIXELFORMAT_ARGB32=377888772
+    SDL_PIXELFORMAT_BGRA32=372645892
+    SDL_PIXELFORMAT_ABGR32=373694468
+    SDL_PIXELFORMAT_RGBX32=374740996
+    SDL_PIXELFORMAT_XRGB32=375789572
+    SDL_PIXELFORMAT_BGRX32=370546692
+    SDL_PIXELFORMAT_XBGR32=371595268
+Enum/SDL_ColorType: 
+    SDL_COLOR_TYPE_UNKNOWN=0
+    SDL_COLOR_TYPE_RGB=1
+    SDL_COLOR_TYPE_YCBCR=2
+Enum/SDL_ColorRange: 
+    SDL_COLOR_RANGE_UNKNOWN=0
+    SDL_COLOR_RANGE_LIMITED=1
+    SDL_COLOR_RANGE_FULL=2
+Enum/SDL_ColorPrimaries: 
+    SDL_COLOR_PRIMARIES_UNKNOWN=0
+    SDL_COLOR_PRIMARIES_BT709=1
+    SDL_COLOR_PRIMARIES_UNSPECIFIED=2
+    SDL_COLOR_PRIMARIES_BT470M=4
+    SDL_COLOR_PRIMARIES_BT470BG=5
+    SDL_COLOR_PRIMARIES_BT601=6
+    SDL_COLOR_PRIMARIES_SMPTE240=7
+    SDL_COLOR_PRIMARIES_GENERIC_FILM=8
+    SDL_COLOR_PRIMARIES_BT2020=9
+    SDL_COLOR_PRIMARIES_XYZ=10
+    SDL_COLOR_PRIMARIES_SMPTE431=11
+    SDL_COLOR_PRIMARIES_SMPTE432=12
+    SDL_COLOR_PRIMARIES_EBU3213=22
+    SDL_COLOR_PRIMARIES_CUSTOM=31
+Enum/SDL_TransferCharacteristics: 
+    SDL_TRANSFER_CHARACTERISTICS_UNKNOWN=0
+    SDL_TRANSFER_CHARACTERISTICS_BT709=1
+    SDL_TRANSFER_CHARACTERISTICS_UNSPECIFIED=2
+    SDL_TRANSFER_CHARACTERISTICS_GAMMA22=4
+    SDL_TRANSFER_CHARACTERISTICS_GAMMA28=5
+    SDL_TRANSFER_CHARACTERISTICS_BT601=6
+    SDL_TRANSFER_CHARACTERISTICS_SMPTE240=7
+    SDL_TRANSFER_CHARACTERISTICS_LINEAR=8
+    SDL_TRANSFER_CHARACTERISTICS_LOG100=9
+    SDL_TRANSFER_CHARACTERISTICS_LOG100_SQRT10=10
+    SDL_TRANSFER_CHARACTERISTICS_IEC61966=11
+    SDL_TRANSFER_CHARACTERISTICS_BT1361=12
+    SDL_TRANSFER_CHARACTERISTICS_SRGB=13
+    SDL_TRANSFER_CHARACTERISTICS_BT2020_10BIT=14
+    SDL_TRANSFER_CHARACTERISTICS_BT2020_12BIT=15
+    SDL_TRANSFER_CHARACTERISTICS_PQ=16
+    SDL_TRANSFER_CHARACTERISTICS_SMPTE428=17
+    SDL_TRANSFER_CHARACTERISTICS_HLG=18
+    SDL_TRANSFER_CHARACTERISTICS_CUSTOM=31
+Enum/SDL_MatrixCoefficients: 
+    SDL_MATRIX_COEFFICIENTS_IDENTITY=0
+    SDL_MATRIX_COEFFICIENTS_BT709=1
+    SDL_MATRIX_COEFFICIENTS_UNSPECIFIED=2
+    SDL_MATRIX_COEFFICIENTS_FCC=4
+    SDL_MATRIX_COEFFICIENTS_BT470BG=5
+    SDL_MATRIX_COEFFICIENTS_BT601=6
+    SDL_MATRIX_COEFFICIENTS_SMPTE240=7
+    SDL_MATRIX_COEFFICIENTS_YCGCO=8
+    SDL_MATRIX_COEFFICIENTS_BT2020_NCL=9
+    SDL_MATRIX_COEFFICIENTS_BT2020_CL=10
+    SDL_MATRIX_COEFFICIENTS_SMPTE2085=11
+    SDL_MATRIX_COEFFICIENTS_CHROMA_DERIVED_NCL=12
+    SDL_MATRIX_COEFFICIENTS_CHROMA_DERIVED_CL=13
+    SDL_MATRIX_COEFFICIENTS_ICTCP=14
+    SDL_MATRIX_COEFFICIENTS_CUSTOM=31
+Enum/SDL_ChromaLocation: 
+    SDL_CHROMA_LOCATION_NONE=0
+    SDL_CHROMA_LOCATION_LEFT=1
+    SDL_CHROMA_LOCATION_CENTER=2
+    SDL_CHROMA_LOCATION_TOPLEFT=3
+Enum/SDL_Colorspace: 
+    SDL_COLORSPACE_UNKNOWN=0
+    SDL_COLORSPACE_SRGB=301991328
+    SDL_COLORSPACE_SRGB_LINEAR=301991168
+    SDL_COLORSPACE_HDR10=301999616
+    SDL_COLORSPACE_JPEG=570426566
+    SDL_COLORSPACE_BT601_LIMITED=554703046
+    SDL_COLORSPACE_BT601_FULL=571480262
+    SDL_COLORSPACE_BT709_LIMITED=554697761
+    SDL_COLORSPACE_BT709_FULL=571474977
+    SDL_COLORSPACE_BT2020_LIMITED=554706441
+    SDL_COLORSPACE_BT2020_FULL=571483657
+    SDL_COLORSPACE_RGB_DEFAULT=301991328
+    SDL_COLORSPACE_YUV_DEFAULT=554703046
+Enum/SDL_ScaleMode: 
+    SDL_SCALEMODE_INVALID=-1
+    SDL_SCALEMODE_NEAREST=0
+    SDL_SCALEMODE_LINEAR=1
+    SDL_SCALEMODE_PIXELART=2
+Enum/SDL_FlipMode: 
+    SDL_FLIP_NONE=0
+    SDL_FLIP_HORIZONTAL=1
+    SDL_FLIP_VERTICAL=2
+    SDL_FLIP_HORIZONTAL_AND_VERTICAL=3
+Enum/SDL_CameraPosition: 
+    SDL_CAMERA_POSITION_UNKNOWN=0
+    SDL_CAMERA_POSITION_FRONT_FACING=1
+    SDL_CAMERA_POSITION_BACK_FACING=2
+Enum/SDL_CameraPermissionState: 
+    SDL_CAMERA_PERMISSION_STATE_DENIED=-1
+    SDL_CAMERA_PERMISSION_STATE_PENDING=0
+    SDL_CAMERA_PERMISSION_STATE_APPROVED=1
+Enum/SDL_SystemTheme: 
+    SDL_SYSTEM_THEME_UNKNOWN=0
+    SDL_SYSTEM_THEME_LIGHT=1
+    SDL_SYSTEM_THEME_DARK=2
+Enum/SDL_DisplayOrientation: 
+    SDL_ORIENTATION_UNKNOWN=0
+    SDL_ORIENTATION_LANDSCAPE=1
+    SDL_ORIENTATION_LANDSCAPE_FLIPPED=2
+    SDL_ORIENTATION_PORTRAIT=3
+    SDL_ORIENTATION_PORTRAIT_FLIPPED=4
+Enum/SDL_FlashOperation: 
+    SDL_FLASH_CANCEL=0
+    SDL_FLASH_BRIEFLY=1
+    SDL_FLASH_UNTIL_FOCUSED=2
+Enum/SDL_ProgressState: 
+    SDL_PROGRESS_STATE_INVALID=-1
+    SDL_PROGRESS_STATE_NONE=0
+    SDL_PROGRESS_STATE_INDETERMINATE=1
+    SDL_PROGRESS_STATE_NORMAL=2
+    SDL_PROGRESS_STATE_PAUSED=3
+    SDL_PROGRESS_STATE_ERROR=4
+Enum/SDL_GLAttr: 
+    SDL_GL_RED_SIZE=0
+    SDL_GL_GREEN_SIZE=1
+    SDL_GL_BLUE_SIZE=2
+    SDL_GL_ALPHA_SIZE=3
+    SDL_GL_BUFFER_SIZE=4
+    SDL_GL_DOUBLEBUFFER=5
+    SDL_GL_DEPTH_SIZE=6
+    SDL_GL_STENCIL_SIZE=7
+    SDL_GL_ACCUM_RED_SIZE=8
+    SDL_GL_ACCUM_GREEN_SIZE=9
+    SDL_GL_ACCUM_BLUE_SIZE=10
+    SDL_GL_ACCUM_ALPHA_SIZE=11
+    SDL_GL_STEREO=12
+    SDL_GL_MULTISAMPLEBUFFERS=13
+    SDL_GL_MULTISAMPLESAMPLES=14
+    SDL_GL_ACCELERATED_VISUAL=15
+    SDL_GL_RETAINED_BACKING=16
+    SDL_GL_CONTEXT_MAJOR_VERSION=17
+    SDL_GL_CONTEXT_MINOR_VERSION=18
+    SDL_GL_CONTEXT_FLAGS=19
+    SDL_GL_CONTEXT_PROFILE_MASK=20
+    SDL_GL_SHARE_WITH_CURRENT_CONTEXT=21
+    SDL_GL_FRAMEBUFFER_SRGB_CAPABLE=22
+    SDL_GL_CONTEXT_RELEASE_BEHAVIOR=23
+    SDL_GL_CONTEXT_RESET_NOTIFICATION=24
+    SDL_GL_CONTEXT_NO_ERROR=25
+    SDL_GL_FLOATBUFFERS=26
+    SDL_GL_EGL_PLATFORM=27
+Enum/SDL_HitTestResult: 
+    SDL_HITTEST_NORMAL=0
+    SDL_HITTEST_DRAGGABLE=1
+    SDL_HITTEST_RESIZE_TOPLEFT=2
+    SDL_HITTEST_RESIZE_TOP=3
+    SDL_HITTEST_RESIZE_TOPRIGHT=4
+    SDL_HITTEST_RESIZE_RIGHT=5
+    SDL_HITTEST_RESIZE_BOTTOMRIGHT=6
+    SDL_HITTEST_RESIZE_BOTTOM=7
+    SDL_HITTEST_RESIZE_BOTTOMLEFT=8
+    SDL_HITTEST_RESIZE_LEFT=9
+Enum/SDL_FileDialogType: 
+    SDL_FILEDIALOG_OPENFILE=0
+    SDL_FILEDIALOG_SAVEFILE=1
+    SDL_FILEDIALOG_OPENFOLDER=2
+Enum/SDL_PowerState: 
+    SDL_POWERSTATE_ERROR=-1
+    SDL_POWERSTATE_UNKNOWN=0
+    SDL_POWERSTATE_ON_BATTERY=1
+    SDL_POWERSTATE_NO_BATTERY=2
+    SDL_POWERSTATE_CHARGING=3
+    SDL_POWERSTATE_CHARGED=4
+Enum/SDL_SensorType: 
+    SDL_SENSOR_INVALID=-1
+    SDL_SENSOR_UNKNOWN=0
+    SDL_SENSOR_ACCEL=1
+    SDL_SENSOR_GYRO=2
+    SDL_SENSOR_ACCEL_L=3
+    SDL_SENSOR_GYRO_L=4
+    SDL_SENSOR_ACCEL_R=5
+    SDL_SENSOR_GYRO_R=6
+    SDL_SENSOR_COUNT=7
+Enum/SDL_JoystickType: 
+    SDL_JOYSTICK_TYPE_UNKNOWN=0
+    SDL_JOYSTICK_TYPE_GAMEPAD=1
+    SDL_JOYSTICK_TYPE_WHEEL=2
+    SDL_JOYSTICK_TYPE_ARCADE_STICK=3
+    SDL_JOYSTICK_TYPE_FLIGHT_STICK=4
+    SDL_JOYSTICK_TYPE_DANCE_PAD=5
+    SDL_JOYSTICK_TYPE_GUITAR=6
+    SDL_JOYSTICK_TYPE_DRUM_KIT=7
+    SDL_JOYSTICK_TYPE_ARCADE_PAD=8
+    SDL_JOYSTICK_TYPE_THROTTLE=9
+    SDL_JOYSTICK_TYPE_COUNT=10
+Enum/SDL_JoystickConnectionState: 
+    SDL_JOYSTICK_CONNECTION_INVALID=-1
+    SDL_JOYSTICK_CONNECTION_UNKNOWN=0
+    SDL_JOYSTICK_CONNECTION_WIRED=1
+    SDL_JOYSTICK_CONNECTION_WIRELESS=2
+Enum/SDL_GamepadType: 
+    SDL_GAMEPAD_TYPE_UNKNOWN=0
+    SDL_GAMEPAD_TYPE_STANDARD=1
+    SDL_GAMEPAD_TYPE_XBOX360=2
+    SDL_GAMEPAD_TYPE_XBOXONE=3
+    SDL_GAMEPAD_TYPE_PS3=4
+    SDL_GAMEPAD_TYPE_PS4=5
+    SDL_GAMEPAD_TYPE_PS5=6
+    SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO=7
+    SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT=8
+    SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT=9
+    SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR=10
+    SDL_GAMEPAD_TYPE_GAMECUBE=11
+    SDL_GAMEPAD_TYPE_COUNT=12
+Enum/SDL_GamepadButton: 
+    SDL_GAMEPAD_BUTTON_INVALID=-1
+    SDL_GAMEPAD_BUTTON_SOUTH=0
+    SDL_GAMEPAD_BUTTON_EAST=1
+    SDL_GAMEPAD_BUTTON_WEST=2
+    SDL_GAMEPAD_BUTTON_NORTH=3
+    SDL_GAMEPAD_BUTTON_BACK=4
+    SDL_GAMEPAD_BUTTON_GUIDE=5
+    SDL_GAMEPAD_BUTTON_START=6
+    SDL_GAMEPAD_BUTTON_LEFT_STICK=7
+    SDL_GAMEPAD_BUTTON_RIGHT_STICK=8
+    SDL_GAMEPAD_BUTTON_LEFT_SHOULDER=9
+    SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER=10
+    SDL_GAMEPAD_BUTTON_DPAD_UP=11
+    SDL_GAMEPAD_BUTTON_DPAD_DOWN=12
+    SDL_GAMEPAD_BUTTON_DPAD_LEFT=13
+    SDL_GAMEPAD_BUTTON_DPAD_RIGHT=14
+    SDL_GAMEPAD_BUTTON_MISC1=15
+    SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1=16
+    SDL_GAMEPAD_BUTTON_LEFT_PADDLE1=17
+    SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2=18
+    SDL_GAMEPAD_BUTTON_LEFT_PADDLE2=19
+    SDL_GAMEPAD_BUTTON_TOUCHPAD=20
+    SDL_GAMEPAD_BUTTON_MISC2=21
+    SDL_GAMEPAD_BUTTON_MISC3=22
+    SDL_GAMEPAD_BUTTON_MISC4=23
+    SDL_GAMEPAD_BUTTON_MISC5=24
+    SDL_GAMEPAD_BUTTON_MISC6=25
+    SDL_GAMEPAD_BUTTON_COUNT=26
+Enum/SDL_GamepadButtonLabel: 
+    SDL_GAMEPAD_BUTTON_LABEL_UNKNOWN=0
+    SDL_GAMEPAD_BUTTON_LABEL_A=1
+    SDL_GAMEPAD_BUTTON_LABEL_B=2
+    SDL_GAMEPAD_BUTTON_LABEL_X=3
+    SDL_GAMEPAD_BUTTON_LABEL_Y=4
+    SDL_GAMEPAD_BUTTON_LABEL_CROSS=5
+    SDL_GAMEPAD_BUTTON_LABEL_CIRCLE=6
+    SDL_GAMEPAD_BUTTON_LABEL_SQUARE=7
+    SDL_GAMEPAD_BUTTON_LABEL_TRIANGLE=8
+Enum/SDL_GamepadAxis: 
+    SDL_GAMEPAD_AXIS_INVALID=-1
+    SDL_GAMEPAD_AXIS_LEFTX=0
+    SDL_GAMEPAD_AXIS_LEFTY=1
+    SDL_GAMEPAD_AXIS_RIGHTX=2
+    SDL_GAMEPAD_AXIS_RIGHTY=3
+    SDL_GAMEPAD_AXIS_LEFT_TRIGGER=4
+    SDL_GAMEPAD_AXIS_RIGHT_TRIGGER=5
+    SDL_GAMEPAD_AXIS_COUNT=6
+Enum/SDL_GamepadBindingType: 
+    SDL_GAMEPAD_BINDTYPE_NONE=0
+    SDL_GAMEPAD_BINDTYPE_BUTTON=1
+    SDL_GAMEPAD_BINDTYPE_AXIS=2
+    SDL_GAMEPAD_BINDTYPE_HAT=3
+Enum/SDL_Scancode: 
+    SDL_SCANCODE_UNKNOWN=0
+    SDL_SCANCODE_A=4
+    SDL_SCANCODE_B=5
+    SDL_SCANCODE_C=6
+    SDL_SCANCODE_D=7
+    SDL_SCANCODE_E=8
+    SDL_SCANCODE_F=9
+    SDL_SCANCODE_G=10
+    SDL_SCANCODE_H=11
+    SDL_SCANCODE_I=12
+    SDL_SCANCODE_J=13
+    SDL_SCANCODE_K=14
+    SDL_SCANCODE_L=15
+    SDL_SCANCODE_M=16
+    SDL_SCANCODE_N=17
+    SDL_SCANCODE_O=18
+    SDL_SCANCODE_P=19
+    SDL_SCANCODE_Q=20
+    SDL_SCANCODE_R=21
+    SDL_SCANCODE_S=22
+    SDL_SCANCODE_T=23
+    SDL_SCANCODE_U=24
+    SDL_SCANCODE_V=25
+    SDL_SCANCODE_W=26
+    SDL_SCANCODE_X=27
+    SDL_SCANCODE_Y=28
+    SDL_SCANCODE_Z=29
+    SDL_SCANCODE_1=30
+    SDL_SCANCODE_2=31
+    SDL_SCANCODE_3=32
+    SDL_SCANCODE_4=33
+    SDL_SCANCODE_5=34
+    SDL_SCANCODE_6=35
+    SDL_SCANCODE_7=36
+    SDL_SCANCODE_8=37
+    SDL_SCANCODE_9=38
+    SDL_SCANCODE_0=39
+    SDL_SCANCODE_RETURN=40
+    SDL_SCANCODE_ESCAPE=41
+    SDL_SCANCODE_BACKSPACE=42
+    SDL_SCANCODE_TAB=43
+    SDL_SCANCODE_SPACE=44
+    SDL_SCANCODE_MINUS=45
+    SDL_SCANCODE_EQUALS=46
+    SDL_SCANCODE_LEFTBRACKET=47
+    SDL_SCANCODE_RIGHTBRACKET=48
+    SDL_SCANCODE_BACKSLASH=49
+    SDL_SCANCODE_NONUSHASH=50
+    SDL_SCANCODE_SEMICOLON=51
+    SDL_SCANCODE_APOSTROPHE=52
+    SDL_SCANCODE_GRAVE=53
+    SDL_SCANCODE_COMMA=54
+    SDL_SCANCODE_PERIOD=55
+    SDL_SCANCODE_SLASH=56
+    SDL_SCANCODE_CAPSLOCK=57
+    SDL_SCANCODE_F1=58
+    SDL_SCANCODE_F2=59
+    SDL_SCANCODE_F3=60
+    SDL_SCANCODE_F4=61
+    SDL_SCANCODE_F5=62
+    SDL_SCANCODE_F6=63
+    SDL_SCANCODE_F7=64
+    SDL_SCANCODE_F8=65
+    SDL_SCANCODE_F9=66
+    SDL_SCANCODE_F10=67
+    SDL_SCANCODE_F11=68
+    SDL_SCANCODE_F12=69
+    SDL_SCANCODE_PRINTSCREEN=70
+    SDL_SCANCODE_SCROLLLOCK=71
+    SDL_SCANCODE_PAUSE=72
+    SDL_SCANCODE_INSERT=73
+    SDL_SCANCODE_HOME=74
+    SDL_SCANCODE_PAGEUP=75
+    SDL_SCANCODE_DELETE=76
+    SDL_SCANCODE_END=77
+    SDL_SCANCODE_PAGEDOWN=78
+    SDL_SCANCODE_RIGHT=79
+    SDL_SCANCODE_LEFT=80
+    SDL_SCANCODE_DOWN=81
+    SDL_SCANCODE_UP=82
+    SDL_SCANCODE_NUMLOCKCLEAR=83
+    SDL_SCANCODE_KP_DIVIDE=84
+    SDL_SCANCODE_KP_MULTIPLY=85
+    SDL_SCANCODE_KP_MINUS=86
+    SDL_SCANCODE_KP_PLUS=87
+    SDL_SCANCODE_KP_ENTER=88
+    SDL_SCANCODE_KP_1=89
+    SDL_SCANCODE_KP_2=90
+    SDL_SCANCODE_KP_3=91
+    SDL_SCANCODE_KP_4=92
+    SDL_SCANCODE_KP_5=93
+    SDL_SCANCODE_KP_6=94
+    SDL_SCANCODE_KP_7=95
+    SDL_SCANCODE_KP_8=96
+    SDL_SCANCODE_KP_9=97
+    SDL_SCANCODE_KP_0=98
+    SDL_SCANCODE_KP_PERIOD=99
+    SDL_SCANCODE_NONUSBACKSLASH=100
+    SDL_SCANCODE_APPLICATION=101
+    SDL_SCANCODE_POWER=102
+    SDL_SCANCODE_KP_EQUALS=103
+    SDL_SCANCODE_F13=104
+    SDL_SCANCODE_F14=105
+    SDL_SCANCODE_F15=106
+    SDL_SCANCODE_F16=107
+    SDL_SCANCODE_F17=108
+    SDL_SCANCODE_F18=109
+    SDL_SCANCODE_F19=110
+    SDL_SCANCODE_F20=111
+    SDL_SCANCODE_F21=112
+    SDL_SCANCODE_F22=113
+    SDL_SCANCODE_F23=114
+    SDL_SCANCODE_F24=115
+    SDL_SCANCODE_EXECUTE=116
+    SDL_SCANCODE_HELP=117
+    SDL_SCANCODE_MENU=118
+    SDL_SCANCODE_SELECT=119
+    SDL_SCANCODE_STOP=120
+    SDL_SCANCODE_AGAIN=121
+    SDL_SCANCODE_UNDO=122
+    SDL_SCANCODE_CUT=123
+    SDL_SCANCODE_COPY=124
+    SDL_SCANCODE_PASTE=125
+    SDL_SCANCODE_FIND=126
+    SDL_SCANCODE_MUTE=127
+    SDL_SCANCODE_VOLUMEUP=128
+    SDL_SCANCODE_VOLUMEDOWN=129
+    SDL_SCANCODE_KP_COMMA=133
+    SDL_SCANCODE_KP_EQUALSAS400=134
+    SDL_SCANCODE_INTERNATIONAL1=135
+    SDL_SCANCODE_INTERNATIONAL2=136
+    SDL_SCANCODE_INTERNATIONAL3=137
+    SDL_SCANCODE_INTERNATIONAL4=138
+    SDL_SCANCODE_INTERNATIONAL5=139
+    SDL_SCANCODE_INTERNATIONAL6=140
+    SDL_SCANCODE_INTERNATIONAL7=141
+    SDL_SCANCODE_INTERNATIONAL8=142
+    SDL_SCANCODE_INTERNATIONAL9=143
+    SDL_SCANCODE_LANG1=144
+    SDL_SCANCODE_LANG2=145
+    SDL_SCANCODE_LANG3=146
+    SDL_SCANCODE_LANG4=147
+    SDL_SCANCODE_LANG5=148
+    SDL_SCANCODE_LANG6=149
+    SDL_SCANCODE_LANG7=150
+    SDL_SCANCODE_LANG8=151
+    SDL_SCANCODE_LANG9=152
+    SDL_SCANCODE_ALTERASE=153
+    SDL_SCANCODE_SYSREQ=154
+    SDL_SCANCODE_CANCEL=155
+    SDL_SCANCODE_CLEAR=156
+    SDL_SCANCODE_PRIOR=157
+    SDL_SCANCODE_RETURN2=158
+    SDL_SCANCODE_SEPARATOR=159
+    SDL_SCANCODE_OUT=160
+    SDL_SCANCODE_OPER=161
+    SDL_SCANCODE_CLEARAGAIN=162
+    SDL_SCANCODE_CRSEL=163
+    SDL_SCANCODE_EXSEL=164
+    SDL_SCANCODE_KP_00=176
+    SDL_SCANCODE_KP_000=177
+    SDL_SCANCODE_THOUSANDSSEPARATOR=178
+    SDL_SCANCODE_DECIMALSEPARATOR=179
+    SDL_SCANCODE_CURRENCYUNIT=180
+    SDL_SCANCODE_CURRENCYSUBUNIT=181
+    SDL_SCANCODE_KP_LEFTPAREN=182
+    SDL_SCANCODE_KP_RIGHTPAREN=183
+    SDL_SCANCODE_KP_LEFTBRACE=184
+    SDL_SCANCODE_KP_RIGHTBRACE=185
+    SDL_SCANCODE_KP_TAB=186
+    SDL_SCANCODE_KP_BACKSPACE=187
+    SDL_SCANCODE_KP_A=188
+    SDL_SCANCODE_KP_B=189
+    SDL_SCANCODE_KP_C=190
+    SDL_SCANCODE_KP_D=191
+    SDL_SCANCODE_KP_E=192
+    SDL_SCANCODE_KP_F=193
+    SDL_SCANCODE_KP_XOR=194
+    SDL_SCANCODE_KP_POWER=195
+    SDL_SCANCODE_KP_PERCENT=196
+    SDL_SCANCODE_KP_LESS=197
+    SDL_SCANCODE_KP_GREATER=198
+    SDL_SCANCODE_KP_AMPERSAND=199
+    SDL_SCANCODE_KP_DBLAMPERSAND=200
+    SDL_SCANCODE_KP_VERTICALBAR=201
+    SDL_SCANCODE_KP_DBLVERTICALBAR=202
+    SDL_SCANCODE_KP_COLON=203
+    SDL_SCANCODE_KP_HASH=204
+    SDL_SCANCODE_KP_SPACE=205
+    SDL_SCANCODE_KP_AT=206
+    SDL_SCANCODE_KP_EXCLAM=207
+    SDL_SCANCODE_KP_MEMSTORE=208
+    SDL_SCANCODE_KP_MEMRECALL=209
+    SDL_SCANCODE_KP_MEMCLEAR=210
+    SDL_SCANCODE_KP_MEMADD=211
+    SDL_SCANCODE_KP_MEMSUBTRACT=212
+    SDL_SCANCODE_KP_MEMMULTIPLY=213
+    SDL_SCANCODE_KP_MEMDIVIDE=214
+    SDL_SCANCODE_KP_PLUSMINUS=215
+    SDL_SCANCODE_KP_CLEAR=216
+    SDL_SCANCODE_KP_CLEARENTRY=217
+    SDL_SCANCODE_KP_BINARY=218
+    SDL_SCANCODE_KP_OCTAL=219
+    SDL_SCANCODE_KP_DECIMAL=220
+    SDL_SCANCODE_KP_HEXADECIMAL=221
+    SDL_SCANCODE_LCTRL=224
+    SDL_SCANCODE_LSHIFT=225
+    SDL_SCANCODE_LALT=226
+    SDL_SCANCODE_LGUI=227
+    SDL_SCANCODE_RCTRL=228
+    SDL_SCANCODE_RSHIFT=229
+    SDL_SCANCODE_RALT=230
+    SDL_SCANCODE_RGUI=231
+    SDL_SCANCODE_MODE=257
+    SDL_SCANCODE_SLEEP=258
+    SDL_SCANCODE_WAKE=259
+    SDL_SCANCODE_CHANNEL_INCREMENT=260
+    SDL_SCANCODE_CHANNEL_DECREMENT=261
+    SDL_SCANCODE_MEDIA_PLAY=262
+    SDL_SCANCODE_MEDIA_PAUSE=263
+    SDL_SCANCODE_MEDIA_RECORD=264
+    SDL_SCANCODE_MEDIA_FAST_FORWARD=265
+    SDL_SCANCODE_MEDIA_REWIND=266
+    SDL_SCANCODE_MEDIA_NEXT_TRACK=267
+    SDL_SCANCODE_MEDIA_PREVIOUS_TRACK=268
+    SDL_SCANCODE_MEDIA_STOP=269
+    SDL_SCANCODE_MEDIA_EJECT=270
+    SDL_SCANCODE_MEDIA_PLAY_PAUSE=271
+    SDL_SCANCODE_MEDIA_SELECT=272
+    SDL_SCANCODE_AC_NEW=273
+    SDL_SCANCODE_AC_OPEN=274
+    SDL_SCANCODE_AC_CLOSE=275
+    SDL_SCANCODE_AC_EXIT=276
+    SDL_SCANCODE_AC_SAVE=277
+    SDL_SCANCODE_AC_PRINT=278
+    SDL_SCANCODE_AC_PROPERTIES=279
+    SDL_SCANCODE_AC_SEARCH=280
+    SDL_SCANCODE_AC_HOME=281
+    SDL_SCANCODE_AC_BACK=282
+    SDL_SCANCODE_AC_FORWARD=283
+    SDL_SCANCODE_AC_STOP=284
+    SDL_SCANCODE_AC_REFRESH=285
+    SDL_SCANCODE_AC_BOOKMARKS=286
+    SDL_SCANCODE_SOFTLEFT=287
+    SDL_SCANCODE_SOFTRIGHT=288
+    SDL_SCANCODE_CALL=289
+    SDL_SCANCODE_ENDCALL=290
+    SDL_SCANCODE_RESERVED=400
+    SDL_SCANCODE_COUNT=512
+Enum/SDL_TextInputType: 
+    SDL_TEXTINPUT_TYPE_TEXT=0
+    SDL_TEXTINPUT_TYPE_TEXT_NAME=1
+    SDL_TEXTINPUT_TYPE_TEXT_EMAIL=2
+    SDL_TEXTINPUT_TYPE_TEXT_USERNAME=3
+    SDL_TEXTINPUT_TYPE_TEXT_PASSWORD_HIDDEN=4
+    SDL_TEXTINPUT_TYPE_TEXT_PASSWORD_VISIBLE=5
+    SDL_TEXTINPUT_TYPE_NUMBER=6
+    SDL_TEXTINPUT_TYPE_NUMBER_PASSWORD_HIDDEN=7
+    SDL_TEXTINPUT_TYPE_NUMBER_PASSWORD_VISIBLE=8
+Enum/SDL_Capitalization: 
+    SDL_CAPITALIZE_NONE=0
+    SDL_CAPITALIZE_SENTENCES=1
+    SDL_CAPITALIZE_WORDS=2
+    SDL_CAPITALIZE_LETTERS=3
+Enum/SDL_SystemCursor: 
+    SDL_SYSTEM_CURSOR_DEFAULT=0
+    SDL_SYSTEM_CURSOR_TEXT=1
+    SDL_SYSTEM_CURSOR_WAIT=2
+    SDL_SYSTEM_CURSOR_CROSSHAIR=3
+    SDL_SYSTEM_CURSOR_PROGRESS=4
+    SDL_SYSTEM_CURSOR_NWSE_RESIZE=5
+    SDL_SYSTEM_CURSOR_NESW_RESIZE=6
+    SDL_SYSTEM_CURSOR_EW_RESIZE=7
+    SDL_SYSTEM_CURSOR_NS_RESIZE=8
+    SDL_SYSTEM_CURSOR_MOVE=9
+    SDL_SYSTEM_CURSOR_NOT_ALLOWED=10
+    SDL_SYSTEM_CURSOR_POINTER=11
+    SDL_SYSTEM_CURSOR_NW_RESIZE=12
+    SDL_SYSTEM_CURSOR_N_RESIZE=13
+    SDL_SYSTEM_CURSOR_NE_RESIZE=14
+    SDL_SYSTEM_CURSOR_E_RESIZE=15
+    SDL_SYSTEM_CURSOR_SE_RESIZE=16
+    SDL_SYSTEM_CURSOR_S_RESIZE=17
+    SDL_SYSTEM_CURSOR_SW_RESIZE=18
+    SDL_SYSTEM_CURSOR_W_RESIZE=19
+    SDL_SYSTEM_CURSOR_COUNT=20
+Enum/SDL_MouseWheelDirection: 
+    SDL_MOUSEWHEEL_NORMAL=0
+    SDL_MOUSEWHEEL_FLIPPED=1
+Enum/SDL_TouchDeviceType: 
+    SDL_TOUCH_DEVICE_INVALID=-1
+    SDL_TOUCH_DEVICE_DIRECT=0
+    SDL_TOUCH_DEVICE_INDIRECT_ABSOLUTE=1
+    SDL_TOUCH_DEVICE_INDIRECT_RELATIVE=2
+Enum/SDL_PenAxis: 
+    SDL_PEN_AXIS_PRESSURE=0
+    SDL_PEN_AXIS_XTILT=1
+    SDL_PEN_AXIS_YTILT=2
+    SDL_PEN_AXIS_DISTANCE=3
+    SDL_PEN_AXIS_ROTATION=4
+    SDL_PEN_AXIS_SLIDER=5
+    SDL_PEN_AXIS_TANGENTIAL_PRESSURE=6
+    SDL_PEN_AXIS_COUNT=7
+Enum/SDL_PenDeviceType: 
+    SDL_PEN_DEVICE_TYPE_INVALID=-1
+    SDL_PEN_DEVICE_TYPE_UNKNOWN=0
+    SDL_PEN_DEVICE_TYPE_DIRECT=1
+    SDL_PEN_DEVICE_TYPE_INDIRECT=2
+Enum/SDL_EventType: 
+    SDL_EVENT_FIRST=0
+    SDL_EVENT_QUIT=256
+    SDL_EVENT_TERMINATING=257
+    SDL_EVENT_LOW_MEMORY=258
+    SDL_EVENT_WILL_ENTER_BACKGROUND=259
+    SDL_EVENT_DID_ENTER_BACKGROUND=260
+    SDL_EVENT_WILL_ENTER_FOREGROUND=261
+    SDL_EVENT_DID_ENTER_FOREGROUND=262
+    SDL_EVENT_LOCALE_CHANGED=263
+    SDL_EVENT_SYSTEM_THEME_CHANGED=264
+    SDL_EVENT_DISPLAY_ORIENTATION=337
+    SDL_EVENT_DISPLAY_ADDED=338
+    SDL_EVENT_DISPLAY_REMOVED=339
+    SDL_EVENT_DISPLAY_MOVED=340
+    SDL_EVENT_DISPLAY_DESKTOP_MODE_CHANGED=341
+    SDL_EVENT_DISPLAY_CURRENT_MODE_CHANGED=342
+    SDL_EVENT_DISPLAY_CONTENT_SCALE_CHANGED=343
+    SDL_EVENT_DISPLAY_USABLE_BOUNDS_CHANGED=344
+    SDL_EVENT_DISPLAY_FIRST=337
+    SDL_EVENT_DISPLAY_LAST=344
+    SDL_EVENT_WINDOW_SHOWN=514
+    SDL_EVENT_WINDOW_HIDDEN=515
+    SDL_EVENT_WINDOW_EXPOSED=516
+    SDL_EVENT_WINDOW_MOVED=517
+    SDL_EVENT_WINDOW_RESIZED=518
+    SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED=519
+    SDL_EVENT_WINDOW_METAL_VIEW_RESIZED=520
+    SDL_EVENT_WINDOW_MINIMIZED=521
+    SDL_EVENT_WINDOW_MAXIMIZED=522
+    SDL_EVENT_WINDOW_RESTORED=523
+    SDL_EVENT_WINDOW_MOUSE_ENTER=524
+    SDL_EVENT_WINDOW_MOUSE_LEAVE=525
+    SDL_EVENT_WINDOW_FOCUS_GAINED=526
+    SDL_EVENT_WINDOW_FOCUS_LOST=527
+    SDL_EVENT_WINDOW_CLOSE_REQUESTED=528
+    SDL_EVENT_WINDOW_HIT_TEST=529
+    SDL_EVENT_WINDOW_ICCPROF_CHANGED=530
+    SDL_EVENT_WINDOW_DISPLAY_CHANGED=531
+    SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED=532
+    SDL_EVENT_WINDOW_SAFE_AREA_CHANGED=533
+    SDL_EVENT_WINDOW_OCCLUDED=534
+    SDL_EVENT_WINDOW_ENTER_FULLSCREEN=535
+    SDL_EVENT_WINDOW_LEAVE_FULLSCREEN=536
+    SDL_EVENT_WINDOW_DESTROYED=537
+    SDL_EVENT_WINDOW_HDR_STATE_CHANGED=538
+    SDL_EVENT_WINDOW_FIRST=514
+    SDL_EVENT_WINDOW_LAST=538
+    SDL_EVENT_KEY_DOWN=768
+    SDL_EVENT_KEY_UP=769
+    SDL_EVENT_TEXT_EDITING=770
+    SDL_EVENT_TEXT_INPUT=771
+    SDL_EVENT_KEYMAP_CHANGED=772
+    SDL_EVENT_KEYBOARD_ADDED=773
+    SDL_EVENT_KEYBOARD_REMOVED=774
+    SDL_EVENT_TEXT_EDITING_CANDIDATES=775
+    SDL_EVENT_SCREEN_KEYBOARD_SHOWN=776
+    SDL_EVENT_SCREEN_KEYBOARD_HIDDEN=777
+    SDL_EVENT_MOUSE_MOTION=1024
+    SDL_EVENT_MOUSE_BUTTON_DOWN=1025
+    SDL_EVENT_MOUSE_BUTTON_UP=1026
+    SDL_EVENT_MOUSE_WHEEL=1027
+    SDL_EVENT_MOUSE_ADDED=1028
+    SDL_EVENT_MOUSE_REMOVED=1029
+    SDL_EVENT_JOYSTICK_AXIS_MOTION=1536
+    SDL_EVENT_JOYSTICK_BALL_MOTION=1537
+    SDL_EVENT_JOYSTICK_HAT_MOTION=1538
+    SDL_EVENT_JOYSTICK_BUTTON_DOWN=1539
+    SDL_EVENT_JOYSTICK_BUTTON_UP=1540
+    SDL_EVENT_JOYSTICK_ADDED=1541
+    SDL_EVENT_JOYSTICK_REMOVED=1542
+    SDL_EVENT_JOYSTICK_BATTERY_UPDATED=1543
+    SDL_EVENT_JOYSTICK_UPDATE_COMPLETE=1544
+    SDL_EVENT_GAMEPAD_AXIS_MOTION=1616
+    SDL_EVENT_GAMEPAD_BUTTON_DOWN=1617
+    SDL_EVENT_GAMEPAD_BUTTON_UP=1618
+    SDL_EVENT_GAMEPAD_ADDED=1619
+    SDL_EVENT_GAMEPAD_REMOVED=1620
+    SDL_EVENT_GAMEPAD_REMAPPED=1621
+    SDL_EVENT_GAMEPAD_TOUCHPAD_DOWN=1622
+    SDL_EVENT_GAMEPAD_TOUCHPAD_MOTION=1623
+    SDL_EVENT_GAMEPAD_TOUCHPAD_UP=1624
+    SDL_EVENT_GAMEPAD_SENSOR_UPDATE=1625
+    SDL_EVENT_GAMEPAD_UPDATE_COMPLETE=1626
+    SDL_EVENT_GAMEPAD_STEAM_HANDLE_UPDATED=1627
+    SDL_EVENT_FINGER_DOWN=1792
+    SDL_EVENT_FINGER_UP=1793
+    SDL_EVENT_FINGER_MOTION=1794
+    SDL_EVENT_FINGER_CANCELED=1795
+    SDL_EVENT_PINCH_BEGIN=1808
+    SDL_EVENT_PINCH_UPDATE=1809
+    SDL_EVENT_PINCH_END=1810
+    SDL_EVENT_CLIPBOARD_UPDATE=2304
+    SDL_EVENT_DROP_FILE=4096
+    SDL_EVENT_DROP_TEXT=4097
+    SDL_EVENT_DROP_BEGIN=4098
+    SDL_EVENT_DROP_COMPLETE=4099
+    SDL_EVENT_DROP_POSITION=4100
+    SDL_EVENT_AUDIO_DEVICE_ADDED=4352
+    SDL_EVENT_AUDIO_DEVICE_REMOVED=4353
+    SDL_EVENT_AUDIO_DEVICE_FORMAT_CHANGED=4354
+    SDL_EVENT_SENSOR_UPDATE=4608
+    SDL_EVENT_PEN_PROXIMITY_IN=4864
+    SDL_EVENT_PEN_PROXIMITY_OUT=4865
+    SDL_EVENT_PEN_DOWN=4866
+    SDL_EVENT_PEN_UP=4867
+    SDL_EVENT_PEN_BUTTON_DOWN=4868
+    SDL_EVENT_PEN_BUTTON_UP=4869
+    SDL_EVENT_PEN_MOTION=4870
+    SDL_EVENT_PEN_AXIS=4871
+    SDL_EVENT_CAMERA_DEVICE_ADDED=5120
+    SDL_EVENT_CAMERA_DEVICE_REMOVED=5121
+    SDL_EVENT_CAMERA_DEVICE_APPROVED=5122
+    SDL_EVENT_CAMERA_DEVICE_DENIED=5123
+    SDL_EVENT_RENDER_TARGETS_RESET=8192
+    SDL_EVENT_RENDER_DEVICE_RESET=8193
+    SDL_EVENT_RENDER_DEVICE_LOST=8194
+    SDL_EVENT_PRIVATE0=16384
+    SDL_EVENT_PRIVATE1=16385
+    SDL_EVENT_PRIVATE2=16386
+    SDL_EVENT_PRIVATE3=16387
+    SDL_EVENT_POLL_SENTINEL=32512
+    SDL_EVENT_USER=32768
+    SDL_EVENT_LAST=65535
+    SDL_EVENT_ENUM_PADDING=2147483647
+Enum/SDL_EventAction: 
+    SDL_ADDEVENT=0
+    SDL_PEEKEVENT=1
+    SDL_GETEVENT=2
+Enum/SDL_Folder: 
+    SDL_FOLDER_HOME=0
+    SDL_FOLDER_DESKTOP=1
+    SDL_FOLDER_DOCUMENTS=2
+    SDL_FOLDER_DOWNLOADS=3
+    SDL_FOLDER_MUSIC=4
+    SDL_FOLDER_PICTURES=5
+    SDL_FOLDER_PUBLICSHARE=6
+    SDL_FOLDER_SAVEDGAMES=7
+    SDL_FOLDER_SCREENSHOTS=8
+    SDL_FOLDER_TEMPLATES=9
+    SDL_FOLDER_VIDEOS=10
+    SDL_FOLDER_COUNT=11
+Enum/SDL_PathType: 
+    SDL_PATHTYPE_NONE=0
+    SDL_PATHTYPE_FILE=1
+    SDL_PATHTYPE_DIRECTORY=2
+    SDL_PATHTYPE_OTHER=3
+Enum/SDL_EnumerationResult: 
+    SDL_ENUM_CONTINUE=0
+    SDL_ENUM_SUCCESS=1
+    SDL_ENUM_FAILURE=2
+Enum/SDL_GPUPrimitiveType: 
+    SDL_GPU_PRIMITIVETYPE_TRIANGLELIST=0
+    SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP=1
+    SDL_GPU_PRIMITIVETYPE_LINELIST=2
+    SDL_GPU_PRIMITIVETYPE_LINESTRIP=3
+    SDL_GPU_PRIMITIVETYPE_POINTLIST=4
+Enum/SDL_GPULoadOp: 
+    SDL_GPU_LOADOP_LOAD=0
+    SDL_GPU_LOADOP_CLEAR=1
+    SDL_GPU_LOADOP_DONT_CARE=2
+Enum/SDL_GPUStoreOp: 
+    SDL_GPU_STOREOP_STORE=0
+    SDL_GPU_STOREOP_DONT_CARE=1
+    SDL_GPU_STOREOP_RESOLVE=2
+    SDL_GPU_STOREOP_RESOLVE_AND_STORE=3
+Enum/SDL_GPUIndexElementSize: 
+    SDL_GPU_INDEXELEMENTSIZE_16BIT=0
+    SDL_GPU_INDEXELEMENTSIZE_32BIT=1
+Enum/SDL_GPUTextureFormat: 
+    SDL_GPU_TEXTUREFORMAT_INVALID=0
+    SDL_GPU_TEXTUREFORMAT_A8_UNORM=1
+    SDL_GPU_TEXTUREFORMAT_R8_UNORM=2
+    SDL_GPU_TEXTUREFORMAT_R8G8_UNORM=3
+    SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM=4
+    SDL_GPU_TEXTUREFORMAT_R16_UNORM=5
+    SDL_GPU_TEXTUREFORMAT_R16G16_UNORM=6
+    SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM=7
+    SDL_GPU_TEXTUREFORMAT_R10G10B10A2_UNORM=8
+    SDL_GPU_TEXTUREFORMAT_B5G6R5_UNORM=9
+    SDL_GPU_TEXTUREFORMAT_B5G5R5A1_UNORM=10
+    SDL_GPU_TEXTUREFORMAT_B4G4R4A4_UNORM=11
+    SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM=12
+    SDL_GPU_TEXTUREFORMAT_BC1_RGBA_UNORM=13
+    SDL_GPU_TEXTUREFORMAT_BC2_RGBA_UNORM=14
+    SDL_GPU_TEXTUREFORMAT_BC3_RGBA_UNORM=15
+    SDL_GPU_TEXTUREFORMAT_BC4_R_UNORM=16
+    SDL_GPU_TEXTUREFORMAT_BC5_RG_UNORM=17
+    SDL_GPU_TEXTUREFORMAT_BC7_RGBA_UNORM=18
+    SDL_GPU_TEXTUREFORMAT_BC6H_RGB_FLOAT=19
+    SDL_GPU_TEXTUREFORMAT_BC6H_RGB_UFLOAT=20
+    SDL_GPU_TEXTUREFORMAT_R8_SNORM=21
+    SDL_GPU_TEXTUREFORMAT_R8G8_SNORM=22
+    SDL_GPU_TEXTUREFORMAT_R8G8B8A8_SNORM=23
+    SDL_GPU_TEXTUREFORMAT_R16_SNORM=24
+    SDL_GPU_TEXTUREFORMAT_R16G16_SNORM=25
+    SDL_GPU_TEXTUREFORMAT_R16G16B16A16_SNORM=26
+    SDL_GPU_TEXTUREFORMAT_R16_FLOAT=27
+    SDL_GPU_TEXTUREFORMAT_R16G16_FLOAT=28
+    SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT=29
+    SDL_GPU_TEXTUREFORMAT_R32_FLOAT=30
+    SDL_GPU_TEXTUREFORMAT_R32G32_FLOAT=31
+    SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT=32
+    SDL_GPU_TEXTUREFORMAT_R11G11B10_UFLOAT=33
+    SDL_GPU_TEXTUREFORMAT_R8_UINT=34
+    SDL_GPU_TEXTUREFORMAT_R8G8_UINT=35
+    SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UINT=36
+    SDL_GPU_TEXTUREFORMAT_R16_UINT=37
+    SDL_GPU_TEXTUREFORMAT_R16G16_UINT=38
+    SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UINT=39
+    SDL_GPU_TEXTUREFORMAT_R32_UINT=40
+    SDL_GPU_TEXTUREFORMAT_R32G32_UINT=41
+    SDL_GPU_TEXTUREFORMAT_R32G32B32A32_UINT=42
+    SDL_GPU_TEXTUREFORMAT_R8_INT=43
+    SDL_GPU_TEXTUREFORMAT_R8G8_INT=44
+    SDL_GPU_TEXTUREFORMAT_R8G8B8A8_INT=45
+    SDL_GPU_TEXTUREFORMAT_R16_INT=46
+    SDL_GPU_TEXTUREFORMAT_R16G16_INT=47
+    SDL_GPU_TEXTUREFORMAT_R16G16B16A16_INT=48
+    SDL_GPU_TEXTUREFORMAT_R32_INT=49
+    SDL_GPU_TEXTUREFORMAT_R32G32_INT=50
+    SDL_GPU_TEXTUREFORMAT_R32G32B32A32_INT=51
+    SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM_SRGB=52
+    SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM_SRGB=53
+    SDL_GPU_TEXTUREFORMAT_BC1_RGBA_UNORM_SRGB=54
+    SDL_GPU_TEXTUREFORMAT_BC2_RGBA_UNORM_SRGB=55
+    SDL_GPU_TEXTUREFORMAT_BC3_RGBA_UNORM_SRGB=56
+    SDL_GPU_TEXTUREFORMAT_BC7_RGBA_UNORM_SRGB=57
+    SDL_GPU_TEXTUREFORMAT_D16_UNORM=58
+    SDL_GPU_TEXTUREFORMAT_D24_UNORM=59
+    SDL_GPU_TEXTUREFORMAT_D32_FLOAT=60
+    SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT=61
+    SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT=62
+    SDL_GPU_TEXTUREFORMAT_ASTC_4x4_UNORM=63
+    SDL_GPU_TEXTUREFORMAT_ASTC_5x4_UNORM=64
+    SDL_GPU_TEXTUREFORMAT_ASTC_5x5_UNORM=65
+    SDL_GPU_TEXTUREFORMAT_ASTC_6x5_UNORM=66
+    SDL_GPU_TEXTUREFORMAT_ASTC_6x6_UNORM=67
+    SDL_GPU_TEXTUREFORMAT_ASTC_8x5_UNORM=68
+    SDL_GPU_TEXTUREFORMAT_ASTC_8x6_UNORM=69
+    SDL_GPU_TEXTUREFORMAT_ASTC_8x8_UNORM=70
+    SDL_GPU_TEXTUREFORMAT_ASTC_10x5_UNORM=71
+    SDL_GPU_TEXTUREFORMAT_ASTC_10x6_UNORM=72
+    SDL_GPU_TEXTUREFORMAT_ASTC_10x8_UNORM=73
+    SDL_GPU_TEXTUREFORMAT_ASTC_10x10_UNORM=74
+    SDL_GPU_TEXTUREFORMAT_ASTC_12x10_UNORM=75
+    SDL_GPU_TEXTUREFORMAT_ASTC_12x12_UNORM=76
+    SDL_GPU_TEXTUREFORMAT_ASTC_4x4_UNORM_SRGB=77
+    SDL_GPU_TEXTUREFORMAT_ASTC_5x4_UNORM_SRGB=78
+    SDL_GPU_TEXTUREFORMAT_ASTC_5x5_UNORM_SRGB=79
+    SDL_GPU_TEXTUREFORMAT_ASTC_6x5_UNORM_SRGB=80
+    SDL_GPU_TEXTUREFORMAT_ASTC_6x6_UNORM_SRGB=81
+    SDL_GPU_TEXTUREFORMAT_ASTC_8x5_UNORM_SRGB=82
+    SDL_GPU_TEXTUREFORMAT_ASTC_8x6_UNORM_SRGB=83
+    SDL_GPU_TEXTUREFORMAT_ASTC_8x8_UNORM_SRGB=84
+    SDL_GPU_TEXTUREFORMAT_ASTC_10x5_UNORM_SRGB=85
+    SDL_GPU_TEXTUREFORMAT_ASTC_10x6_UNORM_SRGB=86
+    SDL_GPU_TEXTUREFORMAT_ASTC_10x8_UNORM_SRGB=87
+    SDL_GPU_TEXTUREFORMAT_ASTC_10x10_UNORM_SRGB=88
+    SDL_GPU_TEXTUREFORMAT_ASTC_12x10_UNORM_SRGB=89
+    SDL_GPU_TEXTUREFORMAT_ASTC_12x12_UNORM_SRGB=90
+    SDL_GPU_TEXTUREFORMAT_ASTC_4x4_FLOAT=91
+    SDL_GPU_TEXTUREFORMAT_ASTC_5x4_FLOAT=92
+    SDL_GPU_TEXTUREFORMAT_ASTC_5x5_FLOAT=93
+    SDL_GPU_TEXTUREFORMAT_ASTC_6x5_FLOAT=94
+    SDL_GPU_TEXTUREFORMAT_ASTC_6x6_FLOAT=95
+    SDL_GPU_TEXTUREFORMAT_ASTC_8x5_FLOAT=96
+    SDL_GPU_TEXTUREFORMAT_ASTC_8x6_FLOAT=97
+    SDL_GPU_TEXTUREFORMAT_ASTC_8x8_FLOAT=98
+    SDL_GPU_TEXTUREFORMAT_ASTC_10x5_FLOAT=99
+    SDL_GPU_TEXTUREFORMAT_ASTC_10x6_FLOAT=100
+    SDL_GPU_TEXTUREFORMAT_ASTC_10x8_FLOAT=101
+    SDL_GPU_TEXTUREFORMAT_ASTC_10x10_FLOAT=102
+    SDL_GPU_TEXTUREFORMAT_ASTC_12x10_FLOAT=103
+    SDL_GPU_TEXTUREFORMAT_ASTC_12x12_FLOAT=104
+Enum/SDL_GPUTextureType: 
+    SDL_GPU_TEXTURETYPE_2D=0
+    SDL_GPU_TEXTURETYPE_2D_ARRAY=1
+    SDL_GPU_TEXTURETYPE_3D=2
+    SDL_GPU_TEXTURETYPE_CUBE=3
+    SDL_GPU_TEXTURETYPE_CUBE_ARRAY=4
+Enum/SDL_GPUSampleCount: 
+    SDL_GPU_SAMPLECOUNT_1=0
+    SDL_GPU_SAMPLECOUNT_2=1
+    SDL_GPU_SAMPLECOUNT_4=2
+    SDL_GPU_SAMPLECOUNT_8=3
+Enum/SDL_GPUCubeMapFace: 
+    SDL_GPU_CUBEMAPFACE_POSITIVEX=0
+    SDL_GPU_CUBEMAPFACE_NEGATIVEX=1
+    SDL_GPU_CUBEMAPFACE_POSITIVEY=2
+    SDL_GPU_CUBEMAPFACE_NEGATIVEY=3
+    SDL_GPU_CUBEMAPFACE_POSITIVEZ=4
+    SDL_GPU_CUBEMAPFACE_NEGATIVEZ=5
+Enum/SDL_GPUTransferBufferUsage: 
+    SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD=0
+    SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD=1
+Enum/SDL_GPUShaderStage: 
+    SDL_GPU_SHADERSTAGE_VERTEX=0
+    SDL_GPU_SHADERSTAGE_FRAGMENT=1
+Enum/SDL_GPUVertexElementFormat: 
+    SDL_GPU_VERTEXELEMENTFORMAT_INVALID=0
+    SDL_GPU_VERTEXELEMENTFORMAT_INT=1
+    SDL_GPU_VERTEXELEMENTFORMAT_INT2=2
+    SDL_GPU_VERTEXELEMENTFORMAT_INT3=3
+    SDL_GPU_VERTEXELEMENTFORMAT_INT4=4
+    SDL_GPU_VERTEXELEMENTFORMAT_UINT=5
+    SDL_GPU_VERTEXELEMENTFORMAT_UINT2=6
+    SDL_GPU_VERTEXELEMENTFORMAT_UINT3=7
+    SDL_GPU_VERTEXELEMENTFORMAT_UINT4=8
+    SDL_GPU_VERTEXELEMENTFORMAT_FLOAT=9
+    SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2=10
+    SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3=11
+    SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4=12
+    SDL_GPU_VERTEXELEMENTFORMAT_BYTE2=13
+    SDL_GPU_VERTEXELEMENTFORMAT_BYTE4=14
+    SDL_GPU_VERTEXELEMENTFORMAT_UBYTE2=15
+    SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4=16
+    SDL_GPU_VERTEXELEMENTFORMAT_BYTE2_NORM=17
+    SDL_GPU_VERTEXELEMENTFORMAT_BYTE4_NORM=18
+    SDL_GPU_VERTEXELEMENTFORMAT_UBYTE2_NORM=19
+    SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM=20
+    SDL_GPU_VERTEXELEMENTFORMAT_SHORT2=21
+    SDL_GPU_VERTEXELEMENTFORMAT_SHORT4=22
+    SDL_GPU_VERTEXELEMENTFORMAT_USHORT2=23
+    SDL_GPU_VERTEXELEMENTFORMAT_USHORT4=24
+    SDL_GPU_VERTEXELEMENTFORMAT_SHORT2_NORM=25
+    SDL_GPU_VERTEXELEMENTFORMAT_SHORT4_NORM=26
+    SDL_GPU_VERTEXELEMENTFORMAT_USHORT2_NORM=27
+    SDL_GPU_VERTEXELEMENTFORMAT_USHORT4_NORM=28
+    SDL_GPU_VERTEXELEMENTFORMAT_HALF2=29
+    SDL_GPU_VERTEXELEMENTFORMAT_HALF4=30
+Enum/SDL_GPUVertexInputRate: 
+    SDL_GPU_VERTEXINPUTRATE_VERTEX=0
+    SDL_GPU_VERTEXINPUTRATE_INSTANCE=1
+Enum/SDL_GPUFillMode: 
+    SDL_GPU_FILLMODE_FILL=0
+    SDL_GPU_FILLMODE_LINE=1
+Enum/SDL_GPUCullMode: 
+    SDL_GPU_CULLMODE_NONE=0
+    SDL_GPU_CULLMODE_FRONT=1
+    SDL_GPU_CULLMODE_BACK=2
+Enum/SDL_GPUFrontFace: 
+    SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE=0
+    SDL_GPU_FRONTFACE_CLOCKWISE=1
+Enum/SDL_GPUCompareOp: 
+    SDL_GPU_COMPAREOP_INVALID=0
+    SDL_GPU_COMPAREOP_NEVER=1
+    SDL_GPU_COMPAREOP_LESS=2
+    SDL_GPU_COMPAREOP_EQUAL=3
+    SDL_GPU_COMPAREOP_LESS_OR_EQUAL=4
+    SDL_GPU_COMPAREOP_GREATER=5
+    SDL_GPU_COMPAREOP_NOT_EQUAL=6
+    SDL_GPU_COMPAREOP_GREATER_OR_EQUAL=7
+    SDL_GPU_COMPAREOP_ALWAYS=8
+Enum/SDL_GPUStencilOp: 
+    SDL_GPU_STENCILOP_INVALID=0
+    SDL_GPU_STENCILOP_KEEP=1
+    SDL_GPU_STENCILOP_ZERO=2
+    SDL_GPU_STENCILOP_REPLACE=3
+    SDL_GPU_STENCILOP_INCREMENT_AND_CLAMP=4
+    SDL_GPU_STENCILOP_DECREMENT_AND_CLAMP=5
+    SDL_GPU_STENCILOP_INVERT=6
+    SDL_GPU_STENCILOP_INCREMENT_AND_WRAP=7
+    SDL_GPU_STENCILOP_DECREMENT_AND_WRAP=8
+Enum/SDL_GPUBlendOp: 
+    SDL_GPU_BLENDOP_INVALID=0
+    SDL_GPU_BLENDOP_ADD=1
+    SDL_GPU_BLENDOP_SUBTRACT=2
+    SDL_GPU_BLENDOP_REVERSE_SUBTRACT=3
+    SDL_GPU_BLENDOP_MIN=4
+    SDL_GPU_BLENDOP_MAX=5
+Enum/SDL_GPUBlendFactor: 
+    SDL_GPU_BLENDFACTOR_INVALID=0
+    SDL_GPU_BLENDFACTOR_ZERO=1
+    SDL_GPU_BLENDFACTOR_ONE=2
+    SDL_GPU_BLENDFACTOR_SRC_COLOR=3
+    SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_COLOR=4
+    SDL_GPU_BLENDFACTOR_DST_COLOR=5
+    SDL_GPU_BLENDFACTOR_ONE_MINUS_DST_COLOR=6
+    SDL_GPU_BLENDFACTOR_SRC_ALPHA=7
+    SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA=8
+    SDL_GPU_BLENDFACTOR_DST_ALPHA=9
+    SDL_GPU_BLENDFACTOR_ONE_MINUS_DST_ALPHA=10
+    SDL_GPU_BLENDFACTOR_CONSTANT_COLOR=11
+    SDL_GPU_BLENDFACTOR_ONE_MINUS_CONSTANT_COLOR=12
+    SDL_GPU_BLENDFACTOR_SRC_ALPHA_SATURATE=13
+Enum/SDL_GPUFilter: 
+    SDL_GPU_FILTER_NEAREST=0
+    SDL_GPU_FILTER_LINEAR=1
+Enum/SDL_GPUSamplerMipmapMode: 
+    SDL_GPU_SAMPLERMIPMAPMODE_NEAREST=0
+    SDL_GPU_SAMPLERMIPMAPMODE_LINEAR=1
+Enum/SDL_GPUSamplerAddressMode: 
+    SDL_GPU_SAMPLERADDRESSMODE_REPEAT=0
+    SDL_GPU_SAMPLERADDRESSMODE_MIRRORED_REPEAT=1
+    SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE=2
+Enum/SDL_GPUPresentMode: 
+    SDL_GPU_PRESENTMODE_VSYNC=0
+    SDL_GPU_PRESENTMODE_IMMEDIATE=1
+    SDL_GPU_PRESENTMODE_MAILBOX=2
+Enum/SDL_GPUSwapchainComposition: 
+    SDL_GPU_SWAPCHAINCOMPOSITION_SDR=0
+    SDL_GPU_SWAPCHAINCOMPOSITION_SDR_LINEAR=1
+    SDL_GPU_SWAPCHAINCOMPOSITION_HDR_EXTENDED_LINEAR=2
+    SDL_GPU_SWAPCHAINCOMPOSITION_HDR10_ST2084=3
+Enum/SDL_hid_bus_type: 
+    SDL_HID_API_BUS_UNKNOWN=0
+    SDL_HID_API_BUS_USB=1
+    SDL_HID_API_BUS_BLUETOOTH=2
+    SDL_HID_API_BUS_I2C=3
+    SDL_HID_API_BUS_SPI=4
+Enum/SDL_HintPriority: 
+    SDL_HINT_DEFAULT=0
+    SDL_HINT_NORMAL=1
+    SDL_HINT_OVERRIDE=2
+Enum/SDL_AppResult: 
+    SDL_APP_CONTINUE=0
+    SDL_APP_SUCCESS=1
+    SDL_APP_FAILURE=2
+Enum/SDL_LogCategory: 
+    SDL_LOG_CATEGORY_APPLICATION=0
+    SDL_LOG_CATEGORY_ERROR=1
+    SDL_LOG_CATEGORY_ASSERT=2
+    SDL_LOG_CATEGORY_SYSTEM=3
+    SDL_LOG_CATEGORY_AUDIO=4
+    SDL_LOG_CATEGORY_VIDEO=5
+    SDL_LOG_CATEGORY_RENDER=6
+    SDL_LOG_CATEGORY_INPUT=7
+    SDL_LOG_CATEGORY_TEST=8
+    SDL_LOG_CATEGORY_GPU=9
+    SDL_LOG_CATEGORY_RESERVED2=10
+    SDL_LOG_CATEGORY_RESERVED3=11
+    SDL_LOG_CATEGORY_RESERVED4=12
+    SDL_LOG_CATEGORY_RESERVED5=13
+    SDL_LOG_CATEGORY_RESERVED6=14
+    SDL_LOG_CATEGORY_RESERVED7=15
+    SDL_LOG_CATEGORY_RESERVED8=16
+    SDL_LOG_CATEGORY_RESERVED9=17
+    SDL_LOG_CATEGORY_RESERVED10=18
+    SDL_LOG_CATEGORY_CUSTOM=19
+Enum/SDL_LogPriority: 
+    SDL_LOG_PRIORITY_INVALID=0
+    SDL_LOG_PRIORITY_TRACE=1
+    SDL_LOG_PRIORITY_VERBOSE=2
+    SDL_LOG_PRIORITY_DEBUG=3
+    SDL_LOG_PRIORITY_INFO=4
+    SDL_LOG_PRIORITY_WARN=5
+    SDL_LOG_PRIORITY_ERROR=6
+    SDL_LOG_PRIORITY_CRITICAL=7
+    SDL_LOG_PRIORITY_COUNT=8
+Enum/SDL_MessageBoxColorType: 
+    SDL_MESSAGEBOX_COLOR_BACKGROUND=0
+    SDL_MESSAGEBOX_COLOR_TEXT=1
+    SDL_MESSAGEBOX_COLOR_BUTTON_BORDER=2
+    SDL_MESSAGEBOX_COLOR_BUTTON_BACKGROUND=3
+    SDL_MESSAGEBOX_COLOR_BUTTON_SELECTED=4
+    SDL_MESSAGEBOX_COLOR_COUNT=5
+Enum/SDL_ProcessIO: 
+    SDL_PROCESS_STDIO_INHERITED=0
+    SDL_PROCESS_STDIO_NULL=1
+    SDL_PROCESS_STDIO_APP=2
+    SDL_PROCESS_STDIO_REDIRECT=3
+Enum/SDL_TextureAccess: 
+    SDL_TEXTUREACCESS_STATIC=0
+    SDL_TEXTUREACCESS_STREAMING=1
+    SDL_TEXTUREACCESS_TARGET=2
+Enum/SDL_TextureAddressMode: 
+    SDL_TEXTURE_ADDRESS_INVALID=-1
+    SDL_TEXTURE_ADDRESS_AUTO=0
+    SDL_TEXTURE_ADDRESS_CLAMP=1
+    SDL_TEXTURE_ADDRESS_WRAP=2
+Enum/SDL_RendererLogicalPresentation: 
+    SDL_LOGICAL_PRESENTATION_DISABLED=0
+    SDL_LOGICAL_PRESENTATION_STRETCH=1
+    SDL_LOGICAL_PRESENTATION_LETTERBOX=2
+    SDL_LOGICAL_PRESENTATION_OVERSCAN=3
+    SDL_LOGICAL_PRESENTATION_INTEGER_SCALE=4
+Enum/SDL_Sandbox: 
+    SDL_SANDBOX_NONE=0
+    SDL_SANDBOX_UNKNOWN_CONTAINER=1
+    SDL_SANDBOX_FLATPAK=2
+    SDL_SANDBOX_SNAP=3
+    SDL_SANDBOX_MACOS=4
+Enum/SDL_DateFormat: 
+    SDL_DATE_FORMAT_YYYYMMDD=0
+    SDL_DATE_FORMAT_DDMMYYYY=1
+    SDL_DATE_FORMAT_MMDDYYYY=2
+Enum/SDL_TimeFormat: 
+    SDL_TIME_FORMAT_24HR=0
+    SDL_TIME_FORMAT_12HR=1
+Struct: 
+    SDL_alignment_test{Cp}a b;
+    SDL_Environment{};
+    SDL_iconv_data_t{};
+    SDL_AssertData{};
+    SDL_AsyncIO{};
+    SDL_AsyncIOOutcome{*<SDL_AsyncIO><SDL_AsyncIOTaskType><SDL_AsyncIOResult>pLLLp}asyncio type result buffer offset bytes_requested bytes_transferred userdata;
+    SDL_AsyncIOQueue{};
+    SDL_AtomicInt{i}value;
+    SDL_AtomicU32{I}value;
+    SDL_Thread{};
+    SDL_Mutex{};
+    SDL_RWLock{};
+    SDL_Semaphore{};
+    SDL_Condition{};
+    SDL_InitState{<SDL_AtomicInt>Lp}status thread reserved;
+    SDL_IOStreamInterface{Ipppppp}version size seek read write flush close;
+    SDL_IOStream{};
+    SDL_AudioSpec{<SDL_AudioFormat>ii}format channels freq;
+    SDL_AudioStream{};
+    SDL_Color{CCCC}r g b a;
+    SDL_FColor{ffff}r g b a;
+    SDL_Palette{i*<SDL_Color>Ii}ncolors colors version refcount;
+    SDL_PixelFormatDetails{<SDL_PixelFormat>CCC[2]IIIICCCCCCCC}format bits_per_pixel bytes_per_pixel padding Rmask Gmask Bmask Amask Rbits Gbits Bbits Abits Rshift Gshift Bshift Ashift;
+    SDL_Point{ii}x y;
+    SDL_FPoint{ff}x y;
+    SDL_Rect{iiii}x y w h;
+    SDL_FRect{ffff}x y w h;
+    SDL_Surface{I<SDL_PixelFormat>iiipip}flags format w h pitch pixels refcount reserved;
+    SDL_Camera{};
+    SDL_CameraSpec{<SDL_PixelFormat><SDL_Colorspace>iiii}format colorspace width height framerate_numerator framerate_denominator;
+    SDL_DisplayModeData{};
+    SDL_DisplayMode{I<SDL_PixelFormat>iiffii*<SDL_DisplayModeData>}displayID format w h pixel_density refresh_rate refresh_rate_numerator refresh_rate_denominator internal;
+    SDL_Window{};
+    SDL_GLContextState{};
+    SDL_DialogFileFilter{ZZ}name pattern;
+    SDL_GUID{C[16]}data;
+    SDL_Sensor{};
+    SDL_Joystick{};
+    SDL_VirtualJoystickTouchpadDesc{SS[3]}nfingers padding;
+    SDL_VirtualJoystickSensorDesc{<SDL_SensorType>f}type rate;
+    SDL_VirtualJoystickDesc{ISSSSSSSSSSS[2]IIZ*<SDL_VirtualJoystickTouchpadDesc>*<SDL_VirtualJoystickSensorDesc>ppppppppp}version type padding vendor_id product_id naxes nbuttons nballs nhats ntouchpads nsensors padding2 button_mask axis_mask name touchpads sensors userdata Update SetPlayerIndex Rumble RumbleTriggers SetLED SendEffect SetSensorsEnabled Cleanup;
+    SDL_Gamepad{};
+    SDL_Cursor{};
+    SDL_CursorFrameInfo{*<SDL_Surface>I}surface duration;
+    SDL_Finger{Lfff}id x y pressure;
+    SDL_CommonEvent{IIL}type reserved timestamp;
+    SDL_DisplayEvent{<SDL_EventType>ILIii}type reserved timestamp displayID data1 data2;
+    SDL_WindowEvent{<SDL_EventType>ILIii}type reserved timestamp windowID data1 data2;
+    SDL_KeyboardDeviceEvent{<SDL_EventType>ILI}type reserved timestamp which;
+    SDL_KeyboardEvent{};
+    SDL_TextEditingEvent{<SDL_EventType>ILIZii}type reserved timestamp windowID text start length;
+    SDL_TextEditingCandidatesEvent{};
+    SDL_TextInputEvent{<SDL_EventType>ILIZ}type reserved timestamp windowID text;
+    SDL_MouseDeviceEvent{<SDL_EventType>ILI}type reserved timestamp which;
+    SDL_MouseMotionEvent{<SDL_EventType>ILIIIffff}type reserved timestamp windowID which state x y xrel yrel;
+    SDL_MouseButtonEvent{};
+    SDL_MouseWheelEvent{<SDL_EventType>ILIIff<SDL_MouseWheelDirection>ffii}type reserved timestamp windowID which x y direction mouse_x mouse_y integer_x integer_y;
+    SDL_JoyAxisEvent{<SDL_EventType>ILICCCCsS}type reserved timestamp which axis padding1 padding2 padding3 value padding4;
+    SDL_JoyBallEvent{<SDL_EventType>ILICCCCss}type reserved timestamp which ball padding1 padding2 padding3 xrel yrel;
+    SDL_JoyHatEvent{<SDL_EventType>ILICCCC}type reserved timestamp which hat value padding1 padding2;
+    SDL_JoyButtonEvent{};
+    SDL_JoyDeviceEvent{<SDL_EventType>ILI}type reserved timestamp which;
+    SDL_JoyBatteryEvent{<SDL_EventType>ILI<SDL_PowerState>i}type reserved timestamp which state percent;
+    SDL_GamepadAxisEvent{<SDL_EventType>ILICCCCsS}type reserved timestamp which axis padding1 padding2 padding3 value padding4;
+    SDL_GamepadButtonEvent{};
+    SDL_GamepadDeviceEvent{<SDL_EventType>ILI}type reserved timestamp which;
+    SDL_GamepadTouchpadEvent{<SDL_EventType>ILIiifff}type reserved timestamp which touchpad finger x y pressure;
+    SDL_GamepadSensorEvent{<SDL_EventType>ILIif[3]L}type reserved timestamp which sensor data sensor_timestamp;
+    SDL_AudioDeviceEvent{};
+    SDL_CameraDeviceEvent{<SDL_EventType>ILI}type reserved timestamp which;
+    SDL_RenderEvent{<SDL_EventType>ILI}type reserved timestamp windowID;
+    SDL_TouchFingerEvent{<SDL_EventType>ILLLfffffI}type reserved timestamp touchID fingerID x y dx dy pressure windowID;
+    SDL_PinchFingerEvent{<SDL_EventType>ILfI}type reserved timestamp scale windowID;
+    SDL_PenProximityEvent{<SDL_EventType>ILII}type reserved timestamp windowID which;
+    SDL_PenMotionEvent{<SDL_EventType>ILIIIff}type reserved timestamp windowID which pen_state x y;
+    SDL_PenTouchEvent{};
+    SDL_PenButtonEvent{};
+    SDL_PenAxisEvent{<SDL_EventType>ILIIIff<SDL_PenAxis>f}type reserved timestamp windowID which pen_state x y axis value;
+    SDL_DropEvent{<SDL_EventType>ILIffZZ}type reserved timestamp windowID x y source data;
+    SDL_ClipboardEvent{};
+    SDL_SensorEvent{<SDL_EventType>ILIf[6]L}type reserved timestamp which data sensor_timestamp;
+    SDL_QuitEvent{<SDL_EventType>IL}type reserved timestamp;
+    SDL_UserEvent{IILIipp}type reserved timestamp windowID code data1 data2;
+    SDL_PathInfo{<SDL_PathType>Llll}type size create_time modify_time access_time;
+    SDL_GPUDevice{};
+    SDL_GPUBuffer{};
+    SDL_GPUTransferBuffer{};
+    SDL_GPUTexture{};
+    SDL_GPUSampler{};
+    SDL_GPUShader{};
+    SDL_GPUComputePipeline{};
+    SDL_GPUGraphicsPipeline{};
+    SDL_GPUCommandBuffer{};
+    SDL_GPURenderPass{};
+    SDL_GPUComputePass{};
+    SDL_GPUCopyPass{};
+    SDL_GPUFence{};
+    SDL_GPUViewport{ffffff}x y w h min_depth max_depth;
+    SDL_GPUTextureTransferInfo{*<SDL_GPUTransferBuffer>III}transfer_buffer offset pixels_per_row rows_per_layer;
+    SDL_GPUTransferBufferLocation{*<SDL_GPUTransferBuffer>I}transfer_buffer offset;
+    SDL_GPUTextureLocation{*<SDL_GPUTexture>IIIII}texture mip_level layer x y z;
+    SDL_GPUTextureRegion{*<SDL_GPUTexture>IIIIIIII}texture mip_level layer x y z w h d;
+    SDL_GPUBlitRegion{*<SDL_GPUTexture>IIIIII}texture mip_level layer_or_depth_plane x y w h;
+    SDL_GPUBufferLocation{*<SDL_GPUBuffer>I}buffer offset;
+    SDL_GPUBufferRegion{*<SDL_GPUBuffer>II}buffer offset size;
+    SDL_GPUIndirectDrawCommand{IIII}num_vertices num_instances first_vertex first_instance;
+    SDL_GPUIndexedIndirectDrawCommand{IIIiI}num_indices num_instances first_index vertex_offset first_instance;
+    SDL_GPUIndirectDispatchCommand{III}groupcount_x groupcount_y groupcount_z;
+    SDL_GPUSamplerCreateInfo{};
+    SDL_GPUVertexBufferDescription{II<SDL_GPUVertexInputRate>I}slot pitch input_rate instance_step_rate;
+    SDL_GPUVertexAttribute{II<SDL_GPUVertexElementFormat>I}location buffer_slot format offset;
+    SDL_GPUVertexInputState{*<SDL_GPUVertexBufferDescription>I*<SDL_GPUVertexAttribute>I}vertex_buffer_descriptions num_vertex_buffers vertex_attributes num_vertex_attributes;
+    SDL_GPUStencilOpState{<SDL_GPUStencilOp><SDL_GPUStencilOp><SDL_GPUStencilOp><SDL_GPUCompareOp>}fail_op pass_op depth_fail_op compare_op;
+    SDL_GPUColorTargetBlendState{};
+    SDL_GPUShaderCreateInfo{JpZI<SDL_GPUShaderStage>IIIII}code_size code entrypoint format stage num_samplers num_storage_textures num_storage_buffers num_uniform_buffers props;
+    SDL_GPUTextureCreateInfo{<SDL_GPUTextureType><SDL_GPUTextureFormat>IIIII<SDL_GPUSampleCount>I}type format usage width height layer_count_or_depth num_levels sample_count props;
+    SDL_GPUBufferCreateInfo{III}usage size props;
+    SDL_GPUTransferBufferCreateInfo{<SDL_GPUTransferBufferUsage>II}usage size props;
+    SDL_GPURasterizerState{};
+    SDL_GPUMultisampleState{};
+    SDL_GPUDepthStencilState{};
+    SDL_GPUColorTargetDescription{<SDL_GPUTextureFormat><SDL_GPUColorTargetBlendState>}format blend_state;
+    SDL_GPUGraphicsPipelineTargetInfo{};
+    SDL_GPUGraphicsPipelineCreateInfo{*<SDL_GPUShader>*<SDL_GPUShader><SDL_GPUVertexInputState><SDL_GPUPrimitiveType><SDL_GPURasterizerState><SDL_GPUMultisampleState><SDL_GPUDepthStencilState><SDL_GPUGraphicsPipelineTargetInfo>I}vertex_shader fragment_shader vertex_input_state primitive_type rasterizer_state multisample_state depth_stencil_state target_info props;
+    SDL_GPUComputePipelineCreateInfo{JpZIIIIIIIIIII}code_size code entrypoint format num_samplers num_readonly_storage_textures num_readonly_storage_buffers num_readwrite_storage_textures num_readwrite_storage_buffers num_uniform_buffers threadcount_x threadcount_y threadcount_z props;
+    SDL_GPUColorTargetInfo{};
+    SDL_GPUDepthStencilTargetInfo{};
+    SDL_GPUBlitInfo{};
+    SDL_GPUBufferBinding{*<SDL_GPUBuffer>I}buffer offset;
+    SDL_GPUTextureSamplerBinding{*<SDL_GPUTexture>*<SDL_GPUSampler>}texture sampler;
+    SDL_GPUStorageBufferReadWriteBinding{};
+    SDL_GPUStorageTextureReadWriteBinding{};
+    SDL_GPUVulkanOptions{IppIpIp}vulkan_api_version feature_list vulkan_10_physical_device_features device_extension_count device_extension_names instance_extension_count instance_extension_names;
+    SDL_Haptic{};
+    SDL_HapticDirection{Ci[3]}type dir;
+    SDL_HapticConstant{S<SDL_HapticDirection>ISSSsSSSS}type direction length delay button interval level attack_length attack_level fade_length fade_level;
+    SDL_HapticPeriodic{S<SDL_HapticDirection>ISSSSssSSSSS}type direction length delay button interval period magnitude offset phase attack_length attack_level fade_length fade_level;
+    SDL_HapticCondition{S<SDL_HapticDirection>ISSSS[3]S[3]s[3]s[3]S[3]s[3]}type direction length delay button interval right_sat left_sat right_coeff left_coeff deadband center;
+    SDL_HapticRamp{S<SDL_HapticDirection>ISSSssSSSS}type direction length delay button interval start end attack_length attack_level fade_length fade_level;
+    SDL_HapticLeftRight{SISS}type length large_magnitude small_magnitude;
+    SDL_HapticCustom{S<SDL_HapticDirection>ISSSCSS*SSSSS}type direction length delay button interval channels period samples data attack_length attack_level fade_length fade_level;
+    SDL_hid_device{};
+    SDL_hid_device_info{*cSS*iS*i*iSSiiii<SDL_hid_bus_type>*<SDL_hid_device_info>}path vendor_id product_id serial_number release_number manufacturer_string product_string usage_page usage interface_number interface_class interface_subclass interface_protocol bus_type next;
+    SDL_SharedObject{};
+    SDL_Locale{ZZ}language country;
+    SDL_MessageBoxButtonData{IiZ}flags buttonID text;
+    SDL_MessageBoxColor{CCC}r g b;
+    SDL_MessageBoxColorScheme{<SDL_MessageBoxColor>[5]}colors;
+    SDL_MessageBoxData{I*<SDL_Window>ZZi*<SDL_MessageBoxButtonData>*<SDL_MessageBoxColorScheme>}flags window title message numbuttons buttons colorScheme;
+    SDL_Process{};
+    SDL_Vertex{<SDL_FPoint><SDL_FColor><SDL_FPoint>}position color tex_coord;
+    SDL_Renderer{};
+    SDL_Texture{<SDL_PixelFormat>iii}format w h refcount;
+    SDL_GPURenderStateCreateInfo{};
+    SDL_GPURenderState{};
+    SDL_StorageInterface{Ippppppppppp}version close ready enumerate info read_file write_file mkdir remove rename copy space_remaining;
+    SDL_Storage{};
+    SDL_DateTime{iiiiiiiii}year month day hour minute second nanosecond day_of_week utc_offset;
+    SDL_Tray{};
+    SDL_TrayMenu{};
+    SDL_TrayEntry{};
+Union: 
+    SDL_Event{I<SDL_CommonEvent><SDL_DisplayEvent><SDL_WindowEvent><SDL_KeyboardDeviceEvent><SDL_KeyboardEvent><SDL_TextEditingEvent><SDL_TextEditingCandidatesEvent><SDL_TextInputEvent><SDL_MouseDeviceEvent><SDL_MouseMotionEvent><SDL_MouseButtonEvent><SDL_MouseWheelEvent><SDL_JoyDeviceEvent><SDL_JoyAxisEvent><SDL_JoyBallEvent><SDL_JoyHatEvent><SDL_JoyButtonEvent><SDL_JoyBatteryEvent><SDL_GamepadDeviceEvent><SDL_GamepadAxisEvent><SDL_GamepadButtonEvent><SDL_GamepadTouchpadEvent><SDL_GamepadSensorEvent><SDL_AudioDeviceEvent><SDL_CameraDeviceEvent><SDL_SensorEvent><SDL_QuitEvent><SDL_UserEvent><SDL_TouchFingerEvent><SDL_PinchFingerEvent><SDL_PenProximityEvent><SDL_PenTouchEvent><SDL_PenMotionEvent><SDL_PenButtonEvent><SDL_PenAxisEvent><SDL_RenderEvent><SDL_DropEvent><SDL_ClipboardEvent>C[128]}type common display window kdevice key edit edit_candidates text mdevice motion button wheel jdevice jaxis jball jhat jbutton jbattery gdevice gaxis gbutton gtouchpad gsensor adevice cdevice sensor quit user tfinger pinch pproximity ptouch pmotion pbutton paxis render drop clipboard padding;
+    SDL_HapticEffect{S<SDL_HapticConstant><SDL_HapticPeriodic><SDL_HapticCondition><SDL_HapticRamp><SDL_HapticLeftRight><SDL_HapticCustom>}type constant periodic condition ramp leftright custom;

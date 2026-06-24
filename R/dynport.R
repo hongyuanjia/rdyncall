@@ -22,14 +22,14 @@
 #' R package whose namespace is populated at load time from the DynPort metadata.
 #' By default, generated package names use the prefix given by option
 #' `rdyncall.dynport.package.prefix`, which defaults to `"dyn."`. For example,
-#' a DynPort with `Package: SDL2` is installed as `dyn.SDL2` unless a package
+#' a DynPort with `Package: SDL3` is installed as `dyn.SDL3` unless a package
 #' name is explicitly supplied.
 #'
-#' The following gives a list of currently supported DCF _DynPorts_:
+#' The package ships the following current-format DCF _DynPort_:
 #'
 #' | **DynPort name/C library** | **Description**                                 |
 #' |:---------------------------|:------------------------------------------------|
-#' | `SDL2`                     | Simple DirectMedia Layer 2                      |
+#' | `SDL3`                     | Simple DirectMedia Layer 3                      |
 #'
 #' The DCF format records the following binding metadata:
 #'
@@ -41,14 +41,13 @@
 #'   union) are registered via [cstruct()] and [cunion()].
 #'
 #' The file path to the _DynPort_ file is derived from `portname` per default.
-#' This would refer to `"<repo>/<portname>.dynport"` where `repo` usually refers
-#' to the initial _DynPort_ repository located at the sub-folder `"dynports/"`
-#' of the package.
+#' This would refer to `"<repo>/<portname>.dynport"` where `repo` defaults to
+#' the package's `"dynports/"` sub-folder.
 #' If `portfile` is given, then this value is taken as file path.
 #'
-#' A tool suite, comprising AWK (was boost wave), GCC Preprocessor, GCC-XML and
-#' XSLT, was used to generate the available _DynPort_ files automatically
-#' by extracting type information from C library header files.
+#' The bundled SDL3 DynPort is generated from SDL3 headers with porter. For
+#' other libraries, generate a DCF `.dynport` file externally and pass it with
+#' `portfile`.
 #'
 #' @param portname the name of a dynport, given as a literal or character
 #'        string.
@@ -99,24 +98,13 @@
 #' Adler, D., Philipp, T. (2008) _DynCall Project_.
 #'   \url{https://dyncall.org}
 #'
-#' Clark, J. (1998). expat - XML Parser Toolkit.
-#'   \url{https://expat.sourceforge.net}
-#'
-#' Ikits, M. and Magallon, M. (2002).  The OpenGL Extension Wrangler Library.
-#'   \url{https://glew.sourceforge.net}
-#'
 #' Latinga, S. (1998). The Simple DirectMedia Layer Library.
 #'   \url{https://www.libsdl.org/}
 #'
-#' Segal, M. and Akeley, K. (1992). The OpenGL Graphics System. A Specification,
-#' Version 1.0. \url{https://www.opengl.org}
-#'
-#' Smith, R. (2001). Open Dynamics Engine. \url{https://ode.org/}
-#'
 #' @examples
 #' \dontrun{
-#' dynport(SDL2)
-#' dyn.SDL2::SDL_GetPlatform()
+#' dynport(SDL3)
+#' dyn.SDL3::SDL_GetPlatform()
 #' }
 #' @aliases dynport_install_package dynport_load_into dynport_lib
 #' @keywords programming interface
