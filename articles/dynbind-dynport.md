@@ -28,7 +28,6 @@ info <- dynbind(
     ),
     envir = math
 )
-article_expect_symbols(info, "math library")
 
 c(
     sqrt = math$sqrt(49),

@@ -4,10 +4,10 @@ pkgdown_sha: ~
 articles:
   articles/callbacks: callbacks.html
   articles/dynbind-dynport: dynbind-dynport.html
-  articles/getting-started: getting-started.html
+  articles/rdyncall: rdyncall.html
   articles/signatures: signatures.html
   articles/structs-unions-memory: structs-unions-memory.html
-last_built: 2026-06-24T07:51Z
+last_built: 2026-06-24T13:32Z
 urls:
   reference: https://hongyuanjia.github.io/rdyncall/reference
   article: https://hongyuanjia.github.io/rdyncall/articles

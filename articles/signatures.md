@@ -67,8 +67,10 @@ size_t strlen(const char *s);
 ``` r
 libc_names <- c("msvcrt", "c", "c.so.6")
 libc <- new.env(parent = globalenv())
-info <- dynbind(libc_names, "strlen(Z)L;", envir = libc)
-article_expect_symbols(info, "C runtime")
+dynbind(libc_names, "strlen(Z)L;", envir = libc)
+#> dynbind report
+#>   library: libc.so.6
+#>   unresolved symbols: 0
 
 libc$strlen("rdyncall")
 #> [1] 8
@@ -84,8 +86,10 @@ examples because R is available wherever the package is loaded.
 
 ``` r
 rapi <- new.env(parent = globalenv())
-info <- dynbind("R", "R_pow(dd)d; R_rsort(pi)v;", envir = rapi)
-article_expect_symbols(info, "R API")
+dynbind("R", "R_pow(dd)d; R_rsort(pi)v;", envir = rapi)
+#> dynbind report
+#>   library: libR.so
+#>   unresolved symbols: 0
 
 rapi$R_pow(2, 10)
 #> [1] 1024
@@ -109,7 +113,7 @@ bindings.
 ``` r
 math_names <- c("msvcrt", "m", "m.so.6")
 math <- new.env(parent = globalenv())
-info <- dynbind(
+dynbind(
     math_names,
     paste(
         "sqrt(d)d",
@@ -119,7 +123,9 @@ info <- dynbind(
     ),
     envir = math
 )
-article_expect_symbols(info, "math library")
+#> dynbind report
+#>   library: libm.so.6
+#>   unresolved symbols: 0
 
 c(
     sqrt = math$sqrt(81),

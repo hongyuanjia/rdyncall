@@ -61,8 +61,10 @@ callback reads the `double` values with
 ``` r
 libc_names <- c("msvcrt", "c", "c.so.6")
 libc <- new.env(parent = globalenv())
-info <- dynbind(libc_names, "qsort(pLLp)v;", envir = libc)
-article_expect_symbols(info, "C runtime")
+dynbind(libc_names, "qsort(pLLp)v;", envir = libc)
+#> dynbind report
+#>   library: libc.so.6
+#>   unresolved symbols: 0
 
 compare_double <- function(px, py) {
     x <- unpack(px, 0L, "d")

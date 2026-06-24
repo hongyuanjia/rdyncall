@@ -64,20 +64,20 @@ rect$w
 The pkgdown articles are organized as a short learning path:
 
 - [Getting
-  started](https://hongyuanjia.github.io/rdyncall/articles/getting-started.md)
+  started](https://hongyuanjia.github.io/rdyncall/articles/rdyncall.html)
   introduces the basic load-resolve-call workflow.
 - [Signatures for C
-  calls](https://hongyuanjia.github.io/rdyncall/articles/signatures.md)
+  calls](https://hongyuanjia.github.io/rdyncall/articles/signatures.html)
   shows how to translate C declarations into rdyncall signatures.
 - [Structs, unions, and
-  memory](https://hongyuanjia.github.io/rdyncall/articles/structs-unions-memory.md)
+  memory](https://hongyuanjia.github.io/rdyncall/articles/structs-unions-memory.html)
   covers raw buffers, aggregate layouts, bitfields, and packed/aligned
   data.
 - [Callbacks from C to
-  R](https://hongyuanjia.github.io/rdyncall/articles/callbacks.md)
+  R](https://hongyuanjia.github.io/rdyncall/articles/callbacks.html)
   explains callback pointers and lifetime rules.
 - [dynbind and DynPort
-  bindings](https://hongyuanjia.github.io/rdyncall/articles/dynbind-dynport.md)
+  bindings](https://hongyuanjia.github.io/rdyncall/articles/dynbind-dynport.html)
   shows how to move from one-off calls to generated binding packages.
 
 ## API Map

@@ -2,8 +2,6 @@
 
 ### Start
 
-- [Getting started with
-  rdyncall](https://hongyuanjia.github.io/rdyncall/articles/getting-started.md):
 - [Signatures for C
   calls](https://hongyuanjia.github.io/rdyncall/articles/signatures.md):
 

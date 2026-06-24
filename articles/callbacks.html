@@ -29,9 +29,18 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
+<li class="nav-item"><a class="nav-link" href="../articles/rdyncall.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="active nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
+<li class="active nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/signatures.html">Signatures for C calls</a></li>
+    <li><a class="dropdown-item" href="../articles/structs-unions-memory.html">Structs, unions, and memory</a></li>
+    <li><a class="dropdown-item" href="../articles/callbacks.html">Callbacks from C to R</a></li>
+    <li><a class="dropdown-item" href="../articles/dynbind-dynport.html">dynbind and DynPort bindings</a></li>
+  </ul>
+</li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -109,8 +118,10 @@ callback reads the <code>double</code> values with
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">libc_names</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"msvcrt"</span>, <span class="st">"c"</span>, <span class="st">"c.so.6"</span><span class="op">)</span></span>
 <span><span class="va">libc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">new.env</a></span><span class="op">(</span>parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">globalenv</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">info</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dynbind.html">dynbind</a></span><span class="op">(</span><span class="va">libc_names</span>, <span class="st">"qsort(pLLp)v;"</span>, envir <span class="op">=</span> <span class="va">libc</span><span class="op">)</span></span>
-<span><span class="fu">article_expect_symbols</span><span class="op">(</span><span class="va">info</span>, <span class="st">"C runtime"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/dynbind.html">dynbind</a></span><span class="op">(</span><span class="va">libc_names</span>, <span class="st">"qsort(pLLp)v;"</span>, envir <span class="op">=</span> <span class="va">libc</span><span class="op">)</span></span>
+<span><span class="co">#&gt; dynbind report</span></span>
+<span><span class="co">#&gt;   library: libc.so.6</span></span>
+<span><span class="co">#&gt;   unresolved symbols: 0</span></span>
 <span></span>
 <span><span class="va">compare_double</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">px</span>, <span class="va">py</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/packing.html">unpack</a></span><span class="op">(</span><span class="va">px</span>, <span class="fl">0L</span>, <span class="st">"d"</span><span class="op">)</span></span>
