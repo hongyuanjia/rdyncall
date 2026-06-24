@@ -3,13 +3,19 @@ template:
   bootstrap: 5
 articles:
 - title: Start
+  navbar:
   contents:
-  - articles/getting-started
   - articles/signatures
 - title: Core FFI
+  navbar:
   contents:
   - articles/structs-unions-memory
   - articles/callbacks
 - title: Generated bindings
+  navbar:
   contents:
   - articles/dynbind-dynport
+navbar:
+  structure:
+    left: [intro, reference, news, articles]
+    right: [search, github]

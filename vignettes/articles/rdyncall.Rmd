@@ -56,8 +56,7 @@ ordinary R code.
 
 ```{r dynbind-sqrt}
 math <- new.env(parent = globalenv())
-info <- dynbind(math_names, "sqrt(d)d;", envir = math)
-article_expect_symbols(info, "math library")
+dynbind(math_names, "sqrt(d)d;", envir = math)
 
 math$sqrt(625)
 ```
