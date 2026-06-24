@@ -17,6 +17,11 @@ articles:
   - articles/dynbind-dynport
   - articles/creating-dynports
   - articles/sdl3-non-gui
+- title: Demos
+  navbar:
+  contents:
+  - articles/non-gui-demos
+  - articles/gui-demos
 - title: Diagnostics
   navbar: Diagnostics
   contents:

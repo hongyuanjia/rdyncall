@@ -1,0 +1,97 @@
+---
+title: "Non-GUI demos"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(rdyncall)
+```
+
+`rdyncall` can call real C libraries without opening windows: parse XML, sort R
+vectors with C algorithms, solve optimization problems, and move bytes through
+low-level I/O APIs.
+
+## XML parsing with libxml2
+
+The libxml2 demo binds the streaming reader API directly with `dynbind()`. R
+owns the XML text and result assembly; libxml2 owns the parser state.
+
+```{r libxml2-demo, eval=FALSE}
+demo("libxml2", package = "rdyncall", ask = FALSE)
+```
+
+The direct binding uses `xmlReaderForMemory()` to create a reader,
+`xmlTextReaderRead()` to iterate nodes, and `xmlTextReaderConstValue()` to read
+text values. The reader pointer is released with `xmlFreeTextReader()`.
+
+For comparison, the same task with the high-level `xml2` package looks like:
+
+```{r xml2-comparison, eval=FALSE}
+xml_text <- "<root><message>rdyncall libxml2 demo</message></root>"
+doc <- xml2::read_xml(xml_text)
+xml2::xml_text(xml2::xml_find_first(doc, ".//message"))
+```
+
+The `xml2` version is the right interface for everyday XML work. The rdyncall
+version shows what is happening one layer lower: shared-library discovery,
+symbol binding, native pointer lifetime, and direct calls into libxml2.
+
+## Sorting through C qsort
+
+The `qsort` demo passes an R numeric vector to C and gives C a comparator
+implemented as an R function through `ccallback()`.
+
+```{r qsort-demo, eval=FALSE}
+demo("qsort", package = "rdyncall", ask = FALSE)
+```
+
+The result matches `sort(x)`, but the sorting loop is the C standard library
+calling back into R for each comparison.
+
+## Solving a linear program with GLPK
+
+The GLPK demo creates a native optimization problem, loads a sparse constraint
+matrix, runs the simplex solver, and reads the objective value and primal
+solution back into R.
+
+```{r glpk-demo, eval=FALSE}
+demo("glpk", package = "rdyncall", ask = FALSE)
+```
+
+The important FFI pattern is ownership: `glp_create_prob()` returns a problem
+pointer, R configures that object through GLPK calls, and `glp_delete_prob()`
+releases the native object when the demo exits.
+
+## Low-level stdio with raw vectors
+
+The stdio demo shows how a C API can read and write bytes while R manages the
+data as raw vectors.
+
+```{r stdio-demo, eval=FALSE}
+demo("stdio", package = "rdyncall", ask = FALSE)
+```
+
+This style is useful for understanding APIs built around `FILE*`, pointer
+arguments, byte counts, and explicit cleanup.
+
+## More small demos
+
+| Demo | What it shows |
+|:--|:--|
+| `sqrt` | Minimal dynamic library lookup and scalar call |
+| `callbacks` | Creating a C-callable function pointer from an R function |
+| `factorial` | Recursive callback-driven control flow |
+| `R_ShowMessage` | Calling an R C API function from R through rdyncall |
+
+These smaller demos are useful when learning one FFI concept at a time before
+moving to larger library bindings.
+
+## Next steps
+
+- Use [signatures](signatures.html) to translate C prototypes into rdyncall
+  call signatures.
+- Use [callbacks](callbacks.html) before passing R functions to C APIs.
+- Use [structs, unions, and memory](structs-unions-memory.html) for pointer,
+  raw-vector, and aggregate data patterns.
+- Use [FFI safety boundaries](ffi-safety.html) before adapting these examples to
+  ownership-sensitive libraries.

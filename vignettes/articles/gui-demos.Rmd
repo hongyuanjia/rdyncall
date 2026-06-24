@@ -1,0 +1,110 @@
+---
+title: "GUI demos"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(rdyncall)
+```
+
+`rdyncall` can call real C GUI and graphics libraries directly from R, including
+interactive SDL3 windows, audio/visual examples, OpenGL rendering, and raylib
+drawing loops.
+
+## SDL3 Snake
+
+The SDL3 Snake demo opens a window, polls keyboard input, updates game state in
+R, and renders each frame through SDL3 calls made with `dynbind()`.
+
+<video controls muted loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-snake-poster.png">
+  <source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-snake.mp4" type="video/mp4">
+</video>
+
+```{r sdl-snake, eval=FALSE}
+demo("SDL", package = "rdyncall", ask = FALSE)
+```
+
+The demo uses `cstruct()` for `SDL_FRect`, `dynbind()` for the SDL3 renderer and
+event functions, a raw buffer for `SDL_PollEvent()`, and keyboard state returned
+from `SDL_GetKeyboardState()`.
+
+## SDL3 audio
+
+The SDL3 audio demo combines a small visual window with planar audio buffers.
+It prepares low-level audio structs and feeds sample data into an SDL3 audio
+stream from R.
+
+<!-- Replace with a screenshot or video after uploading media:
+<video controls muted loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-audio-poster.png">
+  <source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-audio.mp4" type="video/mp4">
+</video>
+-->
+
+```{r sdl-audio, eval=FALSE}
+demo("SDL_audio", package = "rdyncall", ask = FALSE)
+```
+
+This example shows how rdyncall can pass aggregate pointers, raw sample buffers,
+and runtime-managed native resources through a C API that owns audio playback.
+
+## SDL3/OpenGL raster
+
+The SDL3/OpenGL raster demo opens an SDL3 window with an OpenGL context and
+renders a Mandelbrot raster. It is a compact example of using rdyncall for a
+graphics pipeline rather than only individual scalar function calls.
+
+<!-- Replace with a screenshot or video after uploading media:
+<video controls muted loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-raster-poster.png">
+  <source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-raster.mp4" type="video/mp4">
+</video>
+-->
+
+```{r sdl-raster, eval=FALSE}
+demo("SDL_raster", package = "rdyncall", ask = FALSE)
+```
+
+The raster demo exercises SDL3 window creation, OpenGL context setup, native
+buffer uploads, and a timed render loop controlled from R.
+
+## raylib recursive tree
+
+The raylib recursive tree demo draws animated branch geometry with raylib. The R
+side generates branch endpoints and passes raylib aggregate values such as
+`Vector2` and `Color` by value.
+
+<!-- Replace with a screenshot or video after uploading media:
+<video controls muted loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-raylib-tree-poster.png">
+  <source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-raylib-tree.mp4" type="video/mp4">
+</video>
+-->
+
+```{r raylib-tree, eval=FALSE}
+demo("raylib", package = "rdyncall", ask = FALSE)
+```
+
+This demo highlights aggregate-by-value calls, generated geometry in R, and a
+foreign drawing loop managed through raylib.
+
+## What these demos exercise
+
+| Demo | Native library | rdyncall features |
+|:--|:--|:--|
+| SDL3 Snake | SDL3 renderer and events | `dynbind()`, `cstruct()`, raw event buffer, keyboard state, event loop |
+| SDL3 audio | SDL3 audio and renderer | aggregate pointers, raw audio buffers, native resource cleanup |
+| SDL3/OpenGL raster | SDL3 and OpenGL | shared-library discovery, OpenGL context setup, raster buffer upload, timed rendering |
+| raylib recursive tree | raylib | aggregate by value, generated R geometry, drawing loop, downloaded native library |
+
+Together, the demos show rdyncall operating at the boundary where R code owns the
+application logic while C libraries own windows, renderers, audio streams, and
+graphics contexts.
+
+## Next steps
+
+- Use [SDL3 non-GUI probing](sdl3-non-gui.html) for a CI-friendly SDL3 binding
+  check.
+- Use [dynbind and DynPort bindings](dynbind-dynport.html) to understand the
+  wrapper layer used by the demos.
+- Use [structs, unions, and memory](structs-unions-memory.html) for aggregate
+  values such as `SDL_FRect`, `Color`, and `Vector2`.
+- Use [FFI safety boundaries](ffi-safety.html) before adapting these patterns to
+  APIs that store pointers, register callbacks, or own native resources.
