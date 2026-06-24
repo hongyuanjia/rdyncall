@@ -116,10 +116,11 @@ expect_equal(opaque$Opaque$size, 0L)
 expect_equal(opaque$Opaque$align, 1L)
 expect_equal(nrow(opaque$Opaque$fields), 0L)
 
-sdl2_portfile <- system.file("dynports", "SDL2.dynport", package = "rdyncall", mustWork = TRUE)
-sdl2 <- rdyncall:::dynport_read(sdl2_portfile)
-expect_equal(as.character(sdl2$Package), "SDL2")
-expect_true("SDL_mutex" %in% names(sdl2$Struct))
+sdl3_portfile <- system.file("dynports", "SDL3.dynport", package = "rdyncall", mustWork = TRUE)
+sdl3 <- rdyncall:::dynport_read(sdl3_portfile)
+expect_equal(as.character(sdl3$Package), "SDL3")
+expect_true("SDL_GetPlatform" %in% names(sdl3$Function))
+expect_true("SDL_FRect" %in% names(sdl3$Struct))
 
 local({
     portfile <- write_dynport(c(
@@ -135,7 +136,7 @@ local({
     unload_test_package(package)
     on.exit(unload_test_package(package), add = TRUE)
 
-    expect_silent(pkg <- dynport(tiny, portfile = portfile, lib = lib, quiet = TRUE))
+    pkg <- dynport(tiny, portfile = portfile, lib = lib, quiet = TRUE)
     expect_equal(pkg, package)
     expect_true(dir.exists(file.path(lib, package)))
     expect_true(package %in% loadedNamespaces())

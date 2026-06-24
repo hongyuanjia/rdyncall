@@ -29,8 +29,9 @@
 #' R reference to callback objects for as long as foreign code may call them.
 #'
 #' [dynport()] builds and loads generated R packages from DCF `.dynport` binding
-#' specifications. The source tree also carries older `inst/dynports/*.R`
-#' resources from previous rdyncall releases as legacy binding material.
+#' specifications. The package ships an SDL3 DynPort generated from current
+#' headers with porter; other libraries can be bound by generating and loading
+#' additional `.dynport` files.
 #'
 #' # Overview
 #'
@@ -73,5 +74,6 @@
 #' cb <- ccallback("ii)i", function(x, y) x + y)
 #' dyncall(cb, "ii)i", 20L, 3L)
 #' }
+#' @useDynLib rdyncall
 #' @keywords internal
 "_PACKAGE"

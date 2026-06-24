@@ -19,6 +19,9 @@ jobs:
       group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      RDYNCALL_ARTICLE_EXTERNAL: "true"
+      SDL3_VERSION: "3.4.10"
+      SDL3_PREFIX: ${{ github.workspace }}/.cache/sdl3/3.4.10
     permissions:
       contents: write
     steps:
@@ -27,6 +30,52 @@ jobs:
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
+
+      - name: Install article system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxml2-dev libgl1-mesa-dev libglu1-mesa-dev xvfb cmake ninja-build
+
+      - name: Cache SDL3
+        id: cache-sdl3
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.SDL3_PREFIX }}
+          key: ${{ runner.os }}-sdl3-${{ env.SDL3_VERSION }}-v2
+
+      - name: Build SDL3
+        if: steps.cache-sdl3.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          curl -L \
+            "https://github.com/libsdl-org/SDL/releases/download/release-${SDL3_VERSION}/SDL3-${SDL3_VERSION}.tar.gz" \
+            -o "${RUNNER_TEMP}/SDL3.tar.gz"
+          tar -xzf "${RUNNER_TEMP}/SDL3.tar.gz" -C "${RUNNER_TEMP}"
+          cmake \
+            -S "${RUNNER_TEMP}/SDL3-${SDL3_VERSION}" \
+            -B "${RUNNER_TEMP}/SDL3-build" \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="${SDL3_PREFIX}" \
+            -DSDL_SHARED=ON \
+            -DSDL_STATIC=OFF \
+            -DSDL_TESTS=OFF \
+            -DSDL_UNIX_CONSOLE_BUILD=ON
+          cmake --build "${RUNNER_TEMP}/SDL3-build"
+          cmake --install "${RUNNER_TEMP}/SDL3-build"
+
+      - name: Configure SDL3 library path
+        run: |
+          set -euo pipefail
+          sdl3_lib="${SDL3_PREFIX}/lib"
+          if [ ! -d "${sdl3_lib}" ]; then
+            sdl3_lib="${SDL3_PREFIX}/lib64"
+          fi
+          test -d "${sdl3_lib}"
+          echo "${SDL3_PREFIX}/bin" >> "${GITHUB_PATH}"
+          echo "LD_LIBRARY_PATH=${sdl3_lib}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" >> "${GITHUB_ENV}"
+          echo "PKG_CONFIG_PATH=${sdl3_lib}/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}" >> "${GITHUB_ENV}"
+          find "${sdl3_lib}" -maxdepth 1 -name 'libSDL3*' -print -quit
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:

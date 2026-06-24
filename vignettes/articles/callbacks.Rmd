@@ -1,0 +1,146 @@
+---
+title: "Callbacks from C to R"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+helper <- if (file.exists("vignettes/articles/_helpers.R")) {
+    "vignettes/articles/_helpers.R"
+} else {
+    "_helpers.R"
+}
+source(helper)
+library(rdyncall)
+```
+
+Some C APIs do not just call functions immediately. They store a function
+pointer and call it later. `ccallback()` creates a C function pointer that
+enters R when the foreign code invokes it.
+
+## A minimal callback
+
+This callback has the C shape:
+
+```c
+int add(int x, int y);
+```
+
+```{r add-callback}
+add <- ccallback("ii)i", function(x, y) x + y)
+dyncall(add, "ii)i", 20L, 3L)
+```
+
+The callback signature follows the same call-signature format used by
+`dyncall()`.
+
+## Recursive callback call
+
+A callback pointer is just another foreign function pointer. It can be passed
+back into a call if the signature expects a pointer.
+
+```{r factorial}
+factorial_callback <- function(x, fun) {
+    if (x < 2L) {
+        1L
+    } else {
+        x * dyncall(fun, "ip)i", x - 1L, fun)
+    }
+}
+
+factorial_ptr <- ccallback("ip)i", factorial_callback)
+dyncall(factorial_ptr, "ip)i", 6L, factorial_ptr)
+```
+
+This example is small, but it shows the same lifetime rule as larger APIs: keep
+`factorial_ptr` reachable in R for as long as C may call it.
+
+## Sorting with C `qsort`
+
+`qsort()` is a classic C API that accepts a comparison callback:
+
+```c
+void qsort(void *base, size_t nmemb, size_t size,
+           int (*compar)(const void *, const void *));
+```
+
+The comparison callback receives pointers to two elements. The R callback reads
+the `double` values with `unpack()`.
+
+```{r qsort}
+libc_names <- c("msvcrt", "c", "c.so.6")
+libc <- new.env(parent = globalenv())
+info <- dynbind(libc_names, "qsort(pLLp)v;", envir = libc)
+article_expect_symbols(info, "C runtime")
+
+compare_double <- function(px, py) {
+    x <- unpack(px, 0L, "d")
+    y <- unpack(py, 0L, "d")
+    if (x < y) {
+        -1L
+    } else if (x > y) {
+        1L
+    } else {
+        0L
+    }
+}
+
+set.seed(42)
+x <- rnorm(12L)
+expected <- sort(x)
+compare_ptr <- ccallback("pp)i", compare_double)
+
+libc$qsort(x, length(x), 8L, compare_ptr)
+all.equal(x, expected)
+```
+
+The callback object must remain assigned to `compare_ptr` until `qsort()`
+returns. For APIs that store callbacks beyond the registration call, store the
+callback object somewhere with the same lifetime as the foreign registration.
+
+## Immediate and stored callbacks
+
+Callback lifetime depends on whether C calls the pointer during the current
+function call or stores it for later.
+
+| C API pattern | Example | R-side lifetime rule |
+|:--|:--|:--|
+| Immediate callback | `qsort()` | keep the callback object alive until the call returns |
+| Stored callback | GUI, audio, event, or async APIs | keep the callback object alive until the foreign registration is removed |
+
+`qsort()` is comparatively safe because it finishes before control returns to
+R. Event loops are riskier because C may call the pointer long after the
+registration function has returned.
+
+## Error and lifetime rules
+
+Callbacks cross from C into R, so mistakes are more severe than ordinary R
+function errors.
+
+- The callback signature must match the exact C callback type.
+- Keep the callback object alive in R while foreign code may call it.
+- Do not let C call a callback after its R state has been cleaned up.
+- Avoid throwing errors through foreign event loops. Handle errors inside the
+  callback and return a C-level failure value when the API supports one.
+- Aggregate by-value callback arguments and returns are not currently supported.
+
+## A safe registration pattern
+
+For APIs that register callbacks, keep a small R object that owns both the
+foreign handle and the callback pointer.
+
+```{r registration-pattern, eval=FALSE}
+make_registration <- function(handle) {
+    state <- new.env(parent = emptyenv())
+    state$handle <- handle
+    state$callback <- ccallback("ip)v", function(code, userdata) {
+        # Handle the event and return a C-compatible value.
+        invisible(NULL)
+    })
+
+    foreign_register_callback(handle, state$callback)
+    state
+}
+```
+
+The important part is not the exact wrapper shape; it is that the callback
+pointer remains reachable for at least as long as the C library can use it.

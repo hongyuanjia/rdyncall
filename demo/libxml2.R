@@ -1,6 +1,6 @@
 # Package: rdyncall
 # File: demo/libxml2.R
-# Description: XML parsing via direct libxml2 calls, compared with xml2 when available.
+# Description: XML parsing via direct libxml2 calls.
 
 library(rdyncall)
 
@@ -61,35 +61,6 @@ run_libxml2_demo <- function() {
     via_libxml2 <- libxml2_text(xml_text)
     cat("libxml2: ", via_libxml2, "\n", sep = "")
     stopifnot(identical(expected, via_libxml2))
-
-    if (requireNamespace("xml2", quietly = TRUE)) {
-        via_xml2 <- xml2::xml_text(xml2::read_xml(xml_text))
-        cat("xml2:    ", via_xml2, "\n", sep = "")
-        stopifnot(identical(expected, via_xml2))
-
-        iterations <- as.integer(Sys.getenv("LIBXML2_DEMO_ITER", "500"))
-        if (is.na(iterations) || iterations < 1L) {
-            iterations <- 500L
-        }
-
-        libxml2_time <- system.time({
-            for (i in seq_len(iterations)) {
-                stopifnot(identical(expected, libxml2_text(xml_text)))
-            }
-        })[["elapsed"]]
-
-        xml2_time <- system.time({
-            for (i in seq_len(iterations)) {
-                stopifnot(identical(expected, xml2::xml_text(xml2::read_xml(xml_text))))
-            }
-        })[["elapsed"]]
-
-        cat("timing over ", iterations, " parses:\n", sep = "")
-        cat("  libxml2 direct: ", sprintf("%.3f", libxml2_time), " sec\n", sep = "")
-        cat("  xml2 package:   ", sprintf("%.3f", xml2_time), " sec\n", sep = "")
-    } else {
-        cat("xml2 package not installed; comparison skipped.\n")
-    }
 }
 
 run_libxml2_demo()
