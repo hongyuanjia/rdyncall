@@ -22,6 +22,18 @@ move beyond address-by-address calls. It shows when to keep a small binding in
 an environment with `dynbind()`, and when to put binding metadata in a DynPort
 file so `dynport()` can generate and load an R package.
 
+The three layers have different jobs:
+
+| Layer | Input | Output | Best use |
+|:--|:--|:--|:--|
+| `dyncall()` | a function pointer and one call signature | one foreign call | probes and one-off calls |
+| `dynbind()` | library candidates and hand-written signatures | R wrappers in an environment | small, explicit bindings |
+| `dynport()` | a DCF `.dynport` file | a generated R package | repeatable bindings from metadata |
+| `porter` | C headers | a `.dynport` file | generating metadata outside rdyncall |
+
+`porter` is not required at run time by rdyncall. It is the tool used to
+generate DynPort files from headers before `dynport()` loads those files.
+
 ## Bind a small function set
 
 `dynbind()` takes a library name or handle and a library signature. It installs
@@ -115,6 +127,10 @@ The package ships one current-format DynPort file:
 [porter](https://github.com/hongyuanjia/porter) and kept in the package as a
 realistic, non-toy binding example.
 
+`rdyncall` intentionally does not bundle a broad catalog of old DynPort files.
+The supported in-package example is SDL3. For other libraries, generate a fresh
+DCF file for the headers and library version you want to bind.
+
 For other C libraries, generate a `.dynport` file with porter and pass it to
 `dynport(portfile = ...)`. A regeneration script for SDL3 follows this shape
 once the SDL3 header directory is known:
@@ -182,6 +198,8 @@ unless external article execution is explicitly requested.
   wrappers in one environment.
 - Use `dynport()` when the binding metadata should live in a data file and load
   as a generated R package.
+- Use porter when the metadata should come from C headers rather than from
+  hand-written signatures.
 
 All three layers use the same underlying signatures, so start by getting the C
 declarations and signatures correct.
