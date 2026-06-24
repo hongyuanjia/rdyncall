@@ -69,7 +69,7 @@ the `double` values with `unpack()`.
 ```{r qsort}
 libc_names <- c("msvcrt", "c", "c.so.6")
 libc <- new.env(parent = globalenv())
-invisible(dynbind(libc_names, "qsort(pLLp)v;", envir = libc))
+libc_info <- dynbind(libc_names, "qsort(pLLp)v;", envir = libc)
 
 compare_double <- function(px, py) {
     x <- unpack(px, 0L, "d")

@@ -80,7 +80,7 @@ size_t strlen(const char *s);
 ```{r strlen}
 libc_names <- c("msvcrt", "c", "c.so.6")
 libc <- new.env(parent = globalenv())
-invisible(dynbind(libc_names, "strlen(Z)L;", envir = libc))
+libc_info <- dynbind(libc_names, "strlen(Z)L;", envir = libc)
 
 libc$strlen("rdyncall")
 ```
@@ -95,7 +95,7 @@ because R is available wherever the package is loaded.
 
 ```{r r-api}
 rapi <- new.env(parent = globalenv())
-invisible(dynbind("R", "R_pow(dd)d; R_rsort(pi)v;", envir = rapi))
+rapi_info <- dynbind("R", "R_pow(dd)d; R_rsort(pi)v;", envir = rapi)
 
 rapi$R_pow(2, 10)
 
@@ -115,7 +115,7 @@ bindings.
 ```{r library-signature}
 math_names <- c("msvcrt", "m", "m.so.6")
 math <- new.env(parent = globalenv())
-invisible(dynbind(
+math_info <- dynbind(
     math_names,
     paste(
         "sqrt(d)d",
@@ -124,7 +124,7 @@ invisible(dynbind(
         sep = ";"
     ),
     envir = math
-))
+)
 
 c(
     sqrt = math$sqrt(81),
