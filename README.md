@@ -67,24 +67,28 @@ rect$w
 
 ## Learn rdyncall
 
-The pkgdown articles are organized as a short learning path:
+The pkgdown articles are the main documentation path:
 
-- [Getting
+- Start with [Getting
   started](https://hongyuanjia.github.io/rdyncall/articles/rdyncall.html)
-  introduces the basic load-resolve-call workflow.
-- [Signatures for C
-  calls](https://hongyuanjia.github.io/rdyncall/articles/signatures.html)
-  shows how to translate C declarations into rdyncall signatures.
-- [Structs, unions, and
+  and [Signatures for C
+  calls](https://hongyuanjia.github.io/rdyncall/articles/signatures.html).
+- Continue with [Structs, unions, and
   memory](https://hongyuanjia.github.io/rdyncall/articles/structs-unions-memory.html)
-  covers raw buffers, aggregate layouts, bitfields, and packed/aligned
-  data.
-- [Callbacks from C to
-  R](https://hongyuanjia.github.io/rdyncall/articles/callbacks.html)
-  explains callback pointers and lifetime rules.
-- [dynbind and DynPort
-  bindings](https://hongyuanjia.github.io/rdyncall/articles/dynbind-dynport.html)
-  shows how to move from one-off calls to generated binding packages.
+  and [Callbacks from C to
+  R](https://hongyuanjia.github.io/rdyncall/articles/callbacks.html).
+- Build larger bindings with [dynbind and DynPort
+  bindings](https://hongyuanjia.github.io/rdyncall/articles/dynbind-dynport.html),
+  [Porter and SDL3
+  DynPort](https://hongyuanjia.github.io/rdyncall/articles/porter-sdl3.html),
+  and [SDL3 non-GUI
+  probing](https://hongyuanjia.github.io/rdyncall/articles/sdl3-non-gui.html).
+- Use
+  [Troubleshooting](https://hongyuanjia.github.io/rdyncall/articles/troubleshooting.html)
+  and [FFI safety
+  boundaries](https://hongyuanjia.github.io/rdyncall/articles/ffi-safety.html)
+  before binding ownership-sensitive, callback-heavy, or
+  platform-specific APIs.
 
 ## API Map
 
@@ -103,7 +107,7 @@ The pkgdown articles are organized as a short learning path:
 - `dynport()` builds and loads generated R packages from DCF `.dynport`
   binding specifications.
 
-## Structs, Unions and Memory
+## Generated Bindings
 
 `rdyncall` can model ordinary C `struct` and `union` layouts and
 supports several layout features needed by real C APIs:
@@ -124,18 +128,11 @@ data file. The current implementation supports DCF `.dynport` files and
 generates ordinary on-disk R packages whose namespace is populated from
 the DynPort metadata.
 
-The package ships one current-format DynPort,
+The package ships one maintained DynPort example,
 `inst/dynports/SDL3.dynport`, generated from SDL3 headers with
-[`porter`](https://github.com/hongyuanjia/porter):
-
-``` r
-dynport(SDL3)
-dyn.SDL3::SDL_GetPlatform()
-```
-
-For other C libraries, generate a DCF `.dynport` file with porter or
-another header-processing workflow and pass it to
-`dynport(portfile = ...)`.
+[`porter`](https://github.com/hongyuanjia/porter). See the
+generated-binding articles for how to regenerate the metadata, load it
+with `dynport()`, and run a non-GUI SDL3 smoke test.
 
 ## Demos
 
@@ -153,7 +150,10 @@ This is a low-level FFI. A wrong function address, call signature,
 calling convention, pointer lifetime or struct layout can crash the R
 process. Keep the C declaration beside the R signature when writing
 bindings, and hold an R reference to callback objects for as long as
-foreign code may call them.
+foreign code may call them. Read the [FFI safety
+boundaries](https://hongyuanjia.github.io/rdyncall/articles/ffi-safety.html)
+article before binding APIs that allocate memory, store pointers,
+register callbacks, or run event loops.
 
 ## Project Status
 
