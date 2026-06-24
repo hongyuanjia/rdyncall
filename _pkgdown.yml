@@ -1,3 +1,15 @@
-url: ~
+url: https://hongyuanjia.github.io/rdyncall/
 template:
   bootstrap: 5
+articles:
+- title: Start
+  contents:
+  - articles/getting-started
+  - articles/signatures
+- title: Core FFI
+  contents:
+  - articles/structs-unions-memory
+  - articles/callbacks
+- title: Generated bindings
+  contents:
+  - articles/dynbind-dynport

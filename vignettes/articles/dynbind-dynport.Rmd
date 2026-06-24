@@ -1,0 +1,151 @@
+---
+title: "dynbind and DynPort bindings"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+helper <- if (file.exists("vignettes/articles/_helpers.R")) {
+    "vignettes/articles/_helpers.R"
+} else {
+    "_helpers.R"
+}
+source(helper)
+library(rdyncall)
+```
+
+Direct `dyncall()` calls are useful for one-off experiments. Larger bindings
+usually need names, wrappers, constants, types, and repeatable loading. That is
+where `dynbind()` and `dynport()` fit.
+
+## Bind a small function set
+
+`dynbind()` takes a library name or handle and a library signature. It installs
+thin R wrappers in an environment.
+
+```{r dynbind-math}
+math <- new.env(parent = globalenv())
+info <- dynbind(
+    article_math_names,
+    paste(
+        "sqrt(d)d",
+        "cos(d)d",
+        "sin(d)d",
+        sep = ";"
+    ),
+    envir = math
+)
+article_expect_symbols(info, "math library")
+
+c(
+    sqrt = math$sqrt(49),
+    cos = math$cos(0),
+    sin = math$sin(pi / 2)
+)
+```
+
+The generated wrapper still calls the resolved C function through rdyncall. The
+wrapper just hides the address and signature from the user-facing call.
+
+## Inspect unresolved symbols
+
+The return value reports the library handle and unresolved symbols. This makes
+it possible to fail early when a platform lacks a function you require.
+
+```{r unresolved}
+str(info$unresolved.symbols)
+```
+
+For exploratory bindings, unresolved optional symbols can be reported to the
+user. For required bindings, fail before exposing partially working wrappers.
+
+## Library discovery
+
+Character library names that look like file paths are loaded directly.
+Other character values are resolved with `dynfind()`.
+
+```{r dynfind}
+libc_handle <- dynfind(article_libc_names)
+is.nullptr(libc_handle)
+```
+
+Use a vector of candidate names for cross-platform bindings. For example,
+Windows may use `msvcrt`, while Unix-like systems commonly expose C runtime
+symbols through `c` or `c.so.6`.
+
+## From bindings to generated packages
+
+`dynport()` reads a DCF `.dynport` file and generates a real R package in an
+rdyncall-managed library. The generated package namespace is populated from the
+metadata in the DynPort file.
+
+The default DynPort library is:
+
+```{r dynport-lib}
+dynport_lib()
+```
+
+Generated package names use the option
+`rdyncall.dynport.package.prefix`, whose default value is `"dyn."`, plus the
+`Package` field in the DynPort file.
+
+## DynPort file shape
+
+A minimal DynPort file records the package name, library candidates, function
+bindings, and optionally constants and aggregate types.
+
+```text
+Package: SDL2
+Version: 2.28.0
+Library:
+    SDL
+    SDL-2.28
+    SDL-2.28.so.0
+Function:
+    SDL_GetPlatform()Z;
+```
+
+The source tree includes `inst/dynports/SDL2.dynport` as a DCF-style example.
+The executable example below writes a minimal temporary DynPort so it can use
+modern SDL2 library names commonly seen on development machines and CI images.
+
+## A non-GUI SDL2 probe
+
+When `RDYNCALL_ARTICLE_EXTERNAL=true` and SDL2 is available, this article builds
+and loads the generated package, then calls a non-GUI platform query. The chunk
+does not open a window or enter an event loop.
+
+```{r sdl2-dynport, eval=article_eval_external(article_sdl2_names, "SDL2")}
+portfile <- tempfile("SDL2Article-", fileext = ".dynport")
+writeLines(c(
+    "Package: SDL2Article",
+    "Version: 2.0.0",
+    "Library:",
+    "    SDL2",
+    "    SDL2-2.0",
+    "    SDL2-2.0.so.0",
+    "    SDL2-2",
+    "    SDL2-0",
+    "Function:",
+    "    SDL_GetPlatform()Z;"
+), portfile)
+
+generated <- dynport(portfile = portfile, package = "dyn.SDL2Article",
+                     rebuild = TRUE, quiet = TRUE)
+generated
+
+dyn.SDL2Article::SDL_GetPlatform()
+```
+
+If SDL2 is not installed, the code remains visible in the article but is skipped
+unless external article execution is explicitly requested.
+
+## When to choose each layer
+
+- Use `dyncall()` for a single function address or a small experiment.
+- Use `dynbind()` when you know a small set of functions and want ordinary R
+  wrappers in one environment.
+- Use `dynport()` when the binding metadata should live in a data file and load
+  as a generated R package.
+
+All three layers use the same underlying signatures, so start by getting the C
+declarations and signatures correct.
