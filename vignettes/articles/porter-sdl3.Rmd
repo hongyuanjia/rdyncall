@@ -1,0 +1,130 @@
+---
+title: "Porter and SDL3 DynPort"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+helper <- if (file.exists("vignettes/articles/_helpers.R")) {
+    "vignettes/articles/_helpers.R"
+} else {
+    "_helpers.R"
+}
+source(helper)
+library(rdyncall)
+```
+
+`rdyncall` loads DynPort metadata; it does not parse C headers by itself.
+[porter](https://github.com/hongyuanjia/porter) is the companion tool used to
+turn C headers into DCF `.dynport` files. The bundled SDL3 DynPort is the
+package's current real-world example of that workflow.
+
+Use this article when you want to regenerate `inst/dynports/SDL3.dynport` from
+SDL3 headers, or when you want to follow the same pattern for another C
+library.
+
+## Workflow overview
+
+The generation boundary is:
+
+1. Install or locate the C library headers.
+2. Run porter against a small umbrella header.
+3. Set DynPort metadata such as `Package`, `Version`, and `Library`.
+4. Write a DCF `.dynport` file.
+5. Let rdyncall load that file with `dynport()`.
+
+Only step 5 happens at rdyncall runtime.
+
+## The bundled SDL3 DynPort
+
+The installed package contains one bundled DynPort file for SDL3:
+
+```{r bundled-file}
+sdl3_portfile <- system.file("dynports", "SDL3.dynport",
+                            package = "rdyncall", mustWork = TRUE)
+basename(sdl3_portfile)
+```
+
+The file is plain text DCF metadata. The header shows the package identity and
+library candidates:
+
+```{r bundled-header}
+head(readLines(sdl3_portfile), 12L)
+```
+
+The `Library` entries are candidates, not a guarantee that SDL3 is installed on
+the current machine. `dynport()` resolves them when loading the generated
+package.
+
+## Regenerate from SDL3 headers
+
+The exact include path depends on how SDL3 is installed. The shape of the
+generation script is:
+
+```{r porter-script, eval=FALSE}
+library(porter)
+
+sdl3_header <- "/path/to/include/SDL3/SDL.h"
+sdl3_include <- dirname(dirname(sdl3_header))
+
+umbrella <- tempfile(fileext = ".h")
+writeLines("#include <SDL3/SDL.h>", umbrella)
+
+sdl3 <- port(
+    umbrella,
+    limit = dirname(sdl3_header),
+    cflags = paste0("-I", sdl3_include)
+)
+
+sdl3 <- port_set(
+    sdl3,
+    Package = "SDL3",
+    Version = "3.4.10",
+    Library = c("SDL3", "SDL3-0", "SDL3-3")
+)
+
+port_write(sdl3, "inst/dynports/SDL3.dynport")
+```
+
+Keep generated output reviewed in git. A changed header, porter release, or SDL3
+version can legitimately change function, constant, enum, and aggregate
+metadata.
+
+## Validate on the rdyncall side
+
+After regenerating the file, validate the rdyncall side separately from the
+header-generation step:
+
+```{r validate-shape, eval=FALSE}
+portfile <- "inst/dynports/SDL3.dynport"
+lib <- tempfile("rdyncall-dynport-lib")
+
+generated <- dynport(portfile = portfile, package = "dyn.SDL3Check",
+                     lib = lib, rebuild = TRUE, quiet = TRUE)
+generated
+```
+
+If SDL3 is installed, call a non-GUI function such as `SDL_GetPlatform()` to
+prove the generated package can resolve and call at least one real symbol.
+
+## What belongs where
+
+| Concern | Home |
+|:--|:--|
+| Header parsing and metadata generation | porter |
+| Bundled DCF file | `inst/dynports/SDL3.dynport` |
+| Loading generated packages | `dynport()` |
+| Real function calls | generated package wrappers |
+| GUI demos and event loops | separate demos or articles |
+
+The rdyncall package intentionally keeps the bundled DynPort surface small. SDL3
+is the maintained example. Additional libraries should be generated from their
+current headers rather than copied from historical DynPort files.
+
+## Next steps
+
+- Use [dynbind and DynPort bindings](dynbind-dynport.html) for the rdyncall
+  loading layer.
+- Use [SDL3 non-GUI probing](sdl3-non-gui.html) for a CI-safe call through the
+  generated SDL3 package.
+- Use [troubleshooting](troubleshooting.html) when a generated DynPort package
+  cannot find SDL3 or reports unresolved symbols.
