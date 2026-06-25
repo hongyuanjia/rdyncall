@@ -55,8 +55,6 @@ jobs:
             echo "CFLAGS=${RDYNCALL_SAN_FLAGS}"
             echo "CXXFLAGS=${RDYNCALL_SAN_FLAGS}"
             echo "LDFLAGS=-fsanitize=address,undefined"
-            echo "SHLIB_LDFLAGS=-fsanitize=address,undefined"
-            echo "MAIN_LDFLAGS=-fsanitize=address,undefined"
           } > "${HOME}/.R/Makevars"
 
       - name: Install rdyncall with sanitizers

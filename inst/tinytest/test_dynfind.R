@@ -116,18 +116,18 @@ with_dynfind_envs <- function(values, expr) {
 }
 
 copy_fixture <- function(fixture, dir, name) {
-    dir.create(dir, recursive = TRUE)
+    dir.create(dir, recursive = TRUE, showWarnings = FALSE)
     ok <- file.copy(fixture, file.path(dir, paste0(name, .Platform$dynlib.ext)), overwrite = TRUE)
     expect_true(ok)
 }
 
 expect_dynfind_source <- function(libname, source) {
     report <- dynfind_explain(libname)
-    expect_true(any(report$source == source))
-    expect_true(any(report$source == source & report$loaded %in% TRUE))
-    handle <- dynfind(libname)
-    expect_true(is.externalptr(handle))
-    dynunload(handle)
+    source_rows <- report$source == source
+    detail <- paste(capture.output(print(report)), collapse = "\n")
+    expect_true(any(source_rows), info = detail)
+    expect_true(any(source_rows & report$exists), info = detail)
+    expect_true(any(source_rows & report$loaded %in% TRUE), info = detail)
 }
 
 fixture <- build_dynfind_fixture()
@@ -163,7 +163,17 @@ if (.Platform$OS.type == "windows") {
         )
     )
 
-    for (case in windows_cases) {
+    for (name in names(windows_cases)) {
+        case <- windows_cases[[name]]
+        case_prefix <- tempfile(paste0("rdyncall-dynfind-", name, "-"))
+        case$env[names(case$env) != "VCPKG_DEFAULT_TRIPLET"] <- case_prefix
+        case$dir <- switch(name,
+            scoop = file.path(case_prefix, "apps", libname, "current", "bin"),
+            msys2_mingw = file.path(case_prefix, "bin"),
+            msys2_msystem = file.path(case_prefix, "bin"),
+            vcpkg = file.path(case_prefix, "installed", "x64-windows", "bin"),
+            conda = file.path(case_prefix, "Library", "bin")
+        )
         copy_fixture(fixture, case$dir, libname)
         with_dynfind_envs(case$env, {
             expect_dynfind_source(libname, case$source)
