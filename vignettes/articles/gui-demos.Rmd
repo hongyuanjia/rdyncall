@@ -14,7 +14,7 @@ drawing loops.
 ## SDL3 Snake
 
 The SDL3 Snake demo opens a window, polls keyboard input, updates game state in
-R, and renders each frame through SDL3 calls made with `dynbind()`.
+R, and renders each frame through wrappers generated from `SDL3.dynport`.
 
 <video controls muted loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-snake-poster.png">
   <source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-snake.mp4" type="video/mp4">
@@ -24,9 +24,9 @@ R, and renders each frame through SDL3 calls made with `dynbind()`.
 demo("SDL", package = "rdyncall", ask = FALSE)
 ```
 
-The demo uses `cstruct()` for `SDL_FRect`, `dynbind()` for the SDL3 renderer and
-event functions, a raw buffer for `SDL_PollEvent()`, and keyboard state returned
-from `SDL_GetKeyboardState()`.
+The demo generates a temporary DynPort package for SDL3, uses the generated
+`SDL_FRect` aggregate type, passes a raw buffer to `SDL_PollEvent()`, and reads
+keyboard state from `SDL_GetKeyboardState()`.
 
 ## SDL3 audio
 
@@ -89,7 +89,7 @@ foreign drawing loop managed through raylib.
 
 | Demo | Native library | rdyncall features |
 |:--|:--|:--|
-| SDL3 Snake | SDL3 renderer and events | `dynbind()`, `cstruct()`, raw event buffer, keyboard state, event loop |
+| SDL3 Snake | SDL3 renderer and events | `dynport()`, generated aggregate types, raw event buffer, keyboard state, event loop |
 | SDL3 audio | SDL3 audio and renderer | aggregate pointers, raw audio buffers, native resource cleanup |
 | SDL3/OpenGL raster | SDL3 and OpenGL | shared-library discovery, OpenGL context setup, raster buffer upload, timed rendering |
 | raylib recursive tree | raylib | aggregate by value, generated R geometry, drawing loop, downloaded native library |

@@ -5,10 +5,14 @@
 
 library(rdyncall)
 
+# SDL_FRect is used for drawing clickable button rectangles.
 cstruct("SDL_FRect{ffff}x y w h;")
+# SDL_AudioSpec describes the sample format, channel count, and sample rate.
 cstruct("SDL_AudioSpec{Sii}format channels freq;")
+# SDL_AudioPlanes holds left/right channel pointers for planar audio data.
 cstruct("SDL_AudioPlanes{pp}left right;")
 
+# Bind the SDL3 video and audio functions used by this planar-audio demo.
 sdl <- new.env(parent = globalenv())
 sdl_info <- tryCatch(
     dynbind(
@@ -53,15 +57,23 @@ if (length(sdl_info$unresolved.symbols)) {
 }
 rm(sdl_info)
 
+# SDL subsystem bit: initialize audio support.
 SDL_INIT_AUDIO <- 0x00000010L
+# SDL subsystem bit: initialize video/windowing support.
 SDL_INIT_VIDEO <- 0x00000020L
+# SDL event type: user requested the window to close.
 SDL_EVENT_QUIT <- 0x100L
+# SDL audio format value: unsigned 8-bit samples.
 SDL_AUDIO_U8 <- 0x0008L
+# SDL sentinel value: use the default playback device.
 SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK <- -1L
+# SDL mouse button bitmask: left mouse button is down.
 SDL_BUTTON_LMASK <- 1L
 
+# Run a small SDL window that plays a tone in the left or right channel.
 run_sdl_audio_demo <- function() {
     sample_rate <- 4000L
+    # Precompute one short 440 Hz unsigned-8-bit sine tone.
     tone <- local({
         seconds <- 0.35
         n <- as.integer(sample_rate * seconds)
@@ -70,6 +82,7 @@ run_sdl_audio_demo <- function() {
     })
 
     if (tolower(Sys.getenv("SDL_AUDIO_DEMO_PROBE_ONLY", "false")) %in% c("1", "true", "yes")) {
+        # Probe mode checks struct packing and pointer assignment without audio.
         planes <- cdata(SDL_AudioPlanes)
         planes$left <- tone
         planes$right <- NULL
@@ -94,6 +107,7 @@ run_sdl_audio_demo <- function() {
     }
     on.exit(sdl$SDL_DestroyRenderer(renderer), add = TRUE)
 
+    # Describe the stream format passed by-value to SDL_OpenAudioDeviceStream.
     spec <- cdata(SDL_AudioSpec)
     spec$format <- SDL_AUDIO_U8
     spec$channels <- 2L
@@ -106,6 +120,7 @@ run_sdl_audio_demo <- function() {
     on.exit(sdl$SDL_DestroyAudioStream(stream), add = TRUE)
     sdl$SDL_ResumeAudioStreamDevice(stream)
 
+    # Build an SDL_FRect for button rendering and hit testing.
     make_rect <- function(x, y, w, h) {
         rect <- cdata(SDL_FRect)
         rect$x <- as.numeric(x)
@@ -118,14 +133,17 @@ run_sdl_audio_demo <- function() {
     left_button <- make_rect(100, 170, 120, 100)
     right_button <- make_rect(420, 170, 120, 100)
 
+    # Set the renderer color. SDL expects unsigned byte RGBA channels.
     set_color <- function(r, g, b, a = 255L) {
         sdl$SDL_SetRenderDrawColor(renderer, as.integer(r), as.integer(g), as.integer(b), as.integer(a))
     }
 
+    # Test whether a mouse coordinate is inside an SDL_FRect.
     point_in_rect <- function(x, y, rect) {
         x >= rect$x && x <= rect$x + rect$w && y >= rect$y && y <= rect$y + rect$h
     }
 
+    # Queue the tone on one planar channel and leave the other channel silent.
     play_side <- function(side) {
         planes <- cdata(SDL_AudioPlanes)
         if (identical(side, "left")) {
@@ -142,6 +160,7 @@ run_sdl_audio_demo <- function() {
         side
     }
 
+    # Draw one channel-selection button.
     render_button <- function(rect, label, active) {
         if (active) {
             set_color(45L, 170L, 80L)
@@ -166,12 +185,14 @@ run_sdl_audio_demo <- function() {
 
     cat("Click the left or right button to play the tone in that channel.\n")
     repeat {
+        # Poll window events, then read mouse position/button state from SDL.
         while (isTRUE(sdl$SDL_PollEvent(event))) {
             if (unpack(event, 0L, "I") == SDL_EVENT_QUIT) {
                 return(invisible(TRUE))
             }
         }
 
+        # Only accept a new click once the queued tone has finished playing.
         queued <- sdl$SDL_GetAudioStreamQueued(stream)
         if (queued == 0L) {
             current <- ""
@@ -190,6 +211,7 @@ run_sdl_audio_demo <- function() {
         }
         last_mouse <- mouse_down
 
+        # Redraw the two buttons and a short description each frame.
         set_color(12L, 12L, 16L)
         sdl$SDL_RenderClear(renderer)
         render_button(left_button, "LEFT", identical(current, "left"))
