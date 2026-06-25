@@ -79,11 +79,11 @@ jobs:
             -DCMAKE_C_COMPILER=clang \
             -DCMAKE_C_FLAGS="${RDYNCALL_SAN_FLAGS}" \
             -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined -fno-sanitize=function"
-          cmake --build build/dyncall-sanitized --target plain dynload_plain callback_plain callf --parallel
+          cmake --build build/dyncall-sanitized --target plain x dynload_plain callback_plain callf --parallel
 
       - name: Run dyncall native sanitizer fixtures
         run: |
-          ./build/dyncall-sanitized/test/plain/plain
-          ./build/dyncall-sanitized/test/dynload_plain/dynload_plain
-          ./build/dyncall-sanitized/test/callback_plain/callback_plain
-          ./build/dyncall-sanitized/test/callf/callf
+          env -u LD_PRELOAD ./build/dyncall-sanitized/test/plain/plain
+          env -u LD_PRELOAD ./build/dyncall-sanitized/test/dynload_plain/dynload_plain
+          env -u LD_PRELOAD ./build/dyncall-sanitized/test/callback_plain/callback_plain
+          env -u LD_PRELOAD ./build/dyncall-sanitized/test/callf/callf
