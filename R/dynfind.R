@@ -253,12 +253,41 @@ dynfind_try <- function(paths, ..., existing.only = FALSE) {
         paths <- paths[file.exists(paths)]
     }
     for (path in paths) {
-        handle <- dynload(path, ...)
+        handle <- dynfind_load_candidate(path, ...)
         if (!is.null(handle)) {
             return(handle)
         }
     }
     NULL
+}
+
+dynfind_load_candidate <- function(path, ...) {
+    dynfind_with_candidate_dir(path, {
+        dynload(path, ...)
+    })
+}
+
+dynfind_with_candidate_dir <- function(path, expr) {
+    if (.Platform$OS.type != "windows" || is.na(path) || !grepl("[/\\\\]", path)) {
+        return(force(expr))
+    }
+
+    dir <- dirname(path)
+    if (!nzchar(dir) || identical(dir, ".")) {
+        return(force(expr))
+    }
+
+    old <- Sys.getenv("PATH", unset = NA_character_)
+    on.exit({
+        if (is.na(old)) {
+            Sys.unsetenv("PATH")
+        } else {
+            Sys.setenv(PATH = old)
+        }
+    }, add = TRUE)
+
+    Sys.setenv(PATH = if (is.na(old) || !nzchar(old)) dir else paste(dir, old, sep = .Platform$path.sep))
+    force(expr)
 }
 
 dynfind1 <- function(name, ...) {
@@ -309,7 +338,7 @@ dynfind_try_explain <- function(rows) {
         return(rows)
     }
     for (i in seq_len(nrow(rows))) {
-        handle <- dynload(rows$candidate[[i]], auto.unload = FALSE)
+        handle <- dynfind_load_candidate(rows$candidate[[i]], auto.unload = FALSE)
         rows$loaded[[i]] <- !is.null(handle)
         if (!is.null(handle)) {
             rows$resolved_path[[i]] <- tryCatch(dynpath(handle), error = function(e) NA_character_)
@@ -387,6 +416,9 @@ dynfind_try_explain <- function(rows) {
 #' Linuxbrew (`/home/linuxbrew/.linuxbrew`), Scoop (`SCOOP`, `SCOOP_GLOBAL`,
 #' `ProgramData/scoop`), MSYS2 (`MINGW_PREFIX`, `MSYSTEM_PREFIX`,
 #' `C:/msys64`), vcpkg (`VCPKG_ROOT`) and conda (`CONDA_PREFIX`).
+#' On Windows, when `dynfind()` tries a full DLL path from one of these
+#' directories, it temporarily prepends that directory to `PATH` for the load
+#' attempt so that sibling transitive DLL dependencies can be resolved.
 #' (The set of hardcoded locations might expand and change within the next minor releases).
 #'
 #' The file extension depends on the OS: `.dll` (Windows), `.dylib` (macOS),

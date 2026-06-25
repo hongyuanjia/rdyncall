@@ -93,6 +93,9 @@ package-manager library locations such as Homebrew (\code{HOMEBREW_PREFIX},
 Linuxbrew (\verb{/home/linuxbrew/.linuxbrew}), Scoop (\code{SCOOP}, \code{SCOOP_GLOBAL},
 \code{ProgramData/scoop}), MSYS2 (\code{MINGW_PREFIX}, \code{MSYSTEM_PREFIX},
 \verb{C:/msys64}), vcpkg (\code{VCPKG_ROOT}) and conda (\code{CONDA_PREFIX}).
+On Windows, when \code{dynfind()} tries a full DLL path from one of these
+directories, it temporarily prepends that directory to \code{PATH} for the load
+attempt so that sibling transitive DLL dependencies can be resolved.
 (The set of hardcoded locations might expand and change within the next minor releases).
 
 The file extension depends on the OS: \code{.dll} (Windows), \code{.dylib} (macOS),
