@@ -94,6 +94,46 @@ The callback object must remain assigned to `compare_ptr` until
 call, store the callback object somewhere with the same lifetime as the
 foreign registration.
 
+## Aggregate values in callbacks
+
+Callbacks can receive and return registered aggregate types by value
+with the same `<Type>` syntax used by
+[`dyncall()`](https://hongyuanjia.github.io/rdyncall/reference/dyncall.md).
+
+``` r
+cstruct("Point{dd}x y;")
+
+point <- cdata(Point)
+point$x <- 1.5
+point$y <- 2.25
+
+point_sum <- ccallback("<Point>)d", function(p) {
+    p$x + p$y
+})
+
+dyncall(point_sum, "<Point>)d", point)
+#> [1] 3.75
+```
+
+Aggregate arguments arrive as raw-backed `struct` objects, so field
+access uses the same `$` helpers as ordinary
+[`cdata()`](https://hongyuanjia.github.io/rdyncall/reference/struct.md)
+objects. Aggregate return callbacks must return a raw-backed object of
+the exact registered type.
+
+``` r
+make_point <- ccallback("dd)<Point>", function(x, y) {
+    out <- cdata(Point)
+    out$x <- x
+    out$y <- y
+    out
+})
+
+returned <- dyncall(make_point, "dd)<Point>", 4.5, 5.25)
+c(returned$x, returned$y)
+#> [1] 4.50 5.25
+```
+
 ## Immediate and stored callbacks
 
 Callback lifetime depends on whether C calls the pointer during the
@@ -119,8 +159,11 @@ R function errors.
 - Avoid throwing errors through foreign event loops. Handle errors
   inside the callback and return a C-level failure value when the API
   supports one.
-- Aggregate by-value callback arguments and returns are not currently
-  supported.
+- For aggregate callback returns, return a raw-backed `struct` object of
+  the exact expected type and size. A mismatch disables the callback.
+- Aggregate callbacks require an implemented 64-bit x86 or ARM64
+  dyncallback backend; unsupported platforms fail when the callback is
+  created.
 
 ## A safe registration pattern
 

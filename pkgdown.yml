@@ -7,7 +7,7 @@ articles:
   articles/rdyncall: rdyncall.html
   articles/signatures: signatures.html
   articles/structs-unions-memory: structs-unions-memory.html
-last_built: 2026-06-24T18:07Z
+last_built: 2026-06-25T11:24Z
 urls:
   reference: https://hongyuanjia.github.io/rdyncall/reference
   article: https://hongyuanjia.github.io/rdyncall/articles

@@ -168,7 +168,8 @@ are:</p>
 </table>
 <p>Pointer types are written with <code>*</code>, such as
 <code>*i</code> for <code>int *</code>. Typed aggregate pointers are
-written as <code>*&lt;TypeName&gt;</code>.</p>
+written as <code>*&lt;TypeName&gt;</code>. Registered aggregate values
+passed by value are written as <code>&lt;TypeName&gt;</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="call-signatures">Call signatures<a class="anchor" aria-label="anchor" href="#call-signatures"></a>
@@ -220,6 +221,13 @@ used in the articles and demos.</p>
 </td>
 </tr>
 <tr class="odd">
+<td align="left"><code>int visit(Point p);</code></td>
+<td align="left">callback signature <code>&lt;Point&gt;)i</code>
+</td>
+<td align="left">
+<code>Point</code> is passed by value</td>
+</tr>
+<tr class="even">
 <td align="left"><code>const char *SDL_GetPlatform(void);</code></td>
 <td align="left"><code>SDL_GetPlatform()Z</code></td>
 <td align="left">no arguments, C string return</td>

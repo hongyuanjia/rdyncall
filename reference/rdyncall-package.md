@@ -34,7 +34,7 @@ objects. The aggregate layout support includes ordinary struct and union
 fields, fixed-size array fields, integer bitfields, packed layouts,
 manual alignment directives and by-value aggregate calls on supported
 DynCall backends. Aggregate by-value callback arguments and returns are
-currently unsupported.
+supported on implemented 64-bit x86 and ARM64 dyncallback backends.
 
 R functions can be wrapped as C function pointers with
 [`ccallback()`](https://hongyuanjia.github.io/rdyncall/reference/callback.md).

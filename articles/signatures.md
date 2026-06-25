@@ -23,7 +23,8 @@ Type signatures describe individual C values. The most common ones are:
 | `v`       | `void` return                     | `NULL`            |
 
 Pointer types are written with `*`, such as `*i` for `int *`. Typed
-aggregate pointers are written as `*<TypeName>`.
+aggregate pointers are written as `*<TypeName>`. Registered aggregate
+values passed by value are written as `<TypeName>`.
 
 ## Call signatures
 
@@ -50,13 +51,14 @@ d)d
 The table below shows the same translation pattern for several APIs used
 in the articles and demos.
 
-| C declaration                                                                                   | rdyncall form        | Notes                            |
-|:------------------------------------------------------------------------------------------------|:---------------------|:---------------------------------|
-| `double sqrt(double x);`                                                                        | `sqrt(d)d`           | one `double` argument and return |
-| `size_t strlen(const char *s);`                                                                 | `strlen(Z)L`         | `Z` passes a C string            |
-| `void R_rsort(double *x, int n);`                                                               | `R_rsort(pi)v`       | pointer to mutable `double` data |
-| `void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *));` | `qsort(pLLp)v`       | callback has signature `pp)i`    |
-| `const char *SDL_GetPlatform(void);`                                                            | `SDL_GetPlatform()Z` | no arguments, C string return    |
+| C declaration                                                                                   | rdyncall form                  | Notes                            |
+|:------------------------------------------------------------------------------------------------|:-------------------------------|:---------------------------------|
+| `double sqrt(double x);`                                                                        | `sqrt(d)d`                     | one `double` argument and return |
+| `size_t strlen(const char *s);`                                                                 | `strlen(Z)L`                   | `Z` passes a C string            |
+| `void R_rsort(double *x, int n);`                                                               | `R_rsort(pi)v`                 | pointer to mutable `double` data |
+| `void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *));` | `qsort(pLLp)v`                 | callback has signature `pp)i`    |
+| `int visit(Point p);`                                                                           | callback signature `<Point>)i` | `Point` is passed by value       |
+| `const char *SDL_GetPlatform(void);`                                                            | `SDL_GetPlatform()Z`           | no arguments, C string return    |
 
 The following example calls C’s `strlen`, declared as:
 

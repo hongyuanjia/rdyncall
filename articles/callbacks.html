@@ -149,6 +149,41 @@ the registration call, store the callback object somewhere with the same
 lifetime as the foreign registration.</p>
 </div>
 <div class="section level2">
+<h2 id="aggregate-values-in-callbacks">Aggregate values in callbacks<a class="anchor" aria-label="anchor" href="#aggregate-values-in-callbacks"></a>
+</h2>
+<p>Callbacks can receive and return registered aggregate types by value
+with the same <code>&lt;Type&gt;</code> syntax used by
+<code><a href="../reference/dyncall.html">dyncall()</a></code>.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/struct.html">cstruct</a></span><span class="op">(</span><span class="st">"Point{dd}x y;"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">point</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/struct.html">cdata</a></span><span class="op">(</span><span class="va">Point</span><span class="op">)</span></span>
+<span><span class="va">point</span><span class="op">$</span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fl">1.5</span></span>
+<span><span class="va">point</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fl">2.25</span></span>
+<span></span>
+<span><span class="va">point_sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/callback.html">ccallback</a></span><span class="op">(</span><span class="st">"&lt;Point&gt;)d"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">p</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">p</span><span class="op">$</span><span class="va">x</span> <span class="op">+</span> <span class="va">p</span><span class="op">$</span><span class="va">y</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/dyncall.html">dyncall</a></span><span class="op">(</span><span class="va">point_sum</span>, <span class="st">"&lt;Point&gt;)d"</span>, <span class="va">point</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 3.75</span></span></code></pre></div>
+<p>Aggregate arguments arrive as raw-backed <code>struct</code> objects,
+so field access uses the same <code>$</code> helpers as ordinary
+<code><a href="../reference/struct.html">cdata()</a></code> objects. Aggregate return callbacks must return a
+raw-backed object of the exact registered type.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">make_point</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/callback.html">ccallback</a></span><span class="op">(</span><span class="st">"dd)&lt;Point&gt;"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/struct.html">cdata</a></span><span class="op">(</span><span class="va">Point</span><span class="op">)</span></span>
+<span>    <span class="va">out</span><span class="op">$</span><span class="va">x</span> <span class="op">&lt;-</span> <span class="va">x</span></span>
+<span>    <span class="va">out</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="va">y</span></span>
+<span>    <span class="va">out</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">returned</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dyncall.html">dyncall</a></span><span class="op">(</span><span class="va">make_point</span>, <span class="st">"dd)&lt;Point&gt;"</span>, <span class="fl">4.5</span>, <span class="fl">5.25</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">returned</span><span class="op">$</span><span class="va">x</span>, <span class="va">returned</span><span class="op">$</span><span class="va">y</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 4.50 5.25</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="immediate-and-stored-callbacks">Immediate and stored callbacks<a class="anchor" aria-label="anchor" href="#immediate-and-stored-callbacks"></a>
 </h2>
 <p>Callback lifetime depends on whether C calls the pointer during the
@@ -197,8 +232,12 @@ up.</li>
 <li>Avoid throwing errors through foreign event loops. Handle errors
 inside the callback and return a C-level failure value when the API
 supports one.</li>
-<li>Aggregate by-value callback arguments and returns are not currently
-supported.</li>
+<li>For aggregate callback returns, return a raw-backed
+<code>struct</code> object of the exact expected type and size. A
+mismatch disables the callback.</li>
+<li>Aggregate callbacks require an implemented 64-bit x86 or ARM64
+dyncallback backend; unsupported platforms fail when the callback is
+created.</li>
 </ul>
 </div>
 <div class="section level2">
@@ -206,7 +245,7 @@ supported.</li>
 </h2>
 <p>For APIs that register callbacks, keep a small R object that owns
 both the foreign handle and the callback pointer.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">make_registration</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">handle</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">state</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">new.env</a></span><span class="op">(</span>parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">emptyenv</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span>    <span class="va">state</span><span class="op">$</span><span class="va">handle</span> <span class="op">&lt;-</span> <span class="va">handle</span></span>

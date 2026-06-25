@@ -85,7 +85,7 @@ The default DynPort library is:
 
 ``` r
 dynport_lib()
-#> [1] "/home/runner/.cache/R/rdyncall/dynports/R-4.6.0"
+#> [1] "/home/runner/.cache/R/rdyncall/dynports/R-4.6.1"
 ```
 
 Generated package names use the option

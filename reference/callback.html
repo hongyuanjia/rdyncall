@@ -87,9 +87,17 @@ argument types signature within the <a href="dyncall.html">call signature</a>
 specified. See <code><a href="dyncall.html">dyncall()</a></code> for details on the format.</p>
 <p>Finally, the handler evaluates the R call expression within the environment
 given by <code>envir</code>. On return, the R return value of <code>fun</code> is coerced to the C
-value, according to the return type signature specified in <code>signature</code> .
-Aggregate by-value callback arguments and returns are currently unsupported.
-If an error occurs during the evaluation, the callback will be disabled for
+value, according to the return type signature specified in <code>signature</code> .</p>
+<p>Aggregate by-value callback arguments and returns use the same <code>&lt;Type&gt;</code>
+signature syntax as <code><a href="dyncall.html">dyncall()</a></code>. An aggregate argument is passed to the R
+callback as a raw-backed <code>cdata</code> object with <code>struct</code> and <code>typeinfo</code>
+attributes. An aggregate return value must be a raw-backed object for the
+same aggregate type and size. Type or storage mismatches disable the callback
+and emit a warning.</p>
+<p>Aggregate callbacks are supported on the implemented 64-bit x86 and ARM64
+dyncallback backends. On unsupported backends, creating a callback whose
+signature contains <code>&lt;Type&gt;</code> fails early.</p>
+<p>If an error occurs during the evaluation, the callback will be disabled for
 further invocations. (This behaviour might change in the future.)</p>
     </div>
     <div class="section level2">
