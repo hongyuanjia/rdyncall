@@ -80,6 +80,9 @@
 #' @param add logical. If `TRUE`, prepend the DynPort package library to
 #'        `.libPaths()`.
 #'
+#' @param unload logical. If `TRUE`, unload generated DynPort packages from the
+#'        current session before removing them from `lib`.
+#'
 #' @param envir environment to populate from a DynPort file.
 #'
 #' @return
@@ -88,6 +91,7 @@
 #' the generated package name stored in attribute `"package"`.
 #' `dynport_load_into()` invisibly returns `envir`.
 #' `dynport_lib()` returns the DynPort package library path.
+#' `dynport_clear_lib()` invisibly returns the paths it removed.
 #'
 #' @references
 #'
@@ -106,7 +110,7 @@
 #' dynport(SDL3)
 #' dyn.SDL3::SDL_GetPlatform()
 #' }
-#' @aliases dynport_install_package dynport_load_into dynport_lib
+#' @aliases dynport_install_package dynport_load_into dynport_lib dynport_clear_lib
 #' @keywords programming interface
 #' @author Daniel Adler <dadler@uni-goettingen.de>
 #' @export
@@ -205,7 +209,7 @@ dynport_parse_fields <- function(keys, values, lnums, envir = parent.frame()) {
         names(enums) <- vapply(out[is_enum], names, "", USE.NAMES = FALSE)
         out <- c(out[!is_enum], list(Enum = enums))
     }
-    out
+    dynport_apply_variadic_metadata(out)
 }
 
 dynport_parse_field <- function(key, value, lnum, envir = parent.frame()) {
@@ -218,6 +222,7 @@ dynport_parse_field <- function(key, value, lnum, envir = parent.frame()) {
             "Library"  = dynport_parse_library(value,  lnum),
             "Function" = dynport_parse_function(value, lnum, envir),
             "FuncPtr"  = dynport_parse_funcptr(value,  lnum, envir),
+            "Variadic" = dynport_parse_variadic(value, lnum, envir),
             "Struct"   = dynport_parse_struct(value,   lnum, envir),
             "Union"    = dynport_parse_union(value,    lnum, envir),
             "Enum"     = dynport_parse_enum(value,     lnum, key = "Enum"),
@@ -374,10 +379,26 @@ dynport_parse_function <- function(value, lnum = 1L, envir = parent.frame()) {
             issue_error(name, "Extra ')' in specification")
         }
 
-        arg <- dynport_parse_types("struct", tail[[1L]], envir, allow_arrays = FALSE)
-        dynport_issue_type_error(arg, tail[[1L]], issue_error, name, "argument")
+        arg_sig <- gsub("[ \r\n\t]+", "", tail[[1L]])
+        variadic <- grepl(".", arg_sig, fixed = TRUE)
+        if (variadic) {
+            dots <- gregexpr(".", arg_sig, fixed = TRUE)[[1L]]
+            if (length(dots) != 1L || dots[[1L]] < 1L) {
+                issue_error(name, "Only one variadic marker '.' is allowed in argument signature")
+            }
+            if (dots[[1L]] != nchar(arg_sig)) {
+                issue_error(name, "Variadic marker '.' must appear after fixed argument signatures")
+            }
+            arg_sig <- substr(arg_sig, 1L, nchar(arg_sig) - 1L)
+        }
+
+        arg <- dynport_parse_types("struct", arg_sig, envir, allow_arrays = FALSE)
+        dynport_issue_type_error(arg, arg_sig, issue_error, name, "argument")
 
         nm <- ret_nm[-1L]
+        if (variadic && length(nm) && identical(nm[[length(nm)]], "...")) {
+            nm <- nm[-length(nm)]
+        }
         if (length(nm)) {
             if (length(arg$type) != length(nm)) {
                 issue_error(name,
@@ -406,7 +427,12 @@ dynport_parse_function <- function(value, lnum = 1L, envir = parent.frame()) {
 
         lnum <- lnum + lncnt[[i]]
 
-        out[[i]] <- list(name = name, argument = list(sig = tail[[1L]], name = nm), return = ret_nm[[1L]])
+        out[[i]] <- list(
+            name = name,
+            argument = list(sig = arg_sig, name = nm),
+            return = ret_nm[[1L]],
+            variadic = variadic
+        )
     }
 
     names(out) <- vapply(out, .subset2, "", "name")
@@ -415,6 +441,70 @@ dynport_parse_function <- function(value, lnum = 1L, envir = parent.frame()) {
 
 dynport_parse_funcptr <- function(value, lnum = 1L, envir = parent.frame()) {
     dynport_parse_function(value, lnum, envir)
+}
+
+dynport_parse_variadic <- function(value, lnum = 1L, envir = parent.frame()) {
+    vals <- unlist(strsplit(value, "[;\r\n]+"), FALSE, FALSE)
+    vals <- trimws(vals)
+    vals <- vals[nzchar(vals)]
+    if (!length(vals)) return(character())
+
+    has_signature <- grepl("(", vals, fixed = TRUE)
+    if (all(has_signature)) {
+        funs <- dynport_parse_function(value, lnum, envir)
+        for (nm in names(funs)) {
+            funs[[nm]]$variadic <- TRUE
+        }
+        return(funs)
+    }
+    if (any(has_signature)) {
+        dynport_issue_error("Variadic", NULL, lnum, vals[has_signature],
+            "Mixed function names and signatures found"
+        )
+    }
+
+    invld <- vals != make.names(vals)
+    if (any(invld)) {
+        dynport_issue_error("Variadic", NULL, lnum, vals[invld], "Invalid function name found")
+    }
+
+    dups <- unique(vals[duplicated(vals)])
+    if (length(dups)) {
+        dynport_issue_error("Variadic", NULL, lnum, dups, "Duplicate function name found")
+    }
+
+    vals
+}
+
+dynport_apply_variadic_metadata <- function(port) {
+    variadic <- port[["Variadic"]]
+    if (!length(variadic)) return(port)
+
+    functions <- port[["Function"]]
+    funcptrs <- port[["FuncPtr"]]
+    if (is.list(variadic)) {
+        functions[names(variadic)] <- variadic
+        port[["Function"]] <- functions
+        return(port)
+    }
+
+    known <- c(names(functions), names(funcptrs))
+    missing <- setdiff(variadic, known)
+    if (length(missing)) {
+        stop("Variadic DynPort symbols are not defined as functions: ",
+            paste(sQuote(missing), collapse = ", "), call. = FALSE)
+    }
+
+    for (nm in intersect(variadic, names(functions))) {
+        functions[[nm]]$variadic <- TRUE
+    }
+    for (nm in intersect(variadic, names(funcptrs))) {
+        funcptrs[[nm]]$variadic <- TRUE
+    }
+
+    port[["Function"]] <- functions
+    port[["FuncPtr"]] <- funcptrs
+    port
 }
 
 dynport_parse_struct <- function(value, lnum = 1L, envir = parent.frame()) {
@@ -693,6 +783,44 @@ dynport_lib <- function(create = TRUE, add = FALSE) {
     lib
 }
 
+#' @rdname dynport
+#' @export
+dynport_clear_lib <- function(lib = dynport_lib(create = FALSE), unload = TRUE) {
+    lib <- dynport_lib_path(lib, create = FALSE)
+    if (!dir.exists(lib)) return(invisible(character()))
+
+    packages <- dir(lib, all.files = FALSE, full.names = FALSE)
+    if (!length(packages)) return(invisible(character()))
+
+    paths <- file.path(lib, packages)
+    descs <- lapply(paths, dynport_package_description)
+    generated <- vapply(descs, dynport_is_generated_package, logical(1L))
+    packages <- packages[generated]
+    paths <- paths[generated]
+    if (!length(paths)) return(invisible(character()))
+
+    for (i in seq_along(packages)) {
+        package <- packages[[i]]
+        if (!package %in% loadedNamespaces()) next
+
+        ns_path <- normalizePath(getNamespaceInfo(getNamespace(package), "path"),
+            "/", mustWork = FALSE
+        )
+        pkg_path <- normalizePath(paths[[i]], "/", mustWork = FALSE)
+        if (!identical(ns_path, pkg_path)) next
+
+        if (!isTRUE(unload)) {
+            stop("Generated dynport package '", package,
+                "' is loaded; use unload = TRUE to clear it.", call. = FALSE)
+        }
+        dynport_unload_package(package)
+    }
+
+    removed <- normalizePath(paths, "/", mustWork = FALSE)
+    unlink(paths, recursive = TRUE, force = TRUE)
+    invisible(removed)
+}
+
 dynport_resolve_portfile <- function(portname, portfile = NULL, repo) {
     if (is.null(portfile)) {
         portfile <- file.path(repo, paste0(portname, ".dynport"))
@@ -814,9 +942,28 @@ dynport_assign_functions <- function(port, field, envir, funcptr = FALSE) {
         stop("The 'dynport' file must define 'Library' before binding functions.", call. = FALSE)
     }
 
-    report <- dynbind(
-        libraries, dynport_compact_signature(functions),
-        envir = envir, funcptr = funcptr
+    libh <- dynbind_resolve_libhandle(libraries)
+    if (is.null(libh)) {
+        liblabel <- dynbind_libnames_label(libraries)
+        stop("unable to find shared library '", liblabel, "'.", call. = FALSE)
+    }
+
+    syms.failed <- character(0)
+    for (fun in functions) {
+        address <- dynsym(libh, fun$name)
+        if (is.null(address)) {
+            syms.failed <- c(syms.failed, fun$name)
+            next
+        }
+
+        assign(fun$name, dynport_make_wrapper(fun, address, envir, funcptr = funcptr),
+            envir = envir
+        )
+    }
+
+    report <- structure(
+        list(libhandle = libh, unresolved.symbols = syms.failed),
+        class = "dynbind.report"
     )
     dynport_assign_unresolved(report$unresolved.symbols, envir)
     invisible(report)
@@ -840,6 +987,106 @@ dynport_assign_unresolved <- function(symbols, envir) {
         assign(symbol, f, envir = envir)
     }
     invisible()
+}
+
+dynport_make_wrapper <- function(fun, address, envir, funcptr = FALSE) {
+    variadic <- isTRUE(fun$variadic)
+    signature <- dynport_call_signature(fun)
+    arg_names <- dynport_function_arg_names(fun)
+
+    if (variadic && funcptr) {
+        stop("Variadic function-pointer DynPort bindings are not supported.",
+            call. = FALSE
+        )
+    }
+
+    f <- function(...) NULL
+    formals(f) <- dynport_wrapper_formals(arg_names, variadic)
+
+    target <- if (funcptr) {
+        quote(.unpack(.address, 0, "p"))
+    } else {
+        quote(.address)
+    }
+
+    call_args <- if (variadic) {
+        c(
+            list(as.name(".call"), target, as.name(".signature"), as.name(".varargs")),
+            lapply(arg_names, as.name),
+            list(as.name("..."))
+        )
+    } else {
+        c(
+            list(as.name(".call"), target, as.name(".signature")),
+            lapply(arg_names, as.name)
+        )
+    }
+    body(f) <- as.call(call_args)
+
+    wrapper_env <- new.env(parent = envir)
+    wrapper_env$.address <- address
+    wrapper_env$.signature <- signature
+    wrapper_env$.call <- if (variadic) dyncall_variadic else dyncall.default
+    if (funcptr) wrapper_env$.unpack <- unpack
+    environment(f) <- wrapper_env
+    f
+}
+
+dynport_call_signature <- function(fun) {
+    paste0(fun$argument$sig, ")", fun$return)
+}
+
+dynport_signature_types <- function(signature) {
+    if (!nzchar(signature)) return(character())
+    tokens <- scan_signature_tokens(signature)
+    if (!isTRUE(tokens$ok)) {
+        stop("Internal error: invalid DynPort type signature.", call. = FALSE)
+    }
+    tokens$type
+}
+
+dynport_function_arg_names <- function(fun) {
+    types <- dynport_signature_types(fun$argument$sig)
+    names <- fun$argument$name
+    if (!length(names) && length(types)) {
+        names <- paste0("arg", seq_along(types))
+    }
+    if (length(names) != length(types)) {
+        stop("Internal error: DynPort argument name count does not match type count.",
+            call. = FALSE
+        )
+    }
+    if (any(names == "...")) {
+        stop("DynPort fixed argument names must not be '...'.", call. = FALSE)
+    }
+    if (isTRUE(fun$variadic) && any(names == ".varargs")) {
+        stop("DynPort variadic argument names must not be '.varargs'.",
+            call. = FALSE
+        )
+    }
+    names
+}
+
+dynport_wrapper_formals <- function(arg_names, variadic = FALSE) {
+    parts <- paste0(vapply(arg_names, dynport_formal_name, character(1L)), " = ")
+    if (variadic) {
+        parts <- c(parts, "... =", ".varargs = \"\"")
+    }
+    text <- paste0("alist(", paste(parts, collapse = ", "), ")")
+    eval(parse(text = text), envir = baseenv())
+}
+
+dynport_formal_name <- function(name) {
+    reserved <- c(
+        "if", "else", "repeat", "while", "function", "for", "in",
+        "next", "break", "TRUE", "FALSE", "NULL", "Inf", "NaN",
+        "NA", "NA_integer_", "NA_real_", "NA_complex_", "NA_character_"
+    )
+    if (identical(name, "...")) return(name)
+    if (identical(make.names(name), name) && !name %in% reserved) {
+        return(name)
+    }
+    paste0("`", gsub("`", "\\\\`", name, fixed = TRUE), "`")
 }
 
 dynport_md5 <- function(file) {
@@ -940,6 +1187,7 @@ dynport_create_package_source <- function(port, portfile, portname, package, md5
     dynport_write_description(src, port, portname, package, dynport_basename, md5)
     dynport_write_namespace(src, dynport_export_names(port))
     dynport_write_loader(src, dynport_basename)
+    dynport_write_man(src, port)
     dynport_write_license(src)
     src
 }
@@ -987,6 +1235,128 @@ dynport_write_loader <- function(src, dynport_file) {
         "}"
     )
     writeLines(lines, file.path(src, "R", "zzz.R"), useBytes = TRUE)
+}
+
+dynport_write_man <- function(src, port) {
+    functions <- c(port[["Function"]], port[["FuncPtr"]])
+    if (!length(functions)) return(invisible())
+
+    dir.create(file.path(src, "man"), recursive = TRUE, showWarnings = FALSE)
+    for (fun in functions) {
+        dynport_write_function_rd(src, fun)
+    }
+    invisible()
+}
+
+dynport_write_function_rd <- function(src, fun) {
+    name <- fun$name
+    arg_names <- dynport_function_arg_names(fun)
+    arg_types <- dynport_signature_types(fun$argument$sig)
+    usage <- dynport_rd_usage(name, arg_names, isTRUE(fun$variadic))
+
+    arguments <- character()
+    if (length(arg_names)) {
+        arguments <- unlist(Map(function(arg, type) {
+            c(
+                paste0("\\item{", dynport_rd_escape(arg), "}{"),
+                paste0("C parameter with type ", dynport_rd_type_description(type), "."),
+                "}"
+            )
+        }, arg_names, arg_types), use.names = FALSE)
+    }
+    if (isTRUE(fun$variadic)) {
+        arguments <- c(arguments,
+            "\\item{...}{Additional arguments passed to the C variadic parameter list.}",
+            "\\item{.varargs}{Character string giving the C type signatures for arguments passed through \\code{...}.}"
+        )
+    }
+
+    if (length(arguments)) {
+        arguments <- c("\\arguments{", arguments, "}")
+    }
+
+    lines <- c(
+        paste0("\\name{", dynport_rd_escape(name), "}"),
+        paste0("\\alias{", dynport_rd_escape(name), "}"),
+        paste0("\\title{", dynport_rd_escape(name), "}"),
+        "\\usage{",
+        usage,
+        "}",
+        arguments,
+        "\\value{",
+        dynport_rd_return_description(fun$return),
+        "}",
+        "\\description{",
+        paste0("Generated rdyncall wrapper for C symbol \\code{", dynport_rd_escape(name), "}."),
+        "}",
+        "\\keyword{programming}",
+        "\\keyword{interface}"
+    )
+    writeLines(lines, file.path(src, "man", paste0(name, ".Rd")), useBytes = TRUE)
+}
+
+dynport_rd_usage <- function(name, arg_names, variadic = FALSE) {
+    args <- vapply(arg_names, dynport_formal_name, character(1L))
+    if (variadic) {
+        args <- c(args, "...", ".varargs = \"\"")
+    }
+    paste0(name, "(", paste(args, collapse = ", "), ")")
+}
+
+dynport_rd_type_description <- function(type) {
+    paste0("\\code{", dynport_rd_escape(dynport_type_label(type)), "} ",
+        "(signature ", "\\code{", dynport_rd_escape(type), "}", ")"
+    )
+}
+
+dynport_rd_return_description <- function(type) {
+    if (identical(type, "v")) {
+        return("Called for side effects and returns \\code{NULL}.")
+    }
+    paste0("A value converted from ", dynport_rd_type_description(type), ".")
+}
+
+dynport_type_label <- function(type) {
+    ptrcnt <- 0L
+    while (startsWith(type, "*")) {
+        ptrcnt <- ptrcnt + 1L
+        type <- substr(type, 2L, nchar(type))
+    }
+
+    base <- if (startsWith(type, "<") && endsWith(type, ">")) {
+        substr(type, 2L, nchar(type) - 1L)
+    } else {
+        switch(type,
+            B = "bool",
+            c = "char",
+            C = "unsigned char",
+            s = "short",
+            S = "unsigned short",
+            i = "int",
+            I = "unsigned int",
+            j = "long",
+            J = "unsigned long",
+            l = "long long",
+            L = "unsigned long long",
+            f = "float",
+            d = "double",
+            p = "pointer",
+            Z = "string pointer",
+            x = "SEXP",
+            v = "void",
+            type
+        )
+    }
+
+    if (!ptrcnt) return(base)
+    paste(c(rep("pointer to", ptrcnt), base), collapse = " ")
+}
+
+dynport_rd_escape <- function(x) {
+    x <- gsub("\\", "\\\\", x, fixed = TRUE)
+    x <- gsub("%", "\\%", x, fixed = TRUE)
+    x <- gsub("{", "\\{", x, fixed = TRUE)
+    gsub("}", "\\}", x, fixed = TRUE)
 }
 
 dynport_write_license <- function(src) {

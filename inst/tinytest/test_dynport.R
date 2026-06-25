@@ -20,10 +20,12 @@ unload_test_package <- function(package) {
     }
 }
 
+libc_names <- c("msvcrt", "c", "c.so.6")
+
 env <- new.env()
 expect_equal(
     class(bind <- dynbind(
-        c("msvcrt", "c", "c.so.6"), "qsort(piip)v;",
+        libc_names, "qsort(piip)v;",
         pattern = "qsort", replace = "c_qsort", envir = env
     )),
     "dynbind.report"
@@ -106,6 +108,35 @@ expect_dynport_portfile_error("Function: test(ii)a", "type name")
 expect_dynport_portfile_error("Function: test(C[2])v arg", "C\\[2\\].*argument")
 expect_dynport_portfile_error("Function: test(i) i a b", "number")
 expect_dynport_portfile_error("Function: test(ii)i a a", "name")
+expect_dynport_portfile_error("Function: test(i.i)v x y", "Variadic marker")
+
+inline_variadic <- rdyncall:::dynport_parse_function("printf(Z.)i fmt ...;")
+expect_true(inline_variadic$printf$variadic)
+expect_equal(inline_variadic$printf$argument$sig, "Z")
+expect_equal(inline_variadic$printf$argument$name, "fmt")
+
+metadata_variadic <- rdyncall:::dynport_read(write_dynport(c(
+    "Package: VarMeta",
+    "Function:",
+    "    printf(Z)i fmt;",
+    "Variadic:",
+    "    printf"
+)))
+expect_true(metadata_variadic$Function$printf$variadic)
+
+signature_variadic <- rdyncall:::dynport_read(write_dynport(c(
+    "Package: VarSig",
+    "Variadic:",
+    "    snprintf(*cJZ)i text maxlen fmt;"
+)))
+expect_true(signature_variadic$Function$snprintf$variadic)
+expect_equal(signature_variadic$Function$snprintf$argument$name, c("text", "maxlen", "fmt"))
+
+expect_dynport_portfile_error(c(
+    "Package: VarMissing",
+    "Variadic:",
+    "    printf"
+), "not defined")
 
 empty_port <- tempfile(fileext = ".dynport")
 expect_true(file.create(empty_port))
@@ -142,6 +173,36 @@ local({
     expect_true(package %in% loadedNamespaces())
     expect_equal(getExportedValue(package, "TINY_ONE"), 1L)
     expect_true("package:dyn.TinyPort" %in% search())
+})
+
+local({
+    portfile <- write_dynport(c(
+        "Package: ClearPort",
+        "Version: 1.0.0",
+        "Enum/ClearEnum:",
+        "    CLEAR_ONE=1"
+    ))
+    lib <- tempfile("rdyncall-dynport-lib")
+    package <- "dyn.ClearPort"
+    ordinary <- file.path(lib, "ordinary")
+    expect_true(dir.create(ordinary, recursive = TRUE))
+    writeLines(c(
+        "Package: ordinary",
+        "Version: 1.0.0",
+        "Title: Ordinary",
+        "Description: Ordinary package.",
+        "License: MIT"
+    ), file.path(ordinary, "DESCRIPTION"))
+    unload_test_package(package)
+    on.exit(unload_test_package(package), add = TRUE)
+
+    expect_silent(dynport(clear, portfile = portfile, lib = lib, quiet = TRUE))
+    expect_true(package %in% loadedNamespaces())
+    removed <- dynport_clear_lib(lib)
+    expect_true(package %in% basename(removed))
+    expect_false(package %in% loadedNamespaces())
+    expect_false(dir.exists(file.path(lib, package)))
+    expect_true(dir.exists(ordinary))
 })
 
 local({
@@ -210,7 +271,7 @@ local({
 })
 
 local({
-    if (!is.null(dynfind(c("msvcrt", "c", "c.so.6")))) {
+    if (!is.null(dynfind(libc_names))) {
         portfile <- write_dynport(c(
             "Package: CString",
             "Version: 1.0.0",
@@ -227,6 +288,50 @@ local({
         on.exit(unload_test_package(package), add = TRUE)
 
         expect_silent(dynport(cstring, portfile = portfile, lib = lib, quiet = TRUE))
-        expect_equal(getExportedValue(package, "strlen")("abc"), 3)
+        strlen <- getExportedValue(package, "strlen")
+        expect_equal(formalArgs(strlen), "str")
+        expect_equal(strlen("abc"), 3)
+    }
+})
+
+local({
+    libc <- dynfind(libc_names)
+    if (!is.null(libc) && !is.null(dynsym(libc, "snprintf"))) {
+        portfile <- write_dynport(c(
+            "Package: CSnprintf",
+            "Version: 1.0.0",
+            "Library:",
+            "    msvcrt",
+            "    c",
+            "    c.so.6",
+            "Function:",
+            "    snprintf(*cJZ)i text maxlen fmt;",
+            "Variadic:",
+            "    snprintf"
+        ))
+        lib <- tempfile("rdyncall-dynport-lib")
+        package <- "dyn.CSnprintf"
+        unload_test_package(package)
+        on.exit(unload_test_package(package), add = TRUE)
+
+        port <- rdyncall:::dynport_read(portfile)
+        src <- rdyncall:::dynport_create_package_source(port, portfile, "csnprintf", package, "md5")
+        on.exit(unlink(src, recursive = TRUE, force = TRUE), add = TRUE)
+        rd <- file.path(src, "man", "snprintf.Rd")
+        expect_true(file.exists(rd))
+        rd_text <- readLines(rd)
+        expect_true(any(grepl("\\\\title\\{snprintf\\}", rd_text)))
+        expect_true(any(grepl("\\\\item\\{text\\}", rd_text)))
+        expect_true(any(grepl("\\\\item\\{\\.varargs\\}", rd_text)))
+        expect_silent(tools::parse_Rd(rd))
+
+        expect_silent(dynport(csnprintf, portfile = portfile, lib = lib, quiet = TRUE))
+        snprintf <- getExportedValue(package, "snprintf")
+        expect_equal(formalArgs(snprintf), c("text", "maxlen", "fmt", "...", ".varargs"))
+
+        buf <- raw(32L)
+        n <- snprintf(buf, length(buf), "%d", 42L, .varargs = "i")
+        expect_equal(n, 2L)
+        expect_equal(rawToChar(buf[seq_len(n)]), "42")
     }
 })
