@@ -36,7 +36,10 @@ SEXP C_scan_signature_tokens(SEXP signature);
 SEXP C_scan_field_tail(SEXP tail);
 
 /* rcallback.c */
-SEXP C_callback(SEXP sig, SEXP aggr_layouts, SEXP aggr_typeinfos, SEXP fun, SEXP rho);
+SEXP C_callback(SEXP sig, SEXP aggr_layouts, SEXP aggr_typeinfos, SEXP fun, SEXP rho, SEXP state);
+SEXP C_callback_status(SEXP callback);
+SEXP C_callback_is_active(SEXP callback);
+SEXP C_callback_last_error(SEXP callback);
 
 /* rutils.c */
 SEXP C_asexternalptr(SEXP v);
@@ -82,7 +85,10 @@ R_CallMethodDef callMethods[] =
   {"C_dyncount"                 , (DL_FUNC) &C_dyncount         , 1},
   {"C_dynlist"                  , (DL_FUNC) &C_dynlist          , 1},
   /* --- rcallback.c ------------------------------------------------------- */
-  {"C_callback"                 , (DL_FUNC) &C_callback         , 5},
+  {"C_callback"                 , (DL_FUNC) &C_callback         , 6},
+  {"C_callback_status"          , (DL_FUNC) &C_callback_status  , 1},
+  {"C_callback_is_active"       , (DL_FUNC) &C_callback_is_active, 1},
+  {"C_callback_last_error"      , (DL_FUNC) &C_callback_last_error, 1},
   /* --- rpack.c ----------------------------------------------------------- */
   {"C_pack"                     , (DL_FUNC) &C_pack             , 4},
   {"C_unpack"                   , (DL_FUNC) &C_unpack           , 3},

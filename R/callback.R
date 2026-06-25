@@ -10,6 +10,12 @@
 #'
 #' @param envir the environment in which to evaluate the call to `fun`.
 #'
+#' @param callback external pointer returned by `ccallback()`.
+#'
+#' @param x object returned by `callback_status()`.
+#'
+#' @param ... unused.
+#'
 #' @details
 #'
 #' Callbacks are user-defined functions that are registered in a foreign library
@@ -45,7 +51,8 @@
 #' signature contains `<Type>` fails early.
 #'
 #' If an error occurs during the evaluation, the callback will be disabled for
-#' further invocations. (This behaviour might change in the future.)
+#' further invocations. Use `callback_status()` or `callback_last_error()` to
+#' inspect a callback after foreign code has invoked it.
 #'
 #' @return
 #' An external pointer to a synthetically generated C function.
@@ -99,12 +106,33 @@
 #' @export
 ccallback <- function(signature, fun, envir = new.env()) {
     caller <- parent.frame()
-    stopifnot(is.character(signature))
+    if (!is.character(signature) || length(signature) != 1L || is.na(signature)) {
+        stop("'signature' must be a single character string", call. = FALSE)
+    }
     stopifnot(is.function(fun))
     stopifnot(is.environment(envir))
 
     info <- callback_signature_info(signature, caller)
-    .Call("C_callback", info$signature, info$aggregates, info$typeinfos, fun, envir, PACKAGE = "rdyncall")
+    state <- new.env(parent = emptyenv())
+    state$last_error <- NULL
+    wrapped <- function(...) {
+        tryCatch(
+            fun(...),
+            error = function(err) {
+                state$last_error <- list(
+                    message = conditionMessage(err),
+                    class = class(err),
+                    reason = "r_error"
+                )
+                stop(err)
+            }
+        )
+    }
+
+    .Call(
+        "C_callback", info$signature, info$aggregates, info$typeinfos,
+        wrapped, envir, state, PACKAGE = "rdyncall"
+    )
 }
 
 callback_signature_info <- function(signature, envir = parent.frame()) {
@@ -173,4 +201,67 @@ callback_signature_info <- function(signature, envir = parent.frame()) {
     }
 
     list(signature = paste0(out, collapse = ""), aggregates = aggregates, typeinfos = typeinfos)
+}
+
+#' @details
+#' `callback_status()` reports whether a callback is still active, how many
+#' times it has been invoked, and why it was disabled. A disabled callback is
+#' not re-enabled by these helpers; create a new callback if foreign code needs
+#' to call into R again.
+#'
+#' `callback_is_active()` returns only the active flag. `callback_last_error()`
+#' returns `NULL` until an error disables the callback. Once an error has been
+#' recorded, it returns a list with `message`, `class`, and `reason`.
+#'
+#' @return
+#' `callback_status()` returns a list with class `callback_status`.
+#' `callback_is_active()` returns a single logical value.
+#' `callback_last_error()` returns `NULL` or a list describing the last error.
+#'
+#' @examples
+#' cb <- ccallback("i)i", function(x) {
+#'     if (x < 0) stop("negative values are not supported")
+#'     x
+#' })
+#' callback_is_active(cb)
+#' callback_status(cb)
+#'
+#' @rdname callback
+#' @export
+callback_status <- function(callback) {
+    .Call("C_callback_status", callback, PACKAGE = "rdyncall")
+}
+
+#' @rdname callback
+#' @export
+callback_is_active <- function(callback) {
+    .Call("C_callback_is_active", callback, PACKAGE = "rdyncall")
+}
+
+#' @rdname callback
+#' @export
+callback_last_error <- function(callback) {
+    .Call("C_callback_last_error", callback, PACKAGE = "rdyncall")
+}
+
+#' @rdname callback
+#' @export
+print.callback_status <- function(x, ...) {
+    state <- if (isTRUE(x$active)) "active" else "disabled"
+    cat("<rdyncall callback: ", state, ">\n", sep = "")
+    cat("signature: ", x$signature, "\n", sep = "")
+    cat(
+        "invocations: ", format(x$invocations),
+        " (success: ", format(x$successful_invocations),
+        ", errors: ", format(x$error_invocations),
+        ", disabled: ", format(x$disabled_invocations), ")\n",
+        sep = ""
+    )
+    if (!is.null(x$disable_reason)) {
+        cat("disable reason: ", x$disable_reason, "\n", sep = "")
+    }
+    if (!is.null(x$last_error)) {
+        cat("last error: ", x$last_error$message, "\n", sep = "")
+    }
+    invisible(x)
 }
