@@ -1,0 +1,91 @@
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+name: Sanitizers
+
+permissions: read-all
+
+jobs:
+  asan-ubsan:
+    name: ASAN/UBSAN (ubuntu-latest, R release)
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+      RDYNCALL_SAN_FLAGS: -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined
+      ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
+      UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::tinytest
+          needs: check
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build
+
+      - name: Configure sanitizer runtime
+        run: |
+          set -euo pipefail
+          asan_rt="$(clang -print-file-name=libclang_rt.asan-x86_64.so)"
+          if [ ! -f "${asan_rt}" ]; then
+            asan_rt="$(gcc -print-file-name=libasan.so)"
+          fi
+          test -f "${asan_rt}"
+          echo "LD_PRELOAD=${asan_rt}" >> "${GITHUB_ENV}"
+          mkdir -p "${HOME}/.R"
+          {
+            echo "CC=clang"
+            echo "CXX=clang++"
+            echo "CFLAGS=${RDYNCALL_SAN_FLAGS}"
+            echo "CXXFLAGS=${RDYNCALL_SAN_FLAGS}"
+            echo "LDFLAGS=-fsanitize=address,undefined"
+            echo "SHLIB_LDFLAGS=-fsanitize=address,undefined"
+            echo "MAIN_LDFLAGS=-fsanitize=address,undefined"
+          } > "${HOME}/.R/Makevars"
+
+      - name: Install rdyncall with sanitizers
+        run: |
+          set -euo pipefail
+          echo "RDYNCALL_LIB=${RUNNER_TEMP}/rdyncall-lib" >> "${GITHUB_ENV}"
+          mkdir -p "${RUNNER_TEMP}/rdyncall-lib"
+          R CMD INSTALL --preclean --no-test-load --library="${RUNNER_TEMP}/rdyncall-lib" .
+
+      - name: Run tinytest with sanitizers
+        run: |
+          Rscript --vanilla -e '.libPaths(c(Sys.getenv("RDYNCALL_LIB"), .libPaths())); library(rdyncall); tinytest::test_package("rdyncall")'
+
+      - name: Build dyncall native sanitizer fixtures
+        run: |
+          cmake \
+            -S src/dyncall \
+            -B build/dyncall-sanitized \
+            -G Ninja \
+            -DLANG_CXX=OFF \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_C_FLAGS="${RDYNCALL_SAN_FLAGS}" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+          cmake --build build/dyncall-sanitized --target plain dynload_plain callback_plain callf --parallel
+
+      - name: Run dyncall native sanitizer fixtures
+        run: |
+          ./build/dyncall-sanitized/test/plain/plain
+          ./build/dyncall-sanitized/test/dynload_plain/dynload_plain
+          ./build/dyncall-sanitized/test/callback_plain/callback_plain
+          ./build/dyncall-sanitized/test/callf/callf
