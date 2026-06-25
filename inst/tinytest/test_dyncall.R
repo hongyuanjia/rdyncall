@@ -445,9 +445,64 @@ expect_equal(bits_ret$a, 1)
 expect_equal(bits_ret$b, 2)
 expect_equal(bits_ret$c, 3)
 
+# C can call R callbacks that take and return aggregate values by value.
+call_color_callback <- dynsym(aggregate_fixture, "rdyncall_test_call_color_callback")
+color_callback <- ccallback("<Color>)i", function(x) {
+    x$r + 10L * x$g + 100L * x$b + 1000L * x$a
+})
+expect_equal(dyncall(call_color_callback, "p<Color>)i", color_callback, color), 4321L)
+
+call_vec2_mix_callback <- dynsym(aggregate_fixture, "rdyncall_test_call_vec2_mix_callback")
+vec2_mix_callback <- ccallback("i<Vec2>d)d", function(i, x, y) {
+    i + x$x + x$y + y
+})
+expect_equal(dyncall(call_vec2_mix_callback, "pi<Vec2>d)d", vec2_mix_callback, 10L, vec2, 3.25), 17)
+
+call_make_color_callback <- dynsym(aggregate_fixture, "rdyncall_test_call_make_color_callback")
+make_color_callback <- ccallback("CCCC)<Color>", function(r, g, b, a) {
+    out <- cdata(Color)
+    out$r <- r
+    out$g <- g
+    out$b <- b
+    out$a <- a
+    out
+})
+callback_color <- dyncall(call_make_color_callback, "pCCCC)<Color>", make_color_callback, 9L, 10L, 11L, 12L)
+expect_struct_raw(callback_color, "Color")
+expect_equal(callback_color$r, 9)
+expect_equal(callback_color$g, 10)
+expect_equal(callback_color$b, 11)
+expect_equal(callback_color$a, 12)
+
+call_make_vec2_callback <- dynsym(aggregate_fixture, "rdyncall_test_call_make_vec2_callback")
+make_vec2_callback <- ccallback("ff)<Vec2>", function(x, y) {
+    out <- cdata(Vec2)
+    out$x <- x + 1
+    out$y <- y + 2
+    out
+})
+callback_vec2 <- dyncall(call_make_vec2_callback, "pff)<Vec2>", make_vec2_callback, 1.5, 2.5)
+expect_struct_raw(callback_vec2, "Vec2")
+expect_equal(callback_vec2$x, 2.5)
+expect_equal(callback_vec2$y, 4.5)
+
+call_make_more_callback <- dynsym(aggregate_fixture, "rdyncall_test_call_make_more_than_regs_callback")
+make_more_callback <- ccallback("d)<MoreThanRegs>", function(base) {
+    out <- cdata(MoreThanRegs)
+    for (field in names(more_values)) {
+        pack(out, field_offset(MoreThanRegs, field), "d", base + more_values[[field]])
+    }
+    out
+})
+callback_more <- dyncall(call_make_more_callback, "pd)<MoreThanRegs>", make_more_callback, 20)
+expect_struct_raw(callback_more, "MoreThanRegs")
+for (field in names(more_values)) {
+    expect_equal(unpack(callback_more, field_offset(MoreThanRegs, field), "d"), 20 + more_values[[field]])
+}
+
 # Aggregate errors remain explicit.
 wrong_color <- color
 attr(wrong_color, "struct") <- "Vec2"
 expect_error(dyncall(color_sum, "<Color>)i", wrong_color), "incompatible aggregate types")
 expect_error(dyncall(color_sum, "<Missing>)i", color), "unknown aggregate type")
-expect_error(ccallback("<Color>)i", function(x) 0L), "aggregate|signature|Unknown|unsupported")
+expect_error(ccallback("<Missing>)i", function(x) 0L), "unknown aggregate type")

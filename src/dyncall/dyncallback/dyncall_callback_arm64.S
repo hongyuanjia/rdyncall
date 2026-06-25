@@ -32,6 +32,9 @@ BEGIN_ASM
      DCThunk  |   0  |  32
      handler  |  32  |   8
      userdata |  40  |   8
+     aggrs    |  48  |   8
+     aggr ret |  56  |   4
+     aggr cnt |  60  |   4
 */
 
 TEXTAREA
@@ -50,11 +53,11 @@ ALIGN(4)
      type       off   size
      ---------|------|------
      Frame        0     16
-     DCArgs      16    144
-     DCValue    160     16
+     DCArgs      16    160
+     DCValue    176     48
 
-     size              176
-     aligned           176
+     size              224
+     aligned           224
 
 
    locals:
@@ -63,7 +66,7 @@ ALIGN(4)
 */
 
 	mov x10, sp
-	stp x29, x30, [sp, #-176 ]!
+	stp x29, x30, [sp, #-224 ]!
 	mov x29, sp
 
 	add x11, x29 , #16
@@ -82,34 +85,64 @@ ALIGN(4)
 
 	eor x12, x12, x12
 	stp x10,x12,[x11, #128]		/* sp=sp, i=0, f=0 */
+	ldr x13, [x9, #48]
+	str x13, [x11, #144]		/* aggrs */
+	ldr w13, [x9, #56]
+	cmp w13, #0
+	csel x13, x8, xzr, eq
+	str x13, [x11, #152]		/* aggregate return pointer */
 
 
 /* call handler/callback */
 
 	mov x0 , x9          /* DCCallback* pcb      */
 	add x1 , x29 , #16   /* DCArgs*     args     */
-	add x2 , x29 , #160  /* DCValue*    result   */
+	add x2 , x29 , #176  /* DCValue*    result   */
 	ldr x3 , [x9 , #40]  /* void*       userdata */
 
 	ldr x11, [x9 , #32]
+	str x9, [x29, #216]
 	blr x11
 
+	ldr x14, [x29, #216]
+	add x15, x29, #16
 	and w0, w0, #255
+	cmp w0, 'A'
+	b.eq LABELUSE(reta)
 	cmp w0, 'f'
 	b.eq LABELUSE(retf)
 	cmp w0, 'd'
 	b.eq LABELUSE(retf)
 
 LABELDEF(reti)
-	ldr x0, [x29, #160]
+	ldr x0, [x29, #176]
 	b LABELUSE(ret)
 LABELDEF(retf)
-	ldr d0, [x29, #160]
+	ldr d0, [x29, #176]
+	b LABELUSE(ret)
+LABELDEF(reta)
+	ldr w10, [x14, #56]
+	cmp w10, #1
+	b.eq LABELUSE(retai)
+	cmp w10, #2
+	b.eq LABELUSE(retaf)
+	cmp w10, #3
+	b.eq LABELUSE(retaf)
+	ldr x0, [x15, #152]
+	b LABELUSE(ret)
+LABELDEF(retai)
+	ldr x0, [x29, #176]
+	ldr x1, [x29, #184]
+	b LABELUSE(ret)
+LABELDEF(retaf)
+	ldr d0, [x29, #176]
+	ldr d1, [x29, #184]
+	ldr d2, [x29, #192]
+	ldr d3, [x29, #200]
 LABELDEF(ret)
-	ldp x29, x30, [sp], #176
+	ldp x29, x30, [sp], #224
 	ret
 
 
 END_PROC
 END_ASM
-

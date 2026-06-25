@@ -37,6 +37,7 @@ Type signatures describe individual C values. The most common ones are:
 
 Pointer types are written with `*`, such as `*i` for `int *`.
 Typed aggregate pointers are written as `*<TypeName>`.
+Registered aggregate values passed by value are written as `<TypeName>`.
 
 ## Call signatures
 
@@ -69,6 +70,7 @@ articles and demos.
 | `size_t strlen(const char *s);` | `strlen(Z)L` | `Z` passes a C string |
 | `void R_rsort(double *x, int n);` | `R_rsort(pi)v` | pointer to mutable `double` data |
 | `void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *));` | `qsort(pLLp)v` | callback has signature `pp)i` |
+| `int visit(Point p);` | callback signature `<Point>)i` | `Point` is passed by value |
 | `const char *SDL_GetPlatform(void);` | `SDL_GetPlatform()Z` | no arguments, C string return |
 
 The following example calls C's `strlen`, declared as:
