@@ -54,6 +54,7 @@
 <li>Fix <code><a href="../reference/struct.html">cstruct()</a></code> and <code><a href="../reference/struct.html">cunion()</a></code> field parsing when whitespace follows the type signature.</li>
 <li>Store aggregate field names in the explicit <code>typeinfo$fields$name</code> column.</li>
 <li>Add dedicated print methods for <code>typeinfo</code>, <code>struct</code>, <code>ctype</code>, <code>dynbind.report</code> and <code>floatraw</code> objects.</li>
+<li>Add <code><a href="../reference/callback.html">callback_status()</a></code>, <code><a href="../reference/callback.html">callback_is_active()</a></code> and <code><a href="../reference/callback.html">callback_last_error()</a></code> for inspecting rdyncall callback invocation and error state.</li>
 <li>Add <code>struct</code> and <code>union</code> bitfield layout, access, DynPort parsing, and by-value aggregate support.</li>
 <li>Add the <code>rdyncall.callvm.size</code> option to configure CallVM argument stack size at package load.</li>
 <li>Add by-value aggregate argument and return support to <code><a href="../reference/dyncall.html">dyncall()</a></code> for registered <code>struct</code> and <code>union</code> types on supported dyncall backends, including ARM64 aggregate ABI handling.</li>

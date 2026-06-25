@@ -165,6 +165,28 @@ R function errors.
   dyncallback backend; unsupported platforms fail when the callback is
   created.
 
+When a callback does throw an R error, rdyncall disables that callback
+pointer for later invocations. The status helpers make that state
+inspectable:
+
+``` r
+checked_callback <- ccallback("i)i", function(x) {
+    if (x < 0L) {
+        stop("negative values are not supported")
+    }
+    x
+})
+
+dyncall(checked_callback, "i)i", -1L)
+callback_is_active(checked_callback)
+callback_last_error(checked_callback)
+callback_status(checked_callback)
+```
+
+Create a new callback when you need to recover after an error. The
+status helpers are intentionally read-only and do not re-enable disabled
+callbacks.
+
 ## A safe registration pattern
 
 For APIs that register callbacks, keep a small R object that owns both

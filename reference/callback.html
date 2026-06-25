@@ -46,7 +46,16 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ccallback</span><span class="op">(</span><span class="va">signature</span>, <span class="va">fun</span>, envir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">new.env</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ccallback</span><span class="op">(</span><span class="va">signature</span>, <span class="va">fun</span>, envir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">new.env</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">callback_status</span><span class="op">(</span><span class="va">callback</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">callback_is_active</span><span class="op">(</span><span class="va">callback</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">callback_last_error</span><span class="op">(</span><span class="va">callback</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'callback_status'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -65,10 +74,25 @@
 <dt id="arg-envir">envir<a class="anchor" aria-label="anchor" href="#arg-envir"></a></dt>
 <dd><p>the environment in which to evaluate the call to <code>fun</code>.</p></dd>
 
+
+<dt id="arg-callback">callback<a class="anchor" aria-label="anchor" href="#arg-callback"></a></dt>
+<dd><p>external pointer returned by <code>ccallback()</code>.</p></dd>
+
+
+<dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
+<dd><p>object returned by <code>callback_status()</code>.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>unused.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An external pointer to a synthetically generated C function.</p>
+<p><code>callback_status()</code> returns a list with class <code>callback_status</code>.
+<code>callback_is_active()</code> returns a single logical value.
+<code>callback_last_error()</code> returns <code>NULL</code> or a list describing the last error.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -98,7 +122,15 @@ and emit a warning.</p>
 dyncallback backends. On unsupported backends, creating a callback whose
 signature contains <code>&lt;Type&gt;</code> fails early.</p>
 <p>If an error occurs during the evaluation, the callback will be disabled for
-further invocations. (This behaviour might change in the future.)</p>
+further invocations. Use <code>callback_status()</code> or <code>callback_last_error()</code> to
+inspect a callback after foreign code has invoked it.</p>
+<p><code>callback_status()</code> reports whether a callback is still active, how many
+times it has been invoked, and why it was disabled. A disabled callback is
+not re-enabled by these helpers; create a new callback if foreign code needs
+to call into R again.</p>
+<p><code>callback_is_active()</code> returns only the active flag. <code>callback_last_error()</code>
+returns <code>NULL</code> until an error disables the callback. Once an error has been
+recorded, it returns a list with <code>message</code>, <code>class</code>, and <code>reason</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="note">Note<a class="anchor" aria-label="anchor" href="#note"></a></h2>
@@ -169,6 +201,17 @@ invocation of the callback could lead to a <strong>fatal R process crash</strong
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [86]  1.074345882  1.110534893  1.113952419  1.148411606  1.298392759</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [91]  1.316826356  1.318293384  1.337320413  1.623548883  1.672882611</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [96]  1.888504929  1.924343341  2.065024895  2.682557184  2.755417575</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">cb</span> <span class="op">&lt;-</span> <span class="fu">ccallback</span><span class="op">(</span><span class="st">"i)i"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="kw">if</span> <span class="op">(</span><span class="va">x</span> <span class="op">&lt;</span> <span class="fl">0</span><span class="op">)</span> <span class="kw"><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></span><span class="op">(</span><span class="st">"negative values are not supported"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="va">x</span></span></span>
+<span class="r-in"><span><span class="op">}</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">callback_is_active</span><span class="op">(</span><span class="va">cb</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span><span class="fu">callback_status</span><span class="op">(</span><span class="va">cb</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;rdyncall callback: active&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> signature: i)i</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> invocations: 0 (success: 0, errors: 0, disabled: 0)</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

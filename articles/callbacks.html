@@ -239,13 +239,31 @@ mismatch disables the callback.</li>
 dyncallback backend; unsupported platforms fail when the callback is
 created.</li>
 </ul>
+<p>When a callback does throw an R error, rdyncall disables that
+callback pointer for later invocations. The status helpers make that
+state inspectable:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">checked_callback</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/callback.html">ccallback</a></span><span class="op">(</span><span class="st">"i)i"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="kw">if</span> <span class="op">(</span><span class="va">x</span> <span class="op">&lt;</span> <span class="fl">0L</span><span class="op">)</span> <span class="op">{</span></span>
+<span>        <span class="kw"><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></span><span class="op">(</span><span class="st">"negative values are not supported"</span><span class="op">)</span></span>
+<span>    <span class="op">}</span></span>
+<span>    <span class="va">x</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/dyncall.html">dyncall</a></span><span class="op">(</span><span class="va">checked_callback</span>, <span class="st">"i)i"</span>, <span class="op">-</span><span class="fl">1L</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/callback.html">callback_is_active</a></span><span class="op">(</span><span class="va">checked_callback</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/callback.html">callback_last_error</a></span><span class="op">(</span><span class="va">checked_callback</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/callback.html">callback_status</a></span><span class="op">(</span><span class="va">checked_callback</span><span class="op">)</span></span></code></pre></div>
+<p>Create a new callback when you need to recover after an error. The
+status helpers are intentionally read-only and do not re-enable disabled
+callbacks.</p>
 </div>
 <div class="section level2">
 <h2 id="a-safe-registration-pattern">A safe registration pattern<a class="anchor" aria-label="anchor" href="#a-safe-registration-pattern"></a>
 </h2>
 <p>For APIs that register callbacks, keep a small R object that owns
 both the foreign handle and the callback pointer.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">make_registration</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">handle</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">state</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">new.env</a></span><span class="op">(</span>parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">emptyenv</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span>    <span class="va">state</span><span class="op">$</span><span class="va">handle</span> <span class="op">&lt;-</span> <span class="va">handle</span></span>

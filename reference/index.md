@@ -3,6 +3,10 @@
 ## All functions
 
 - [`ccallback()`](https://hongyuanjia.github.io/rdyncall/reference/callback.md)
+  [`callback_status()`](https://hongyuanjia.github.io/rdyncall/reference/callback.md)
+  [`callback_is_active()`](https://hongyuanjia.github.io/rdyncall/reference/callback.md)
+  [`callback_last_error()`](https://hongyuanjia.github.io/rdyncall/reference/callback.md)
+  [`print(`*`<callback_status>`*`)`](https://hongyuanjia.github.io/rdyncall/reference/callback.md)
   : Dynamic wrapping of R functions as C callbacks
 - [`dynbind()`](https://hongyuanjia.github.io/rdyncall/reference/dynbind.md)
   [`print(`*`<dynbind.report>`*`)`](https://hongyuanjia.github.io/rdyncall/reference/dynbind.md)

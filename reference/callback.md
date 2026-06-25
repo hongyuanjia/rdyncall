@@ -6,6 +6,15 @@ Function to wrap R functions as C function pointers.
 
 ``` r
 ccallback(signature, fun, envir = new.env())
+
+callback_status(callback)
+
+callback_is_active(callback)
+
+callback_last_error(callback)
+
+# S3 method for class 'callback_status'
+print(x, ...)
 ```
 
 ## Arguments
@@ -24,9 +33,26 @@ ccallback(signature, fun, envir = new.env())
 
   the environment in which to evaluate the call to `fun`.
 
+- callback:
+
+  external pointer returned by `ccallback()`.
+
+- x:
+
+  object returned by `callback_status()`.
+
+- ...:
+
+  unused.
+
 ## Value
 
 An external pointer to a synthetically generated C function.
+
+`callback_status()` returns a list with class `callback_status`.
+`callback_is_active()` returns a single logical value.
+`callback_last_error()` returns `NULL` or a list describing the last
+error.
 
 ## Details
 
@@ -70,7 +96,19 @@ ARM64 dyncallback backends. On unsupported backends, creating a callback
 whose signature contains `<Type>` fails early.
 
 If an error occurs during the evaluation, the callback will be disabled
-for further invocations. (This behaviour might change in the future.)
+for further invocations. Use `callback_status()` or
+`callback_last_error()` to inspect a callback after foreign code has
+invoked it.
+
+`callback_status()` reports whether a callback is still active, how many
+times it has been invoked, and why it was disabled. A disabled callback
+is not re-enabled by these helpers; create a new callback if foreign
+code needs to call into R again.
+
+`callback_is_active()` returns only the active flag.
+`callback_last_error()` returns `NULL` until an error disables the
+callback. Once an error has been recorded, it returns a list with
+`message`, `class`, and `reason`.
 
 ## Note
 
@@ -144,4 +182,15 @@ x
 #>  [86]  1.074345882  1.110534893  1.113952419  1.148411606  1.298392759
 #>  [91]  1.316826356  1.318293384  1.337320413  1.623548883  1.672882611
 #>  [96]  1.888504929  1.924343341  2.065024895  2.682557184  2.755417575
+
+cb <- ccallback("i)i", function(x) {
+    if (x < 0) stop("negative values are not supported")
+    x
+})
+callback_is_active(cb)
+#> [1] TRUE
+callback_status(cb)
+#> <rdyncall callback: active>
+#> signature: i)i
+#> invocations: 0 (success: 0, errors: 0, disabled: 0)
 ```
