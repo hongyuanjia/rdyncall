@@ -15,6 +15,10 @@ articles:
   navbar:
   contents:
   - articles/dynbind-dynport
+- title: Diagnostics
+  navbar:
+  contents:
+  - articles/troubleshooting
 navbar:
   structure:
     left: [intro, reference, news, articles]

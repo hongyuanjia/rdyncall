@@ -2,9 +2,12 @@
 % Please edit documentation in R/dynfind.R
 \name{dynfind}
 \alias{dynfind}
+\alias{dynfind_explain}
 \title{Portable searching and loading of shared libraries}
 \usage{
 dynfind(libnames, auto.unload = TRUE)
+
+dynfind_explain(libnames, try.load = TRUE)
 }
 \arguments{
 \item{libnames}{vector of character strings specifying several short library
@@ -12,11 +15,20 @@ names.}
 
 \item{auto.unload}{logical: if \code{TRUE} then a finalizer is registered that
 closes the library on garbage collection. See \code{\link[=dynload]{dynload()}} for details.}
+
+\item{try.load}{logical: if \code{TRUE}, attempt candidates in \code{dynfind()} order
+until one loads. The loaded handle is immediately closed with
+\code{\link[=dynunload]{dynunload()}}.}
 }
 \value{
 \code{\link[=dynfind]{dynfind()}} returns an external pointer (library handle), if search was
 successful.
 Otherwise, if no library is located, a \code{NULL} is returned.
+
+\code{dynfind_explain()} returns a data frame with columns \code{libname}, \code{source},
+\code{candidate}, \code{exists}, \code{loaded}, and \code{resolved_path}. \code{loaded} is \code{NA} for
+candidates that were not attempted because an earlier candidate loaded, or
+because \code{try.load = FALSE}.
 }
 \description{
 Function to load shared libraries using a platform-portable interface.
@@ -24,6 +36,11 @@ Function to load shared libraries using a platform-portable interface.
 \details{
 \code{dynfind()} offers a platform-portable naming interface for loading a
 specific shared library.
+
+\code{dynfind_explain()} returns the candidate paths that \code{dynfind()} would try,
+optionally attempts them in the same order, and records the first loadable
+candidate. It is intended for diagnosing platform-specific library discovery
+failures without keeping a library handle open.
 
 The naming scheme and standard locations of shared libraries are OS-specific.
 When loading a shared library dynamically at run-time across platforms via
@@ -73,8 +90,12 @@ fails, \code{dynfind()} also checks library directories that belong to the
 current R runtime, such as \code{R.home("lib")} and \code{R.home("bin")}, and common
 package-manager library locations such as Homebrew (\code{HOMEBREW_PREFIX},
 \verb{/opt/homebrew}, \verb{/usr/local}), MacPorts (\code{MACPORTS_PREFIX}, \verb{/opt/local}),
-Linuxbrew (\verb{/home/linuxbrew/.linuxbrew}) and Scoop (\code{SCOOP}, \code{SCOOP_GLOBAL},
-\code{ProgramData/scoop}).
+Linuxbrew (\verb{/home/linuxbrew/.linuxbrew}), Scoop (\code{SCOOP}, \code{SCOOP_GLOBAL},
+\code{ProgramData/scoop}), MSYS2 (\code{MINGW_PREFIX}, \code{MSYSTEM_PREFIX},
+\verb{C:/msys64}), vcpkg (\code{VCPKG_ROOT}) and conda (\code{CONDA_PREFIX}).
+On Windows, when \code{dynfind()} tries a full DLL path from one of these
+directories, it temporarily prepends that directory to \code{PATH} for the load
+attempt so that sibling transitive DLL dependencies can be resolved.
 (The set of hardcoded locations might expand and change within the next minor releases).
 
 The file extension depends on the OS: \code{.dll} (Windows), \code{.dylib} (macOS),
@@ -93,6 +114,11 @@ and \verb{/Library/}.
 
 \code{dynfind()} loads a library via \code{\link[=dynload]{dynload()}} passing over the parameter
 \code{auto.unload}.
+}
+\examples{
+diag <- dynfind_explain(c("msvcrt", "m", "m.so.6"), try.load = FALSE)
+head(diag)
+
 }
 \seealso{
 See \code{\link[=dynload]{dynload()}} for details on the loader interface to the OS-specific
