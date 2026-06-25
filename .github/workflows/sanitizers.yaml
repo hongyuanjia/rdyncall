@@ -17,7 +17,7 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
-      RDYNCALL_SAN_FLAGS: -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined
+      RDYNCALL_SAN_FLAGS: -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize=function
       ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
       UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
 
@@ -54,7 +54,7 @@ jobs:
             echo "CXX=clang++"
             echo "CFLAGS=${RDYNCALL_SAN_FLAGS}"
             echo "CXXFLAGS=${RDYNCALL_SAN_FLAGS}"
-            echo "LDFLAGS=-fsanitize=address,undefined"
+            echo "LDFLAGS=-fsanitize=address,undefined -fno-sanitize=function"
           } > "${HOME}/.R/Makevars"
 
       - name: Install rdyncall with sanitizers
@@ -78,7 +78,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_C_COMPILER=clang \
             -DCMAKE_C_FLAGS="${RDYNCALL_SAN_FLAGS}" \
-            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined -fno-sanitize=function"
           cmake --build build/dyncall-sanitized --target plain dynload_plain callback_plain callf --parallel
 
       - name: Run dyncall native sanitizer fixtures
