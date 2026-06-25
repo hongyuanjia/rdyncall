@@ -484,6 +484,12 @@ RDYNCALL_TEST_EXPORT rdyncall_test_bits rdyncall_test_make_bits(unsigned int a, 
 
 typedef int (*rdyncall_test_color_callback)(rdyncall_test_color);
 typedef double (*rdyncall_test_vec2_mix_callback)(int, rdyncall_test_vec2, double);
+typedef int (*rdyncall_test_exhaust_ints_color_callback)(int, int, int, int, int, int, int, int, rdyncall_test_color);
+typedef double (*rdyncall_test_exhaust_fp_vec2_callback)(double, double, double, double, double, double, double, double, rdyncall_test_vec2);
+typedef double (*rdyncall_test_more_than_regs_callback)(rdyncall_test_more_than_regs);
+typedef rdyncall_test_color (*rdyncall_test_color_vec2_callback)(rdyncall_test_color, rdyncall_test_vec2);
+typedef double (*rdyncall_test_nested_vec2_callback)(rdyncall_test_nested_vec2);
+typedef double (*rdyncall_test_packed_char_double_callback)(rdyncall_test_packed_char_double);
 typedef rdyncall_test_color (*rdyncall_test_make_color_callback)(unsigned char, unsigned char, unsigned char, unsigned char);
 typedef rdyncall_test_vec2 (*rdyncall_test_make_vec2_callback)(float, float);
 typedef rdyncall_test_more_than_regs (*rdyncall_test_make_more_than_regs_callback)(double);
@@ -496,6 +502,36 @@ RDYNCALL_TEST_EXPORT int rdyncall_test_call_color_callback(rdyncall_test_color_c
 RDYNCALL_TEST_EXPORT double rdyncall_test_call_vec2_mix_callback(rdyncall_test_vec2_mix_callback cb, int i, rdyncall_test_vec2 x, double y)
 {
   return cb(i, x, y);
+}
+
+RDYNCALL_TEST_EXPORT int rdyncall_test_call_exhaust_ints_color_callback(rdyncall_test_exhaust_ints_color_callback cb, rdyncall_test_color x)
+{
+  return cb(1, 2, 3, 4, 5, 6, 7, 8, x);
+}
+
+RDYNCALL_TEST_EXPORT double rdyncall_test_call_exhaust_fp_vec2_callback(rdyncall_test_exhaust_fp_vec2_callback cb, rdyncall_test_vec2 x)
+{
+  return cb(1, 2, 3, 4, 5, 6, 7, 8, x);
+}
+
+RDYNCALL_TEST_EXPORT double rdyncall_test_call_more_than_regs_callback(rdyncall_test_more_than_regs_callback cb, rdyncall_test_more_than_regs x)
+{
+  return cb(x);
+}
+
+RDYNCALL_TEST_EXPORT rdyncall_test_color rdyncall_test_call_color_vec2_callback(rdyncall_test_color_vec2_callback cb, rdyncall_test_color x, rdyncall_test_vec2 y)
+{
+  return cb(x, y);
+}
+
+RDYNCALL_TEST_EXPORT double rdyncall_test_call_nested_vec2_callback(rdyncall_test_nested_vec2_callback cb, rdyncall_test_nested_vec2 x)
+{
+  return cb(x);
+}
+
+RDYNCALL_TEST_EXPORT double rdyncall_test_call_packed_char_double_callback(rdyncall_test_packed_char_double_callback cb, rdyncall_test_packed_char_double x)
+{
+  return cb(x);
 }
 
 RDYNCALL_TEST_EXPORT rdyncall_test_color rdyncall_test_call_make_color_callback(rdyncall_test_make_color_callback cb, unsigned char r, unsigned char g, unsigned char b, unsigned char a)

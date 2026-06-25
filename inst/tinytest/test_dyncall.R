@@ -460,6 +460,62 @@ vec2_mix_callback <- ccallback("i<Vec2>d)d", function(i, x, y) {
 })
 expect_equal(dyncall(call_vec2_mix_callback, "pi<Vec2>d)d", vec2_mix_callback, 10L, vec2, 3.25), 17)
 
+call_exhaust_ints_color_callback <- dynsym(aggregate_fixture, "rdyncall_test_call_exhaust_ints_color_callback")
+exhaust_ints_color_callback <- ccallback("iiiiiiii<Color>)i", function(a0, a1, a2, a3, a4, a5, a6, a7, x) {
+    expect_struct_raw(x, "Color")
+    sum(a0, a1, a2, a3, a4, a5, a6, a7) + x$r + 10L * x$g + 100L * x$b + 1000L * x$a
+})
+expect_equal(dyncall(call_exhaust_ints_color_callback, "p<Color>)i", exhaust_ints_color_callback, color), 4357L)
+
+call_exhaust_fp_vec2_callback <- dynsym(aggregate_fixture, "rdyncall_test_call_exhaust_fp_vec2_callback")
+exhaust_fp_vec2_callback <- ccallback("dddddddd<Vec2>)d", function(a0, a1, a2, a3, a4, a5, a6, a7, x) {
+    expect_struct_raw(x, "Vec2")
+    sum(a0, a1, a2, a3, a4, a5, a6, a7) + x$x + x$y
+})
+expect_equal(dyncall(call_exhaust_fp_vec2_callback, "p<Vec2>)d", exhaust_fp_vec2_callback, vec2), 39.75)
+
+call_more_callback <- dynsym(aggregate_fixture, "rdyncall_test_call_more_than_regs_callback")
+more_callback <- ccallback("<MoreThanRegs>)d", function(x) {
+    expect_struct_raw(x, "MoreThanRegs")
+    sum(vapply(names(more_values), function(field) {
+        unpack(x, field_offset(MoreThanRegs, field), "d")
+    }, numeric(1)))
+})
+expect_equal(dyncall(call_more_callback, "p<MoreThanRegs>)d", more_callback, more_than_regs), 15)
+
+call_color_vec2_callback <- dynsym(aggregate_fixture, "rdyncall_test_call_color_vec2_callback")
+color_vec2_callback <- ccallback("<Color><Vec2>)<Color>", function(x, y) {
+    expect_struct_raw(x, "Color")
+    expect_struct_raw(y, "Vec2")
+    out <- cdata(Color)
+    out$r <- x$r + 1L
+    out$g <- x$g + 2L
+    out$b <- x$b + as.integer(y$x)
+    out$a <- x$a + as.integer(y$y)
+    out
+})
+callback_color_vec2 <- dyncall(call_color_vec2_callback, "p<Color><Vec2>)<Color>", color_vec2_callback, color, vec2)
+expect_struct_raw(callback_color_vec2, "Color")
+expect_equal(callback_color_vec2$r, 2)
+expect_equal(callback_color_vec2$g, 4)
+expect_equal(callback_color_vec2$b, 4)
+expect_equal(callback_color_vec2$a, 6)
+
+call_nested_vec2_callback <- dynsym(aggregate_fixture, "rdyncall_test_call_nested_vec2_callback")
+nested_vec2_callback <- ccallback("<NestedVec2>)d", function(x) {
+    expect_struct_raw(x, "NestedVec2")
+    expect_struct_raw(x$xy, "Vec2")
+    x$xy$x + x$xy$y
+})
+expect_equal(dyncall(call_nested_vec2_callback, "p<NestedVec2>)d", nested_vec2_callback, nested_vec2), 11.75)
+
+call_packed_char_double_callback <- dynsym(aggregate_fixture, "rdyncall_test_call_packed_char_double_callback")
+packed_char_double_callback <- ccallback("<PackedCharDouble>)d", function(x) {
+    expect_struct_raw(x, "PackedCharDouble")
+    x$c + x$d
+})
+expect_equal(dyncall(call_packed_char_double_callback, "p<PackedCharDouble>)d", packed_char_double_callback, packed_char_double), 9.5)
+
 call_make_color_callback <- dynsym(aggregate_fixture, "rdyncall_test_call_make_color_callback")
 make_color_callback <- ccallback("CCCC)<Color>", function(r, g, b, a) {
     out <- cdata(Color)
@@ -501,6 +557,23 @@ expect_struct_raw(callback_more, "MoreThanRegs")
 for (field in names(more_values)) {
     expect_equal(unpack(callback_more, field_offset(MoreThanRegs, field), "d"), 20 + more_values[[field]])
 }
+
+wrong_color_type_callback <- ccallback("CCCC)<Color>", function(r, g, b, a) cdata(Vec2))
+expect_warning(
+    dyncall(call_make_color_callback, "pCCCC)<Color>", wrong_color_type_callback, 1L, 2L, 3L, 4L),
+    "aggregate callback return value has incompatible type or storage"
+)
+
+wrong_color_size_callback <- ccallback("CCCC)<Color>", function(r, g, b, a) {
+    out <- raw(1L)
+    attr(out, "struct") <- "Color"
+    class(out) <- "struct"
+    out
+})
+expect_warning(
+    dyncall(call_make_color_callback, "pCCCC)<Color>", wrong_color_size_callback, 1L, 2L, 3L, 4L),
+    "aggregate callback return value has incompatible type or storage"
+)
 
 # Aggregate errors remain explicit.
 wrong_color <- color
