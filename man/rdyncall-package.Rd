@@ -27,7 +27,7 @@ through raw-backed \code{\link[=cdata]{cdata()}} objects. The aggregate layout s
 ordinary struct and union fields, fixed-size array fields, integer bitfields,
 packed layouts, manual alignment directives and by-value aggregate calls on
 supported DynCall backends. Aggregate by-value callback arguments and returns
-are currently unsupported.
+are supported on implemented 64-bit x86 and ARM64 dyncallback backends.
 
 R functions can be wrapped as C function pointers with \code{\link[=ccallback]{ccallback()}}. Keep an
 R reference to callback objects for as long as foreign code may call them.

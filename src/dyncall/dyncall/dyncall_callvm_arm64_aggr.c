@@ -44,8 +44,10 @@ static DCsize dc_arm64_align_up(DCsize x, DCsize align)
 
 static DCsize dc_arm64_stack_align(const DCaggr* ag)
 {
-  DCsize align = ag && ag->alignment ? ag->alignment : 1;
-  return align > 8 ? 8 : align;
+  (void)ag;
+  /* AAPCS64 stack aggregate arguments use 8-byte argument slots. The
+     aggregate's own alignment is for object layout, not stack slot placement. */
+  return 8;
 }
 
 static void dc_arm64_append_stack(DCCallVM_arm64* self, const void* x, DCsize size, DCsize align, int pad_to_8)
@@ -201,8 +203,10 @@ static void dc_callvm_argAggr_arm64(DCCallVM* in_self, const DCaggr* ag, const v
   if(dc_arm64_is_hfa(ag, &hfa_type, &hfa_count)) {
     if(self->f + hfa_count <= DC_ARM64_NUM_REGS)
       dc_arm64_copy_hfa_to_regs(self, ag, (const DCchar*)x, hfa_type);
-    else
+    else {
       dc_arm64_append_stack(self, x, ag->size, dc_arm64_stack_align(ag), 1);
+      self->f = DC_ARM64_NUM_REGS;
+    }
     return;
   }
 
@@ -218,6 +222,7 @@ static void dc_callvm_argAggr_arm64(DCCallVM* in_self, const DCaggr* ag, const v
   }
 
   dc_arm64_append_stack(self, x, ag->size, dc_arm64_stack_align(ag), 1);
+  self->i = DC_ARM64_NUM_REGS;
 }
 
 static void dc_callvm_argAggr_arm64_vararg(DCCallVM* in_self, const DCaggr* ag, const void* x)

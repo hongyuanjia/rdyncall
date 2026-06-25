@@ -32,7 +32,18 @@
 #' Finally, the handler evaluates the R call expression within the environment
 #' given by `envir`. On return, the R return value of `fun` is coerced to the C
 #' value, according to the return type signature specified in `signature` .
-#' Aggregate by-value callback arguments and returns are currently unsupported.
+#'
+#' Aggregate by-value callback arguments and returns use the same `<Type>`
+#' signature syntax as [dyncall()]. An aggregate argument is passed to the R
+#' callback as a raw-backed `cdata` object with `struct` and `typeinfo`
+#' attributes. An aggregate return value must be a raw-backed object for the
+#' same aggregate type and size. Type or storage mismatches disable the callback
+#' and emit a warning.
+#'
+#' Aggregate callbacks are supported on the implemented 64-bit x86 and ARM64
+#' dyncallback backends. On unsupported backends, creating a callback whose
+#' signature contains `<Type>` fails early.
+#'
 #' If an error occurs during the evaluation, the callback will be disabled for
 #' further invocations. (This behaviour might change in the future.)
 #'
@@ -87,12 +98,79 @@
 #' @rdname callback
 #' @export
 ccallback <- function(signature, fun, envir = new.env()) {
+    caller <- parent.frame()
     stopifnot(is.character(signature))
     stopifnot(is.function(fun))
     stopifnot(is.environment(envir))
-    if (grepl("<", signature, fixed = TRUE)) {
-        stop("aggregate callback signatures are not supported", call. = FALSE)
+
+    info <- callback_signature_info(signature, caller)
+    .Call("C_callback", info$signature, info$aggregates, info$typeinfos, fun, envir, PACKAGE = "rdyncall")
+}
+
+callback_signature_info <- function(signature, envir = parent.frame()) {
+    if (!is.character(signature) || length(signature) != 1L || is.na(signature)) {
+        stop("'signature' must be a single character string", call. = FALSE)
     }
 
-    .Call("C_callback", signature, fun, envir, PACKAGE = "rdyncall")
+    n <- nchar(signature)
+    i <- 1L
+    out <- character()
+    aggregates <- list()
+    typeinfos <- list()
+
+    append_aggregate <- function(name) {
+        info <- get_typeinfo(name, envir = envir)
+        if (is.null(info)) {
+            stop("unknown aggregate type '", name, "'", call. = FALSE)
+        }
+        aggregates[[length(aggregates) + 1L]] <<- dyncall_aggregate_layout(name, envir = envir)
+        typeinfos[[length(typeinfos) + 1L]] <<- info
+    }
+
+    append_pointer <- function() {
+        out[[length(out) + 1L]] <<- "p"
+    }
+
+    if (n >= 2L && substr(signature, 1L, 1L) == "_") {
+        out <- c(substr(signature, 1L, 1L), substr(signature, 2L, 2L))
+        i <- 3L
+    }
+
+    while (i <= n) {
+        ch <- substr(signature, i, i)
+
+        if (ch == "A") {
+            stop("signature type 'A' is reserved for internal aggregate callbacks; use '<Type>'", call. = FALSE)
+        }
+
+        if (ch == "*") {
+            while (i <= n && substr(signature, i, i) == "*") {
+                i <- i + 1L
+            }
+            if (i > n) {
+                stop("invalid pointer signature: missing pointed-to type", call. = FALSE)
+            }
+            if (substr(signature, i, i) == "<") {
+                type <- dyncall_aggregate_signature_type(signature, i)
+                i <- type$next_index + 1L
+            } else {
+                i <- i + 1L
+            }
+            append_pointer()
+            next
+        }
+
+        if (ch == "<") {
+            type <- dyncall_aggregate_signature_type(signature, i)
+            append_aggregate(type$name)
+            out[[length(out) + 1L]] <- "A"
+            i <- type$next_index + 1L
+            next
+        }
+
+        out[[length(out) + 1L]] <- ch
+        i <- i + 1L
+    }
+
+    list(signature = paste0(out, collapse = ""), aggregates = aggregates, typeinfos = typeinfos)
 }

@@ -42,7 +42,18 @@ specified. See \code{\link[=dyncall]{dyncall()}} for details on the format.
 Finally, the handler evaluates the R call expression within the environment
 given by \code{envir}. On return, the R return value of \code{fun} is coerced to the C
 value, according to the return type signature specified in \code{signature} .
-Aggregate by-value callback arguments and returns are currently unsupported.
+
+Aggregate by-value callback arguments and returns use the same \verb{<Type>}
+signature syntax as \code{\link[=dyncall]{dyncall()}}. An aggregate argument is passed to the R
+callback as a raw-backed \code{cdata} object with \code{struct} and \code{typeinfo}
+attributes. An aggregate return value must be a raw-backed object for the
+same aggregate type and size. Type or storage mismatches disable the callback
+and emit a warning.
+
+Aggregate callbacks are supported on the implemented 64-bit x86 and ARM64
+dyncallback backends. On unsupported backends, creating a callback whose
+signature contains \verb{<Type>} fails early.
+
 If an error occurs during the evaluation, the callback will be disabled for
 further invocations. (This behaviour might change in the future.)
 }

@@ -32,25 +32,39 @@ jobs:
         if: runner.os == 'Windows'
         run: cmake -S src/dyncall -B build/dyncall -A ARM64 -DLANG_CXX=OFF
 
-      - name: Build dyncall plain aggregate test
+      - name: Build dyncall native aggregate tests
         if: runner.os != 'Windows'
-        run: cmake --build build/dyncall --target plain --config Release --parallel
+        run: >
+          cmake --build build/dyncall --config Release --parallel
+          --target plain call_suite_aggrs callback_plain callback_suite_aggrs
 
-      - name: Build dyncall plain aggregate test (Windows ARM64)
+      - name: Build dyncall native aggregate tests (Windows ARM64)
         if: runner.os == 'Windows'
         run: |
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           $msbuild = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
           if (-not $msbuild) { throw "MSBuild not found" }
-          & $msbuild .\build\dyncall\test\plain\plain.vcxproj /p:Configuration=Release /p:Platform=ARM64 /m
+          $targets = @("plain", "call_suite_aggrs", "callback_plain", "callback_suite_aggrs")
+          foreach ($target in $targets) {
+            & $msbuild ".\build\dyncall\test\$target\$target.vcxproj" /p:Configuration=Release /p:Platform=ARM64 /m
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
 
-      - name: Run dyncall plain aggregate test
+      - name: Run dyncall native aggregate tests
         if: runner.os != 'Windows'
-        run: ./build/dyncall/test/plain/plain
+        run: |
+          ./build/dyncall/test/plain/plain
+          ./build/dyncall/test/call_suite_aggrs/call_suite_aggrs
+          ./build/dyncall/test/callback_plain/callback_plain
+          ./build/dyncall/test/callback_suite_aggrs/callback_suite_aggrs
 
-      - name: Run dyncall plain aggregate test (Windows ARM64)
+      - name: Run dyncall native aggregate tests (Windows ARM64)
         if: runner.os == 'Windows'
-        run: .\\build\\dyncall\\test\\plain\\Release\\plain.exe
+        run: |
+          .\build\dyncall\test\plain\Release\plain.exe
+          .\build\dyncall\test\call_suite_aggrs\Release\call_suite_aggrs.exe
+          .\build\dyncall\test\callback_plain\Release\callback_plain.exe
+          .\build\dyncall\test\callback_suite_aggrs\Release\callback_suite_aggrs.exe
 
   r-focused:
     name: R focused aggregate (${{ matrix.os }})
