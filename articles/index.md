@@ -16,3 +16,8 @@
 
 - [dynbind and DynPort
   bindings](https://hongyuanjia.github.io/rdyncall/articles/dynbind-dynport.md):
+
+### Diagnostics
+
+- [Troubleshooting rdyncall
+  bindings](https://hongyuanjia.github.io/rdyncall/articles/troubleshooting.md):

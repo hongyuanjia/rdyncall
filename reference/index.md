@@ -24,6 +24,7 @@
   [`dyncall.fastcall()`](https://hongyuanjia.github.io/rdyncall/reference/dyncall.md)
   : Foreign Function Interface with support for almost all C types
 - [`dynfind()`](https://hongyuanjia.github.io/rdyncall/reference/dynfind.md)
+  [`dynfind_explain()`](https://hongyuanjia.github.io/rdyncall/reference/dynfind.md)
   : Portable searching and loading of shared libraries
 - [`dynload()`](https://hongyuanjia.github.io/rdyncall/reference/dynload.md)
   [`dynunload()`](https://hongyuanjia.github.io/rdyncall/reference/dynload.md)

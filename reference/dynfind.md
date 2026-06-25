@@ -6,6 +6,8 @@ Function to load shared libraries using a platform-portable interface.
 
 ``` r
 dynfind(libnames, auto.unload = TRUE)
+
+dynfind_explain(libnames, try.load = TRUE)
 ```
 
 ## Arguments
@@ -21,15 +23,31 @@ dynfind(libnames, auto.unload = TRUE)
   [`dynload()`](https://hongyuanjia.github.io/rdyncall/reference/dynload.md)
   for details.
 
+- try.load:
+
+  logical: if `TRUE`, attempt candidates in `dynfind()` order until one
+  loads. The loaded handle is immediately closed with
+  [`dynunload()`](https://hongyuanjia.github.io/rdyncall/reference/dynload.md).
+
 ## Value
 
 `dynfind()` returns an external pointer (library handle), if search was
 successful. Otherwise, if no library is located, a `NULL` is returned.
 
+`dynfind_explain()` returns a data frame with columns `libname`,
+`source`, `candidate`, `exists`, `loaded`, and `resolved_path`. `loaded`
+is `NA` for candidates that were not attempted because an earlier
+candidate loaded, or because `try.load = FALSE`.
+
 ## Details
 
 `dynfind()` offers a platform-portable naming interface for loading a
 specific shared library.
+
+`dynfind_explain()` returns the candidate paths that `dynfind()` would
+try, optionally attempts them in the same order, and records the first
+loadable candidate. It is intended for diagnosing platform-specific
+library discovery failures without keeping a library handle open.
 
 The naming scheme and standard locations of shared libraries are
 OS-specific. When loading a shared library dynamically at run-time
@@ -84,9 +102,14 @@ current R runtime, such as `R.home("lib")` and `R.home("bin")`, and
 common package-manager library locations such as Homebrew
 (`HOMEBREW_PREFIX`, `/opt/homebrew`, `/usr/local`), MacPorts
 (`MACPORTS_PREFIX`, `/opt/local`), Linuxbrew
-(`/home/linuxbrew/.linuxbrew`) and Scoop (`SCOOP`, `SCOOP_GLOBAL`,
-`ProgramData/scoop`). (The set of hardcoded locations might expand and
-change within the next minor releases).
+(`/home/linuxbrew/.linuxbrew`), Scoop (`SCOOP`, `SCOOP_GLOBAL`,
+`ProgramData/scoop`), MSYS2 (`MINGW_PREFIX`, `MSYSTEM_PREFIX`,
+`C:/msys64`), vcpkg (`VCPKG_ROOT`) and conda (`CONDA_PREFIX`). On
+Windows, when `dynfind()` tries a full DLL path from one of these
+directories, it temporarily prepends that directory to `PATH` for the
+load attempt so that sibling transitive DLL dependencies can be
+resolved. (The set of hardcoded locations might expand and change within
+the next minor releases).
 
 The file extension depends on the OS: `.dll` (Windows), `.dylib`
 (macOS), `.so` (all others).
@@ -109,3 +132,18 @@ passing over the parameter `auto.unload`.
 See
 [`dynload()`](https://hongyuanjia.github.io/rdyncall/reference/dynload.md)
 for details on the loader interface to the OS-specific dynamic linker.
+
+## Examples
+
+``` r
+diag <- dynfind_explain(c("msvcrt", "m", "m.so.6"), try.load = FALSE)
+head(diag)
+#> dynfind candidates; load attempts were not run:
+#>  libname source    candidate exists loaded resolved_path
+#>   msvcrt loader libmsvcrt.so  FALSE     NA          <NA>
+#>   msvcrt loader    libmsvcrt  FALSE     NA          <NA>
+#>   msvcrt loader       msvcrt  FALSE     NA          <NA>
+#>        m loader      libm.so  FALSE     NA          <NA>
+#>        m loader         libm  FALSE     NA          <NA>
+#>        m loader            m  FALSE     NA          <NA>
+```
