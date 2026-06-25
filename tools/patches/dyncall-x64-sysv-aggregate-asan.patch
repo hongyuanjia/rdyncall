@@ -1,0 +1,37 @@
+diff --git a/src/dyncall/dyncall/dyncall_callvm_x64.c b/src/dyncall/dyncall/dyncall_callvm_x64.c
+index 5f5a45a..5050492 100644
+--- a/src/dyncall/dyncall/dyncall_callvm_x64.c
++++ b/src/dyncall/dyncall/dyncall_callvm_x64.c
+@@ -165,6 +165,8 @@ static void dc_callvm_argPointer_x64(DCCallVM* in_self, DCpointer x)
+ static void dc_callvm_argAggr_x64(DCCallVM* in_self, const DCaggr* ag, const void* x)
+ {
+   int i;
++  DCsize offset, size;
++  union { DClonglong i; DCdouble f; } eightbyte;
+   DCCallVM_x64* self = (DCCallVM_x64*)in_self;
+ 
+   if (!ag) {
+@@ -196,9 +198,16 @@ static void dc_callvm_argAggr_x64(DCCallVM* in_self, const DCaggr* ag, const voi
+ 
+   for(i=0; ag->sysv_classes[i] && i<DC_SYSV_MAX_NUM_CLASSES; ++i)
+   {
++    offset = (DCsize)i * sizeof(DClonglong);
++    size = offset < ag->size ? ag->size - offset : 0;
++    if(size > sizeof(DClonglong))
++      size = sizeof(DClonglong);
++    memset(&eightbyte, 0, sizeof(eightbyte));
++    memcpy(&eightbyte, (const DCchar*)x + offset, size);
++
+     switch (ag->sysv_classes[i]) {
+-      case SYSVC_INTEGER: dc_callvm_argLongLong_x64(in_self, ((DClonglong*)x)[i]); break;
+-      case SYSVC_SSE:     dc_callvm_argDouble_x64  (in_self, ((DCdouble  *)x)[i]); break;
++      case SYSVC_INTEGER: dc_callvm_argLongLong_x64(in_self, eightbyte.i); break;
++      case SYSVC_SSE:     dc_callvm_argDouble_x64  (in_self, eightbyte.f); break;
+       /* @@@AGGR implement when implementing x87 types */
+     }
+   }
+@@ -520,4 +529,3 @@ DCCallVM* dcNewCallVM(DCsize size)
+ 
+   return (DCCallVM*)p;
+ }
+-
