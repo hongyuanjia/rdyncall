@@ -13,6 +13,7 @@
 #include <string.h>
 
 #define RDYNCALL_CALLBACK_MAX_AGGRS 256
+#define RDYNCALL_CALLBACK_TAG "rdyncall.callback"
 
 #if defined(DC__Feature_AggrByVal) && (defined(DC__Arch_AMD64) || defined(DC__Arch_ARM64))
 #define RDYNCALL_HAS_CALLBACK_AGGR_BYVAL 1
@@ -24,11 +25,18 @@ typedef struct
   SEXP        signature_x;
   SEXP        fun;
   SEXP        rho;
+  SEXP        state;
+  SEXP        last_error;
   SEXP        aggr_typeinfos;
   int         nargs;
   int         naggrs;
   int         aggr_count;
   const char* signature; /* argument signature without call mode prefix */
+  unsigned long invocations;
+  unsigned long successful_invocations;
+  unsigned long error_invocations;
+  unsigned long disabled_invocations;
+  const char* disable_reason;
   DCaggr**    callback_aggrs;
   DCaggr**    all_aggrs;
 } R_Callback;
@@ -180,6 +188,166 @@ static int rcallback_expect_struct(SEXP x, SEXP typeinfo, int size)
   return strcmp(actual, expected) == 0;
 }
 
+static SEXP C_callback_tag(void)
+{
+  return Rf_install(RDYNCALL_CALLBACK_TAG);
+}
+
+static int C_is_callback(SEXP callback)
+{
+  return TYPEOF(callback) == EXTPTRSXP &&
+    R_ExternalPtrAddr(callback) != NULL &&
+    R_ExternalPtrTag(callback) == C_callback_tag();
+}
+
+static R_Callback* C_callback_data(SEXP callback)
+{
+  DCCallback* cb;
+  R_Callback* rdata;
+
+  if (!C_is_callback(callback))
+    Rf_error("not an rdyncall callback");
+
+  cb = R_ExternalPtrAddr(callback);
+  rdata = (R_Callback*) dcbGetUserData(cb);
+  if (!rdata)
+    Rf_error("not an rdyncall callback");
+
+  return rdata;
+}
+
+static SEXP C_callback_last_error_object(R_Callback* rdata)
+{
+  SEXP last_error;
+
+  if (!rdata)
+    return R_NilValue;
+
+  if (rdata->last_error != R_NilValue)
+    return rdata->last_error;
+
+  if (rdata->state == R_NilValue || TYPEOF(rdata->state) != ENVSXP)
+    return R_NilValue;
+
+  last_error = Rf_eval(Rf_install("last_error"), rdata->state);
+  return last_error == R_UnboundValue ? R_NilValue : last_error;
+}
+
+static void C_callback_store_last_error(R_Callback* rdata, SEXP last_error)
+{
+  if (!rdata)
+    return;
+
+  if (rdata->last_error != R_NilValue)
+    R_ReleaseObject(rdata->last_error);
+
+  rdata->last_error = last_error;
+
+  if (rdata->last_error != R_NilValue)
+    R_PreserveObject(rdata->last_error);
+}
+
+static void C_callback_set_last_error(R_Callback* rdata, const char* message, const char* reason)
+{
+  SEXP last_error, names;
+
+  if (!rdata)
+    return;
+
+  PROTECT(last_error = Rf_allocVector(VECSXP, 3));
+  PROTECT(names = Rf_allocVector(STRSXP, 3));
+
+  SET_STRING_ELT(names, 0, Rf_mkChar("message"));
+  SET_STRING_ELT(names, 1, Rf_mkChar("class"));
+  SET_STRING_ELT(names, 2, Rf_mkChar("reason"));
+  Rf_setAttrib(last_error, R_NamesSymbol, names);
+
+  SET_VECTOR_ELT(last_error, 0, Rf_mkString(message ? message : ""));
+  SET_VECTOR_ELT(last_error, 1, Rf_mkString("rdyncall_callback_error"));
+  SET_VECTOR_ELT(last_error, 2, Rf_mkString(reason ? reason : ""));
+
+  C_callback_store_last_error(rdata, last_error);
+  UNPROTECT(2);
+}
+
+static void C_callback_disable(R_Callback* rdata, const char* reason, const char* message)
+{
+  rdata->disabled = 1;
+  rdata->disable_reason = reason;
+
+  if (C_callback_last_error_object(rdata) == R_NilValue)
+    C_callback_set_last_error(rdata, message, reason);
+}
+
+static void C_callback_disable_error(R_Callback* rdata, const char* reason, const char* message)
+{
+  rdata->error_invocations++;
+  C_callback_disable(rdata, reason, message);
+}
+
+static char C_callback_return_type(R_Callback* rdata, int* return_aggr_index)
+{
+  const char* ptr;
+  int aggr_index = 0;
+
+  if (return_aggr_index)
+    *return_aggr_index = 0;
+  if (!rdata || !rdata->signature)
+    return DC_SIGCHAR_VOID;
+
+  ptr = rdata->signature;
+  while (*ptr && *ptr != ')') {
+    if (*ptr == DC_SIGCHAR_AGGREGATE)
+      aggr_index++;
+    ptr++;
+  }
+  if (*ptr != ')')
+    return DC_SIGCHAR_VOID;
+
+  if (return_aggr_index)
+    *return_aggr_index = aggr_index;
+  return *(ptr + 1) ? *(ptr + 1) : DC_SIGCHAR_VOID;
+}
+
+static char C_callback_zero_return(R_Callback* rdata, DCArgs* args, DCValue* result)
+{
+  int return_aggr_index = 0;
+  char ch = C_callback_return_type(rdata, &return_aggr_index);
+
+  switch (ch) {
+  case DC_SIGCHAR_BOOL:      result->B = DC_FALSE; break;
+  case DC_SIGCHAR_CHAR:      result->c = 0; break;
+  case DC_SIGCHAR_UCHAR:     result->C = 0; break;
+  case DC_SIGCHAR_SHORT:     result->s = 0; break;
+  case DC_SIGCHAR_USHORT:    result->S = 0; break;
+  case DC_SIGCHAR_INT:
+  case DC_SIGCHAR_UINT:      result->i = 0; break;
+  case DC_SIGCHAR_LONG:
+  case DC_SIGCHAR_ULONG:     result->j = 0; break;
+  case DC_SIGCHAR_LONGLONG:
+  case DC_SIGCHAR_ULONGLONG: result->L = 0; break;
+  case DC_SIGCHAR_FLOAT:     result->f = 0.0f; break;
+  case DC_SIGCHAR_DOUBLE:    result->d = 0.0; break;
+  case DC_SIGCHAR_POINTER:   result->p = NULL; break;
+  case DC_SIGCHAR_STRING:    result->p = (DCpointer) ""; break;
+  case DC_SIGCHAR_AGGREGATE:
+    if (rdata && return_aggr_index < rdata->naggrs) {
+      DCaggr *ag = rdata->callback_aggrs[return_aggr_index];
+      void *empty = R_alloc(ag->size, 1);
+      memset(empty, 0, ag->size);
+      dcbReturnAggr(args, result, empty);
+      break;
+    }
+    return DC_SIGCHAR_VOID;
+  case DC_SIGCHAR_VOID:
+  default:
+    result->L = 0;
+    break;
+  }
+
+  return ch;
+}
+
 char R_dcCallbackHandler( DCCallback* pcb, DCArgs* args, DCValue* result, void* userdata )
 {
 	R_Callback* rdata;
@@ -191,7 +359,12 @@ char R_dcCallbackHandler( DCCallback* pcb, DCArgs* args, DCValue* result, void* 
 
 	rdata = (R_Callback*) userdata;
 
-	if (rdata->disabled) return DC_SIGCHAR_VOID;
+	rdata->invocations++;
+
+	if (rdata->disabled) {
+		rdata->disabled_invocations++;
+		return C_callback_zero_return(rdata, args, result);
+	}
 
 	ptr = rdata->signature;
 
@@ -211,10 +384,10 @@ char R_dcCallbackHandler( DCCallback* pcb, DCArgs* args, DCValue* result, void* 
 		ch = *ptr++;
 		if (ch == ')') break;
 		if (i >= n) {
-			warning("invalid signature.");
-			rdata->disabled = 1;
+			warning("invalid callback signature. Callback disabled.");
+			C_callback_disable_error(rdata, "invalid_signature", "invalid callback signature");
 			UNPROTECT(1);
-			return DC_SIGCHAR_VOID;
+			return C_callback_zero_return(rdata, args, result);
 		}
 		switch(ch) {
 		case DC_SIGCHAR_BOOL:      item = ScalarLogical( ( dcbArgBool(args) == DC_FALSE ) ? FALSE : TRUE ); break;
@@ -237,30 +410,30 @@ char R_dcCallbackHandler( DCCallback* pcb, DCArgs* args, DCValue* result, void* 
 			SEXP typeinfo;
 			DCaggr *ag;
 			if (aggr_index >= rdata->naggrs) {
-				warning("invalid aggregate callback signature");
-				rdata->disabled = 1;
+				warning("invalid aggregate callback signature. Callback disabled.");
+				C_callback_disable_error(rdata, "invalid_signature", "invalid aggregate callback signature");
 				UNPROTECT(1);
-				return DC_SIGCHAR_VOID;
+				return C_callback_zero_return(rdata, args, result);
 			}
 			typeinfo = VECTOR_ELT(rdata->aggr_typeinfos, aggr_index);
 			ag = rdata->callback_aggrs[aggr_index++];
 			PROTECT(item = Rf_allocVector(RAWSXP, ag->size));
 			item_protected = 1;
 			if (!dcbArgAggr(args, RAW(item))) {
-				warning("aggregate callback argument is unsupported by this backend");
-				rdata->disabled = 1;
+				warning("aggregate callback argument is unsupported by this backend. Callback disabled.");
+				C_callback_disable_error(rdata, "unsupported_argument", "aggregate callback argument is unsupported by this backend");
 				UNPROTECT(2);
-				return DC_SIGCHAR_VOID;
+				return C_callback_zero_return(rdata, args, result);
 			}
 			rcallback_set_struct_attrib(item, typeinfo);
 			break;
 		}
 		default:
 		case '\0':
-			warning("invalid signature");
-			rdata->disabled = 1;
+			warning("invalid callback signature. Callback disabled.");
+			C_callback_disable_error(rdata, "invalid_signature", "invalid callback signature");
 			UNPROTECT(1);
-			return DC_SIGCHAR_VOID;
+			return C_callback_zero_return(rdata, args, result);
 		}
 		SETCAR( x, item);
 		if (item_protected) {
@@ -273,14 +446,14 @@ char R_dcCallbackHandler( DCCallback* pcb, DCArgs* args, DCValue* result, void* 
 
 	int error = 0;
 
-	PROTECT( ans = R_tryEval( s, rdata->rho, &error ) );
+	PROTECT( ans = R_tryEvalSilent( s, rdata->rho, &error ) );
 
 	if (error)
 	{
 		warning("an error occurred during callback invocation in R. Callback disabled.");
-		rdata->disabled = 1;
+		C_callback_disable_error(rdata, "r_error", "an error occurred during callback invocation in R");
 		UNPROTECT(2);
-		return DC_SIGCHAR_VOID;
+		return C_callback_zero_return(rdata, args, result);
 	}
 
 	/* propagate return value */
@@ -357,37 +530,41 @@ char R_dcCallbackHandler( DCCallback* pcb, DCArgs* args, DCValue* result, void* 
 			}
 			break;
 		case DC_SIGCHAR_STRING:
-			warning("not implemented");
-			rdata->disabled = 1;
-			break;
+			warning("callback string return values are not implemented. Callback disabled.");
+			C_callback_disable_error(rdata, "unsupported_return", "callback string return values are not implemented");
+			UNPROTECT(2);
+			return C_callback_zero_return(rdata, args, result);
 		case DC_SIGCHAR_AGGREGATE:
 		{
 			SEXP typeinfo;
 			DCaggr *ag;
 			if (aggr_index >= rdata->naggrs) {
-				warning("invalid aggregate callback return signature");
-				rdata->disabled = 1;
-				break;
+				warning("invalid aggregate callback return signature. Callback disabled.");
+				C_callback_disable_error(rdata, "invalid_signature", "invalid aggregate callback return signature");
+				UNPROTECT(2);
+				return C_callback_zero_return(rdata, args, result);
 			}
 			typeinfo = VECTOR_ELT(rdata->aggr_typeinfos, aggr_index);
 			ag = rdata->callback_aggrs[aggr_index];
 			if (!rcallback_expect_struct(ans, typeinfo, ag->size)) {
-				warning("aggregate callback return value has incompatible type or storage");
-				rdata->disabled = 1;
-				break;
+				warning("aggregate callback return value has incompatible type or storage. Callback disabled.");
+				C_callback_disable_error(rdata, "invalid_return", "aggregate callback return value has incompatible type or storage");
+				UNPROTECT(2);
+				return C_callback_zero_return(rdata, args, result);
 			}
 			dcbReturnAggr(args, result, RAW(ans));
 			break;
 		}
 		}
 	}
+	rdata->successful_invocations++;
 	UNPROTECT(2);
 	return ch;
 }
 
 void R_callback_finalizer(SEXP x);
 
-SEXP C_callback(SEXP sig_x, SEXP aggr_layouts_x, SEXP aggr_typeinfos_x, SEXP fun_x, SEXP rho_x)
+SEXP C_callback(SEXP sig_x, SEXP aggr_layouts_x, SEXP aggr_typeinfos_x, SEXP fun_x, SEXP rho_x, SEXP state_x)
 {
   const char* signature;
   R_Callback* rdata;
@@ -412,14 +589,18 @@ SEXP C_callback(SEXP sig_x, SEXP aggr_layouts_x, SEXP aggr_typeinfos_x, SEXP fun
   rdata->signature_x = sig_x;
   rdata->fun = fun_x;
   rdata->rho = rho_x;
+  rdata->state = state_x;
+  rdata->last_error = R_NilValue;
   rdata->aggr_typeinfos = aggr_typeinfos_x;
   rdata->naggrs = (int) naggrs;
   rdata->aggr_count = 0;
+  rdata->disable_reason = NULL;
   rdata->callback_aggrs = NULL;
   rdata->all_aggrs = NULL;
   R_PreserveObject(rdata->signature_x);
   R_PreserveObject(rdata->fun);
   R_PreserveObject(rdata->rho);
+  R_PreserveObject(rdata->state);
   R_PreserveObject(rdata->aggr_typeinfos);
 
   if (naggrs > 0) {
@@ -435,7 +616,10 @@ SEXP C_callback(SEXP sig_x, SEXP aggr_layouts_x, SEXP aggr_typeinfos_x, SEXP fun
     R_ReleaseObject(rdata->signature_x);
     R_ReleaseObject(rdata->fun);
     R_ReleaseObject(rdata->rho);
+    R_ReleaseObject(rdata->state);
     R_ReleaseObject(rdata->aggr_typeinfos);
+    if (rdata->last_error != R_NilValue)
+      R_ReleaseObject(rdata->last_error);
     R_Free(rdata);
     Rf_error("aggregate by-value callbacks are unsupported by this backend");
 #endif
@@ -464,11 +648,14 @@ SEXP C_callback(SEXP sig_x, SEXP aggr_layouts_x, SEXP aggr_typeinfos_x, SEXP fun
     R_ReleaseObject(rdata->signature_x);
     R_ReleaseObject(rdata->fun);
     R_ReleaseObject(rdata->rho);
+    R_ReleaseObject(rdata->state);
     R_ReleaseObject(rdata->aggr_typeinfos);
+    if (rdata->last_error != R_NilValue)
+      R_ReleaseObject(rdata->last_error);
     R_Free(rdata);
     Rf_error("failed to create callback");
   }
-  SEXP ans = R_MakeExternalPtr( cb, R_NilValue, R_NilValue );
+  SEXP ans = R_MakeExternalPtr( cb, C_callback_tag(), state_x );
   R_RegisterCFinalizerEx(ans, R_callback_finalizer, TRUE);
   return ans;
 }
@@ -481,11 +668,63 @@ void R_callback_finalizer(SEXP x)
   R_ReleaseObject(rdata->signature_x);
   R_ReleaseObject(rdata->fun);
   R_ReleaseObject(rdata->rho);
+  R_ReleaseObject(rdata->state);
   R_ReleaseObject(rdata->aggr_typeinfos);
+  if (rdata->last_error != R_NilValue)
+    R_ReleaseObject(rdata->last_error);
   rcallback_free_aggrs(rdata);
   if (rdata->callback_aggrs) R_Free(rdata->callback_aggrs);
   if (rdata->all_aggrs) R_Free(rdata->all_aggrs);
   R_Free(rdata);
   dcbFreeCallback(cb);
   R_ClearExternalPtr(x);
+}
+
+SEXP C_callback_status(SEXP callback)
+{
+  R_Callback* rdata = C_callback_data(callback);
+  SEXP ans, names, last_error;
+
+  PROTECT(ans = Rf_allocVector(VECSXP, 9));
+  PROTECT(names = Rf_allocVector(STRSXP, 9));
+
+  SET_STRING_ELT(names, 0, Rf_mkChar("active"));
+  SET_STRING_ELT(names, 1, Rf_mkChar("disabled"));
+  SET_STRING_ELT(names, 2, Rf_mkChar("signature"));
+  SET_STRING_ELT(names, 3, Rf_mkChar("invocations"));
+  SET_STRING_ELT(names, 4, Rf_mkChar("successful_invocations"));
+  SET_STRING_ELT(names, 5, Rf_mkChar("error_invocations"));
+  SET_STRING_ELT(names, 6, Rf_mkChar("disabled_invocations"));
+  SET_STRING_ELT(names, 7, Rf_mkChar("disable_reason"));
+  SET_STRING_ELT(names, 8, Rf_mkChar("last_error"));
+  Rf_setAttrib(ans, R_NamesSymbol, names);
+
+  SET_VECTOR_ELT(ans, 0, Rf_ScalarLogical(!rdata->disabled));
+  SET_VECTOR_ELT(ans, 1, Rf_ScalarLogical(rdata->disabled));
+  SET_VECTOR_ELT(ans, 2, Rf_duplicate(rdata->signature_x));
+  SET_VECTOR_ELT(ans, 3, Rf_ScalarReal((double) rdata->invocations));
+  SET_VECTOR_ELT(ans, 4, Rf_ScalarReal((double) rdata->successful_invocations));
+  SET_VECTOR_ELT(ans, 5, Rf_ScalarReal((double) rdata->error_invocations));
+  SET_VECTOR_ELT(ans, 6, Rf_ScalarReal((double) rdata->disabled_invocations));
+  SET_VECTOR_ELT(ans, 7, rdata->disable_reason ? Rf_mkString(rdata->disable_reason) : R_NilValue);
+  last_error = C_callback_last_error_object(rdata);
+  SET_VECTOR_ELT(ans, 8, last_error == R_NilValue ? R_NilValue : Rf_duplicate(last_error));
+
+  Rf_setAttrib(ans, R_ClassSymbol, Rf_mkString("callback_status"));
+
+  UNPROTECT(2);
+  return ans;
+}
+
+SEXP C_callback_is_active(SEXP callback)
+{
+  R_Callback* rdata = C_callback_data(callback);
+  return Rf_ScalarLogical(!rdata->disabled);
+}
+
+SEXP C_callback_last_error(SEXP callback)
+{
+  R_Callback* rdata = C_callback_data(callback);
+  SEXP last_error = C_callback_last_error_object(rdata);
+  return last_error == R_NilValue ? R_NilValue : Rf_duplicate(last_error);
 }

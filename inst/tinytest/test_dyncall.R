@@ -89,9 +89,11 @@ build_aggregate_by_value_fixture <- function() {
     outdir <- tempfile("rdyncall-aggr-fixture-")
     dir.create(outdir)
     outdir <- normalizePath(outdir, winslash = "/", mustWork = TRUE)
+    src_copy <- file.path(outdir, basename(src))
+    file.copy(src, src_copy)
     lib <- file.path(outdir, paste0("aggregate_by_value", .Platform$dynlib.ext))
     out <- system2(file.path(R.home("bin"), "R"),
-        c("CMD", "SHLIB", "-o", lib, src),
+        c("CMD", "SHLIB", "-o", lib, src_copy),
         stdout = TRUE, stderr = TRUE
     )
     if (!is.null(attr(out, "status"))) {

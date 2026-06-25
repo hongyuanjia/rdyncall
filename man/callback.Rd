@@ -4,9 +4,21 @@
 \alias{ccallback}
 \alias{callback}
 \alias{dyncallback}
+\alias{callback_status}
+\alias{callback_is_active}
+\alias{callback_last_error}
+\alias{print.callback_status}
 \title{Dynamic wrapping of R functions as C callbacks}
 \usage{
 ccallback(signature, fun, envir = new.env())
+
+callback_status(callback)
+
+callback_is_active(callback)
+
+callback_last_error(callback)
+
+\method{print}{callback_status}(x, ...)
 }
 \arguments{
 \item{signature}{character string specifying the
@@ -15,9 +27,19 @@ ccallback(signature, fun, envir = new.env())
 \item{fun}{R function to be wrapped as a C function pointer.}
 
 \item{envir}{the environment in which to evaluate the call to \code{fun}.}
+
+\item{callback}{external pointer returned by \code{ccallback()}.}
+
+\item{x}{object returned by \code{callback_status()}.}
+
+\item{...}{unused.}
 }
 \value{
 An external pointer to a synthetically generated C function.
+
+\code{callback_status()} returns a list with class \code{callback_status}.
+\code{callback_is_active()} returns a single logical value.
+\code{callback_last_error()} returns \code{NULL} or a list describing the last error.
 }
 \description{
 Function to wrap R functions as C function pointers.
@@ -55,7 +77,17 @@ dyncallback backends. On unsupported backends, creating a callback whose
 signature contains \verb{<Type>} fails early.
 
 If an error occurs during the evaluation, the callback will be disabled for
-further invocations. (This behaviour might change in the future.)
+further invocations. Use \code{callback_status()} or \code{callback_last_error()} to
+inspect a callback after foreign code has invoked it.
+
+\code{callback_status()} reports whether a callback is still active, how many
+times it has been invoked, and why it was disabled. A disabled callback is
+not re-enabled by these helpers; create a new callback if foreign code needs
+to call into R again.
+
+\code{callback_is_active()} returns only the active flag. \code{callback_last_error()}
+returns \code{NULL} until an error disables the callback. Once an error has been
+recorded, it returns a list with \code{message}, \code{class}, and \code{reason}.
 }
 \note{
 The call signature \strong{MUST} match the foreign C callback function type,
@@ -87,6 +119,13 @@ cb <- ccallback("pp)i", function(px, py) {
 x <- rnorm(100)
 qsort(x, length(x), 8, cb)
 x
+
+cb <- ccallback("i)i", function(x) {
+    if (x < 0) stop("negative values are not supported")
+    x
+})
+callback_is_active(cb)
+callback_status(cb)
 
 }
 \references{

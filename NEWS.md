@@ -19,6 +19,8 @@
 - Store aggregate field names in the explicit `typeinfo$fields$name` column.
 - Add dedicated print methods for `typeinfo`, `struct`, `ctype`,
   `dynbind.report` and `floatraw` objects.
+- Add `callback_status()`, `callback_is_active()` and `callback_last_error()`
+  for inspecting rdyncall callback invocation and error state.
 - Add `struct` and `union` bitfield layout, access, DynPort parsing, and by-value aggregate support.
 - Add the `rdyncall.callvm.size` option to configure CallVM argument stack size at package load.
 - Add by-value aggregate argument and return support to `dyncall()` for registered `struct` and `union` types on supported dyncall backends, including ARM64 aggregate ABI handling.
