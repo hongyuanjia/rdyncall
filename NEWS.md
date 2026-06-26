@@ -1,37 +1,43 @@
 # rdyncall 0.10.0
 
-- Restore package compilation on current R toolchains.
-- Update the bundled dyncall source and stop tracking generated static libraries.
-- Replace deprecated/internal R C API usage with public accessors where possible.
-- Support `dynlist()` for macOS dyld shared cache libraries.
-- Generate real on-disk R packages from DCF DynPort files via `dynport()`.
+- Restore package compilation on current R toolchains (#19).
+- Update the bundled dyncall source and stop tracking generated static libraries (#19).
+- Replace deprecated/internal R C API usage with public accessors where possible (#19).
+- Support `dynlist()` for macOS dyld shared cache libraries (#20).
+- Generate real on-disk R packages from DCF DynPort files via `dynport()` (#28).
 - Improve generated DynPort packages with argument-preserving wrappers,
   variadic function metadata, generated help pages and a cleanup helper for
-  the managed DynPort library.
+  the managed DynPort library (#52).
+- Support `Constant` and `Variadic` fields in DCF DynPort files, including
+  binding variadic entries through `dyncall_variadic()` (#53).
 - Add `dyncall_variadic()` for calling C variadic functions with explicit
-  call-site vararg signatures.
+  call-site vararg signatures (#35).
 - Allow `dynbind()` to accept direct library paths and existing external
-  pointer handles in addition to short library names.
+  pointer handles in addition to short library names (#29).
 - Improve `dynfind()` discovery for libraries installed by common package
-  managers, including Homebrew, MacPorts, Linuxbrew and Scoop.
+  managers, including Homebrew, MacPorts, Linuxbrew and Scoop (#31).
 - Improve `dynfind()` discovery of the current R runtime library and avoid
-  treating same-named directories as direct `dynbind()` library paths.
+  treating same-named directories as direct `dynbind()` library paths (#39).
+- Add `dynfind_explain()` diagnostics for shared-library discovery and expand
+  Windows library discovery coverage (#48).
 - Return nested aggregate fields from `$` as raw-backed `struct` objects so
-  they can be reused for field access and aggregate by-value calls.
-- Fix `cstruct()` and `cunion()` field parsing when whitespace follows the type signature.
-- Store aggregate field names in the explicit `typeinfo$fields$name` column.
+  they can be reused for field access and aggregate by-value calls (#33).
+- Fix `cstruct()` and `cunion()` field parsing when whitespace follows the type signature (#21).
+- Store aggregate field names in the explicit `typeinfo$fields$name` column (#21).
 - Add dedicated print methods for `typeinfo`, `struct`, `ctype`,
-  `dynbind.report` and `floatraw` objects.
+  `dynbind.report` and `floatraw` objects (#41).
 - Add `callback_status()`, `callback_is_active()` and `callback_last_error()`
-  for inspecting rdyncall callback invocation and error state.
-- Add `struct` and `union` bitfield layout, access, DynPort parsing, and by-value aggregate support.
-- Add the `rdyncall.callvm.size` option to configure CallVM argument stack size at package load.
-- Add by-value aggregate argument and return support to `dyncall()` for registered `struct` and `union` types on supported dyncall backends, including ARM64 aggregate ABI handling.
-- Support fixed-size array fields in `struct` and `union` type signatures via the `type[N]` suffix.
-- Add `@packed`, `@pack(n)` and `@align(n)` layout directives for `cstruct()`, `cunion()` and DynPort aggregate definitions.
-- Refresh roxygen-generated documentation and package metadata for renewed development.
-- Generate `NAMESPACE` from roxygen2 metadata instead of maintaining it by hand.
-- Modernize GitHub Actions checks across Linux, macOS, and Windows, with an optional R-hub workflow for extended platform checks.
+  for inspecting rdyncall callback invocation and error state (#49).
+- Add by-value aggregate argument and return support to `ccallback()` for the
+  implemented x86_64 and ARM64 dyncallback backends (#50).
+- Add `struct` and `union` bitfield layout, access, DynPort parsing, and by-value aggregate support (#26).
+- Add the `rdyncall.callvm.size` option to configure CallVM argument stack size at package load (#22).
+- Add by-value aggregate argument and return support to `dyncall()` for registered `struct` and `union` types on supported dyncall backends, including ARM64 aggregate ABI handling (#23).
+- Support fixed-size array fields in `struct` and `union` type signatures via the `type[N]` suffix (#26).
+- Add `@packed`, `@pack(n)` and `@align(n)` layout directives for `cstruct()`, `cunion()` and DynPort aggregate definitions (#26).
+- Refresh roxygen-generated documentation and package metadata for renewed development (#19).
+- Generate `NAMESPACE` from roxygen2 metadata instead of maintaining it by hand (#40).
+- Modernize GitHub Actions checks across Linux, macOS, and Windows, with an optional R-hub workflow for extended platform checks (#19).
 
 # rdyncall 0.9
 
