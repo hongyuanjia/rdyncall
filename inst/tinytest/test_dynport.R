@@ -49,6 +49,11 @@ expect_dynport_portfile_error(c("Version: 1", "  2"), "single string")
 # library
 expect_dynport_portfile_error(c("Library: com", " |.o"), "file name")
 
+# constant
+expect_dynport_portfile_error("Constant: a", "constant specification")
+expect_dynport_portfile_error("Constant: a-b = 1", "constant name")
+expect_dynport_portfile_error("Constant: a = b", "constant value")
+
 # enum
 expect_dynport_portfile_error("Enum: a = 1", "Invalid specification")
 expect_dynport_portfile_error("Enum/test: a = 1 b = 2", "member specification")
@@ -138,6 +143,21 @@ expect_dynport_portfile_error(c(
     "    printf"
 ), "not defined")
 
+parsed_port <- rdyncall:::dynport_read(write_dynport(c(
+    "Package: ParsePort",
+    "Version: 1.0.0",
+    "Constant:",
+    "    PARSE_INT=32",
+    "    PARSE_WIDE=2147483648",
+    "    PARSE_STR=\"hello\"",
+    "Variadic:",
+    "    parse_printf(Z)i fmt;"
+)))
+expect_equal(parsed_port$Constant$PARSE_INT, 32L)
+expect_equal(parsed_port$Constant$PARSE_WIDE, 2147483648)
+expect_equal(parsed_port$Constant$PARSE_STR, "hello")
+expect_true(parsed_port$Function$parse_printf$variadic)
+
 empty_port <- tempfile(fileext = ".dynport")
 expect_true(file.create(empty_port))
 expect_error(dynport(rdyncall_empty_dynport, portfile = empty_port), "Empty")
@@ -150,7 +170,9 @@ expect_equal(nrow(opaque$Opaque$fields), 0L)
 sdl3_portfile <- system.file("dynports", "SDL3.dynport", package = "rdyncall", mustWork = TRUE)
 sdl3 <- rdyncall:::dynport_read(sdl3_portfile)
 expect_equal(as.character(sdl3$Package), "SDL3")
+expect_equal(sdl3$Constant$SDL_INIT_VIDEO, 32L)
 expect_true("SDL_GetPlatform" %in% names(sdl3$Function))
+expect_true(sdl3$Function$SDL_Log$variadic)
 expect_true("SDL_FRect" %in% names(sdl3$Struct))
 expect_equal(
     length(rdyncall:::dynport_wrapper_formals(
@@ -163,6 +185,9 @@ local({
     portfile <- write_dynport(c(
         "Package: TinyPort",
         "Version: 1.0.0",
+        "Constant:",
+        "    TINY_CONST=42",
+        "    TINY_STR=\"tiny\"",
         "Enum/TinyEnum:",
         "    TINY_ONE=1",
         "Struct:",
@@ -177,6 +202,8 @@ local({
     expect_equal(pkg, package)
     expect_true(dir.exists(file.path(lib, package)))
     expect_true(package %in% loadedNamespaces())
+    expect_equal(getExportedValue(package, "TINY_CONST"), 42L)
+    expect_equal(getExportedValue(package, "TINY_STR"), "tiny")
     expect_equal(getExportedValue(package, "TINY_ONE"), 1L)
     expect_true("package:dyn.TinyPort" %in% search())
 })
@@ -339,5 +366,57 @@ local({
         n <- snprintf(buf, length(buf), "%d", 42L, .varargs = "i")
         expect_equal(n, 2L)
         expect_equal(rawToChar(buf[seq_len(n)]), "42")
+    }
+})
+
+local({
+    rlib <- dynfind("R")
+    if (!is.null(rlib) && !is.null(dynsym(rlib, "rdyncall_missing_dynport_symbol"))) {
+        stop("Unexpected test fixture symbol exists in R library.", call. = FALSE)
+    }
+    if (!is.null(rlib)) {
+        portfile <- write_dynport(c(
+            "Package: MissingSymbol",
+            "Version: 1.0.0",
+            "Library:",
+            "    R",
+            "Function:",
+            "    rdyncall_missing_dynport_symbol()v;"
+        ))
+        lib <- tempfile("rdyncall-dynport-lib")
+        package <- "dyn.MissingSymbol"
+        unload_test_package(package)
+        on.exit(unload_test_package(package), add = TRUE)
+
+        expect_silent(dynport(missing_symbol, portfile = portfile, lib = lib, quiet = TRUE))
+        expect_error(
+            getExportedValue(package, "rdyncall_missing_dynport_symbol")(),
+            "Unresolved DynPort symbol 'rdyncall_missing_dynport_symbol'"
+        )
+    }
+})
+
+local({
+    rlib <- dynfind("R")
+    if (!is.null(rlib) && !is.null(dynsym(rlib, "Rprintf"))) {
+        portfile <- write_dynport(c(
+            "Package: RVariadic",
+            "Version: 1.0.0",
+            "Library:",
+            "    R",
+            "Variadic:",
+            "    Rprintf(Z)v format;"
+        ))
+        lib <- tempfile("rdyncall-dynport-lib")
+        package <- "dyn.RVariadic"
+        unload_test_package(package)
+        on.exit(unload_test_package(package), add = TRUE)
+
+        expect_silent(dynport(rvariadic, portfile = portfile, lib = lib, quiet = TRUE))
+        output <- capture.output(
+            result <- getExportedValue(package, "Rprintf")("dynport %d", 2L, .varargs = "i")
+        )
+        expect_null(result)
+        expect_true(any(grepl("dynport 2", output, fixed = TRUE)))
     }
 })
