@@ -5,6 +5,7 @@
 \alias{dynport_install_package}
 \alias{dynport_load_into}
 \alias{dynport_lib}
+\alias{dynport_clear_lib}
 \title{Dynamic R Bindings to standard and common C libraries}
 \usage{
 dynport(
@@ -32,6 +33,8 @@ dynport_install_package(
 dynport_load_into(portfile, envir)
 
 dynport_lib(create = TRUE, add = FALSE)
+
+dynport_clear_lib(lib = dynport_lib(create = FALSE), unload = TRUE)
 }
 \arguments{
 \item{portname}{the name of a dynport, given as a literal or character
@@ -66,6 +69,9 @@ when it does not exist.}
 
 \item{add}{logical. If \code{TRUE}, prepend the DynPort package library to
 \code{.libPaths()}.}
+
+\item{unload}{logical. If \code{TRUE}, unload generated DynPort packages from the
+current session before removing them from \code{lib}.}
 }
 \value{
 \code{dynport()} invisibly returns the generated package name.
@@ -73,6 +79,7 @@ when it does not exist.}
 the generated package name stored in attribute \code{"package"}.
 \code{dynport_load_into()} invisibly returns \code{envir}.
 \code{dynport_lib()} returns the DynPort package library path.
+\code{dynport_clear_lib()} invisibly returns the paths it removed.
 }
 \description{
 Functions to turn DCF DynPort files into generated R packages that provide

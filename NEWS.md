@@ -5,6 +5,9 @@
 - Replace deprecated/internal R C API usage with public accessors where possible.
 - Support `dynlist()` for macOS dyld shared cache libraries.
 - Generate real on-disk R packages from DCF DynPort files via `dynport()`.
+- Improve generated DynPort packages with argument-preserving wrappers,
+  variadic function metadata, generated help pages and a cleanup helper for
+  the managed DynPort library.
 - Add `dyncall_variadic()` for calling C variadic functions with explicit
   call-site vararg signatures.
 - Allow `dynbind()` to accept direct library paths and existing external
