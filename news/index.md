@@ -2,74 +2,106 @@
 
 ## rdyncall 0.10.0
 
-- Restore package compilation on current R toolchains.
+- Restore package compilation on current R toolchains
+  ([\#19](https://github.com/hongyuanjia/rdyncall/issues/19)).
 - Update the bundled dyncall source and stop tracking generated static
-  libraries.
+  libraries ([\#19](https://github.com/hongyuanjia/rdyncall/issues/19)).
 - Replace deprecated/internal R C API usage with public accessors where
-  possible.
+  possible ([\#19](https://github.com/hongyuanjia/rdyncall/issues/19)).
 - Support
   [`dynlist()`](https://hongyuanjia.github.io/rdyncall/reference/dynload.md)
-  for macOS dyld shared cache libraries.
+  for macOS dyld shared cache libraries
+  ([\#20](https://github.com/hongyuanjia/rdyncall/issues/20)).
 - Generate real on-disk R packages from DCF DynPort files via
-  [`dynport()`](https://hongyuanjia.github.io/rdyncall/reference/dynport.md).
+  [`dynport()`](https://hongyuanjia.github.io/rdyncall/reference/dynport.md)
+  ([\#28](https://github.com/hongyuanjia/rdyncall/issues/28)).
 - Improve generated DynPort packages with argument-preserving wrappers,
   variadic function metadata, generated help pages and a cleanup helper
-  for the managed DynPort library.
+  for the managed DynPort library
+  ([\#52](https://github.com/hongyuanjia/rdyncall/issues/52)).
+- Support `Constant` and `Variadic` fields in DCF DynPort files,
+  including binding variadic entries through
+  [`dyncall_variadic()`](https://hongyuanjia.github.io/rdyncall/reference/dyncall.md)
+  ([\#53](https://github.com/hongyuanjia/rdyncall/issues/53)).
 - Add
   [`dyncall_variadic()`](https://hongyuanjia.github.io/rdyncall/reference/dyncall.md)
   for calling C variadic functions with explicit call-site vararg
-  signatures.
+  signatures
+  ([\#35](https://github.com/hongyuanjia/rdyncall/issues/35)).
 - Allow
   [`dynbind()`](https://hongyuanjia.github.io/rdyncall/reference/dynbind.md)
   to accept direct library paths and existing external pointer handles
-  in addition to short library names.
+  in addition to short library names
+  ([\#29](https://github.com/hongyuanjia/rdyncall/issues/29)).
 - Improve
   [`dynfind()`](https://hongyuanjia.github.io/rdyncall/reference/dynfind.md)
   discovery for libraries installed by common package managers,
-  including Homebrew, MacPorts, Linuxbrew and Scoop.
+  including Homebrew, MacPorts, Linuxbrew and Scoop
+  ([\#31](https://github.com/hongyuanjia/rdyncall/issues/31)).
 - Improve
   [`dynfind()`](https://hongyuanjia.github.io/rdyncall/reference/dynfind.md)
   discovery of the current R runtime library and avoid treating
   same-named directories as direct
   [`dynbind()`](https://hongyuanjia.github.io/rdyncall/reference/dynbind.md)
-  library paths.
+  library paths
+  ([\#39](https://github.com/hongyuanjia/rdyncall/issues/39)).
+- Add
+  [`dynfind_explain()`](https://hongyuanjia.github.io/rdyncall/reference/dynfind.md)
+  diagnostics for shared-library discovery and expand Windows library
+  discovery coverage
+  ([\#48](https://github.com/hongyuanjia/rdyncall/issues/48)).
 - Return nested aggregate fields from `$` as raw-backed `struct` objects
-  so they can be reused for field access and aggregate by-value calls.
+  so they can be reused for field access and aggregate by-value calls
+  ([\#33](https://github.com/hongyuanjia/rdyncall/issues/33)).
 - Fix
   [`cstruct()`](https://hongyuanjia.github.io/rdyncall/reference/struct.md)
   and
   [`cunion()`](https://hongyuanjia.github.io/rdyncall/reference/struct.md)
-  field parsing when whitespace follows the type signature.
+  field parsing when whitespace follows the type signature
+  ([\#21](https://github.com/hongyuanjia/rdyncall/issues/21)).
 - Store aggregate field names in the explicit `typeinfo$fields$name`
-  column.
+  column ([\#21](https://github.com/hongyuanjia/rdyncall/issues/21)).
 - Add dedicated print methods for `typeinfo`, `struct`, `ctype`,
-  `dynbind.report` and `floatraw` objects.
+  `dynbind.report` and `floatraw` objects
+  ([\#41](https://github.com/hongyuanjia/rdyncall/issues/41)).
 - Add
   [`callback_status()`](https://hongyuanjia.github.io/rdyncall/reference/callback.md),
   [`callback_is_active()`](https://hongyuanjia.github.io/rdyncall/reference/callback.md)
   and
   [`callback_last_error()`](https://hongyuanjia.github.io/rdyncall/reference/callback.md)
-  for inspecting rdyncall callback invocation and error state.
+  for inspecting rdyncall callback invocation and error state
+  ([\#49](https://github.com/hongyuanjia/rdyncall/issues/49)).
+- Add by-value aggregate argument and return support to
+  [`ccallback()`](https://hongyuanjia.github.io/rdyncall/reference/callback.md)
+  for the implemented x86_64 and ARM64 dyncallback backends
+  ([\#50](https://github.com/hongyuanjia/rdyncall/issues/50)).
 - Add `struct` and `union` bitfield layout, access, DynPort parsing, and
-  by-value aggregate support.
+  by-value aggregate support
+  ([\#26](https://github.com/hongyuanjia/rdyncall/issues/26)).
 - Add the `rdyncall.callvm.size` option to configure CallVM argument
-  stack size at package load.
+  stack size at package load
+  ([\#22](https://github.com/hongyuanjia/rdyncall/issues/22)).
 - Add by-value aggregate argument and return support to
   [`dyncall()`](https://hongyuanjia.github.io/rdyncall/reference/dyncall.md)
   for registered `struct` and `union` types on supported dyncall
-  backends, including ARM64 aggregate ABI handling.
+  backends, including ARM64 aggregate ABI handling
+  ([\#23](https://github.com/hongyuanjia/rdyncall/issues/23)).
 - Support fixed-size array fields in `struct` and `union` type
-  signatures via the `type[N]` suffix.
+  signatures via the `type[N]` suffix
+  ([\#26](https://github.com/hongyuanjia/rdyncall/issues/26)).
 - Add `@packed`, `@pack(n)` and `@align(n)` layout directives for
   [`cstruct()`](https://hongyuanjia.github.io/rdyncall/reference/struct.md),
   [`cunion()`](https://hongyuanjia.github.io/rdyncall/reference/struct.md)
-  and DynPort aggregate definitions.
+  and DynPort aggregate definitions
+  ([\#26](https://github.com/hongyuanjia/rdyncall/issues/26)).
 - Refresh roxygen-generated documentation and package metadata for
-  renewed development.
+  renewed development
+  ([\#19](https://github.com/hongyuanjia/rdyncall/issues/19)).
 - Generate `NAMESPACE` from roxygen2 metadata instead of maintaining it
-  by hand.
+  by hand ([\#40](https://github.com/hongyuanjia/rdyncall/issues/40)).
 - Modernize GitHub Actions checks across Linux, macOS, and Windows, with
-  an optional R-hub workflow for extended platform checks.
+  an optional R-hub workflow for extended platform checks
+  ([\#19](https://github.com/hongyuanjia/rdyncall/issues/19)).
 
 ## rdyncall 0.9
 

@@ -42,29 +42,32 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.10.0" id="rdyncall-0100">rdyncall 0.10.0<a class="anchor" aria-label="anchor" href="#rdyncall-0100"></a></h2>
-<ul><li>Restore package compilation on current R toolchains.</li>
-<li>Update the bundled dyncall source and stop tracking generated static libraries.</li>
-<li>Replace deprecated/internal R C API usage with public accessors where possible.</li>
-<li>Support <code><a href="../reference/dynload.html">dynlist()</a></code> for macOS dyld shared cache libraries.</li>
-<li>Generate real on-disk R packages from DCF DynPort files via <code><a href="../reference/dynport.html">dynport()</a></code>.</li>
-<li>Improve generated DynPort packages with argument-preserving wrappers, variadic function metadata, generated help pages and a cleanup helper for the managed DynPort library.</li>
-<li>Add <code><a href="../reference/dyncall.html">dyncall_variadic()</a></code> for calling C variadic functions with explicit call-site vararg signatures.</li>
-<li>Allow <code><a href="../reference/dynbind.html">dynbind()</a></code> to accept direct library paths and existing external pointer handles in addition to short library names.</li>
-<li>Improve <code><a href="../reference/dynfind.html">dynfind()</a></code> discovery for libraries installed by common package managers, including Homebrew, MacPorts, Linuxbrew and Scoop.</li>
-<li>Improve <code><a href="../reference/dynfind.html">dynfind()</a></code> discovery of the current R runtime library and avoid treating same-named directories as direct <code><a href="../reference/dynbind.html">dynbind()</a></code> library paths.</li>
-<li>Return nested aggregate fields from <code>$</code> as raw-backed <code>struct</code> objects so they can be reused for field access and aggregate by-value calls.</li>
-<li>Fix <code><a href="../reference/struct.html">cstruct()</a></code> and <code><a href="../reference/struct.html">cunion()</a></code> field parsing when whitespace follows the type signature.</li>
-<li>Store aggregate field names in the explicit <code>typeinfo$fields$name</code> column.</li>
-<li>Add dedicated print methods for <code>typeinfo</code>, <code>struct</code>, <code>ctype</code>, <code>dynbind.report</code> and <code>floatraw</code> objects.</li>
-<li>Add <code><a href="../reference/callback.html">callback_status()</a></code>, <code><a href="../reference/callback.html">callback_is_active()</a></code> and <code><a href="../reference/callback.html">callback_last_error()</a></code> for inspecting rdyncall callback invocation and error state.</li>
-<li>Add <code>struct</code> and <code>union</code> bitfield layout, access, DynPort parsing, and by-value aggregate support.</li>
-<li>Add the <code>rdyncall.callvm.size</code> option to configure CallVM argument stack size at package load.</li>
-<li>Add by-value aggregate argument and return support to <code><a href="../reference/dyncall.html">dyncall()</a></code> for registered <code>struct</code> and <code>union</code> types on supported dyncall backends, including ARM64 aggregate ABI handling.</li>
-<li>Support fixed-size array fields in <code>struct</code> and <code>union</code> type signatures via the <code>type[N]</code> suffix.</li>
-<li>Add <code>@packed</code>, <code>@pack(n)</code> and <code>@align(n)</code> layout directives for <code><a href="../reference/struct.html">cstruct()</a></code>, <code><a href="../reference/struct.html">cunion()</a></code> and DynPort aggregate definitions.</li>
-<li>Refresh roxygen-generated documentation and package metadata for renewed development.</li>
-<li>Generate <code>NAMESPACE</code> from roxygen2 metadata instead of maintaining it by hand.</li>
-<li>Modernize GitHub Actions checks across Linux, macOS, and Windows, with an optional R-hub workflow for extended platform checks.</li>
+<ul><li>Restore package compilation on current R toolchains (<a href="https://github.com/hongyuanjia/rdyncall/issues/19" class="external-link">#19</a>).</li>
+<li>Update the bundled dyncall source and stop tracking generated static libraries (<a href="https://github.com/hongyuanjia/rdyncall/issues/19" class="external-link">#19</a>).</li>
+<li>Replace deprecated/internal R C API usage with public accessors where possible (<a href="https://github.com/hongyuanjia/rdyncall/issues/19" class="external-link">#19</a>).</li>
+<li>Support <code><a href="../reference/dynload.html">dynlist()</a></code> for macOS dyld shared cache libraries (<a href="https://github.com/hongyuanjia/rdyncall/issues/20" class="external-link">#20</a>).</li>
+<li>Generate real on-disk R packages from DCF DynPort files via <code><a href="../reference/dynport.html">dynport()</a></code> (<a href="https://github.com/hongyuanjia/rdyncall/issues/28" class="external-link">#28</a>).</li>
+<li>Improve generated DynPort packages with argument-preserving wrappers, variadic function metadata, generated help pages and a cleanup helper for the managed DynPort library (<a href="https://github.com/hongyuanjia/rdyncall/issues/52" class="external-link">#52</a>).</li>
+<li>Support <code>Constant</code> and <code>Variadic</code> fields in DCF DynPort files, including binding variadic entries through <code><a href="../reference/dyncall.html">dyncall_variadic()</a></code> (<a href="https://github.com/hongyuanjia/rdyncall/issues/53" class="external-link">#53</a>).</li>
+<li>Add <code><a href="../reference/dyncall.html">dyncall_variadic()</a></code> for calling C variadic functions with explicit call-site vararg signatures (<a href="https://github.com/hongyuanjia/rdyncall/issues/35" class="external-link">#35</a>).</li>
+<li>Allow <code><a href="../reference/dynbind.html">dynbind()</a></code> to accept direct library paths and existing external pointer handles in addition to short library names (<a href="https://github.com/hongyuanjia/rdyncall/issues/29" class="external-link">#29</a>).</li>
+<li>Improve <code><a href="../reference/dynfind.html">dynfind()</a></code> discovery for libraries installed by common package managers, including Homebrew, MacPorts, Linuxbrew and Scoop (<a href="https://github.com/hongyuanjia/rdyncall/issues/31" class="external-link">#31</a>).</li>
+<li>Improve <code><a href="../reference/dynfind.html">dynfind()</a></code> discovery of the current R runtime library and avoid treating same-named directories as direct <code><a href="../reference/dynbind.html">dynbind()</a></code> library paths (<a href="https://github.com/hongyuanjia/rdyncall/issues/39" class="external-link">#39</a>).</li>
+<li>Add <code><a href="../reference/dynfind.html">dynfind_explain()</a></code> diagnostics for shared-library discovery and expand Windows library discovery coverage (<a href="https://github.com/hongyuanjia/rdyncall/issues/48" class="external-link">#48</a>).</li>
+<li>Return nested aggregate fields from <code>$</code> as raw-backed <code>struct</code> objects so they can be reused for field access and aggregate by-value calls (<a href="https://github.com/hongyuanjia/rdyncall/issues/33" class="external-link">#33</a>).</li>
+<li>Fix <code><a href="../reference/struct.html">cstruct()</a></code> and <code><a href="../reference/struct.html">cunion()</a></code> field parsing when whitespace follows the type signature (<a href="https://github.com/hongyuanjia/rdyncall/issues/21" class="external-link">#21</a>).</li>
+<li>Store aggregate field names in the explicit <code>typeinfo$fields$name</code> column (<a href="https://github.com/hongyuanjia/rdyncall/issues/21" class="external-link">#21</a>).</li>
+<li>Add dedicated print methods for <code>typeinfo</code>, <code>struct</code>, <code>ctype</code>, <code>dynbind.report</code> and <code>floatraw</code> objects (<a href="https://github.com/hongyuanjia/rdyncall/issues/41" class="external-link">#41</a>).</li>
+<li>Add <code><a href="../reference/callback.html">callback_status()</a></code>, <code><a href="../reference/callback.html">callback_is_active()</a></code> and <code><a href="../reference/callback.html">callback_last_error()</a></code> for inspecting rdyncall callback invocation and error state (<a href="https://github.com/hongyuanjia/rdyncall/issues/49" class="external-link">#49</a>).</li>
+<li>Add by-value aggregate argument and return support to <code><a href="../reference/callback.html">ccallback()</a></code> for the implemented x86_64 and ARM64 dyncallback backends (<a href="https://github.com/hongyuanjia/rdyncall/issues/50" class="external-link">#50</a>).</li>
+<li>Add <code>struct</code> and <code>union</code> bitfield layout, access, DynPort parsing, and by-value aggregate support (<a href="https://github.com/hongyuanjia/rdyncall/issues/26" class="external-link">#26</a>).</li>
+<li>Add the <code>rdyncall.callvm.size</code> option to configure CallVM argument stack size at package load (<a href="https://github.com/hongyuanjia/rdyncall/issues/22" class="external-link">#22</a>).</li>
+<li>Add by-value aggregate argument and return support to <code><a href="../reference/dyncall.html">dyncall()</a></code> for registered <code>struct</code> and <code>union</code> types on supported dyncall backends, including ARM64 aggregate ABI handling (<a href="https://github.com/hongyuanjia/rdyncall/issues/23" class="external-link">#23</a>).</li>
+<li>Support fixed-size array fields in <code>struct</code> and <code>union</code> type signatures via the <code>type[N]</code> suffix (<a href="https://github.com/hongyuanjia/rdyncall/issues/26" class="external-link">#26</a>).</li>
+<li>Add <code>@packed</code>, <code>@pack(n)</code> and <code>@align(n)</code> layout directives for <code><a href="../reference/struct.html">cstruct()</a></code>, <code><a href="../reference/struct.html">cunion()</a></code> and DynPort aggregate definitions (<a href="https://github.com/hongyuanjia/rdyncall/issues/26" class="external-link">#26</a>).</li>
+<li>Refresh roxygen-generated documentation and package metadata for renewed development (<a href="https://github.com/hongyuanjia/rdyncall/issues/19" class="external-link">#19</a>).</li>
+<li>Generate <code>NAMESPACE</code> from roxygen2 metadata instead of maintaining it by hand (<a href="https://github.com/hongyuanjia/rdyncall/issues/40" class="external-link">#40</a>).</li>
+<li>Modernize GitHub Actions checks across Linux, macOS, and Windows, with an optional R-hub workflow for extended platform checks (<a href="https://github.com/hongyuanjia/rdyncall/issues/19" class="external-link">#19</a>).</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.9" id="rdyncall-09">rdyncall 0.9<a class="anchor" aria-label="anchor" href="#rdyncall-09"></a></h2>
