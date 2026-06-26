@@ -13,7 +13,8 @@ dynbind(
   callmode = "default",
   pattern = NULL,
   replace = NULL,
-  funcptr = FALSE
+  funcptr = FALSE,
+  variadic = FALSE
 )
 
 # S3 method for class 'dynbind.report'
@@ -65,6 +66,13 @@ print(x, ...)
   logical, that indicates whether foreign objects refer to functions
   (`FALSE`, default) or to function pointer variables (`TRUE` rarely
   needed).
+
+- variadic:
+
+  logical, that indicates whether wrappers should call C variadic
+  functions using
+  [`dyncall_variadic()`](https://hongyuanjia.github.io/rdyncall/reference/dyncall.md).
+  Cannot be combined with `funcptr = TRUE`.
 
 - x:
 
@@ -146,6 +154,12 @@ variables, indicated by setting `funcptr` to `TRUE`, in which case
 `<TARGET>` is replaced with the expression `unpack(<TARGET>,"p",0)` in
 order to dereference `<TARGET>` as a pointer-to-function variable at
 call-time.
+
+`variadic = TRUE` creates wrappers for C functions declared with `...`.
+Generated wrappers accept normal call arguments through `...` and a
+named `.varargs` argument that describes the run-time vararg signature
+passed to
+[`dyncall_variadic()`](https://hongyuanjia.github.io/rdyncall/reference/dyncall.md).
 
 ## See also
 
