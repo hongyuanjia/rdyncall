@@ -12,7 +12,8 @@ dynbind(
   callmode = "default",
   pattern = NULL,
   replace = NULL,
-  funcptr = FALSE
+  funcptr = FALSE,
+  variadic = FALSE
 )
 
 \method{print}{dynbind.report}(x, ...)
@@ -42,6 +43,10 @@ part of symbolic names.}
 \item{funcptr}{logical, that indicates whether foreign objects refer to
 functions (\code{FALSE}, default) or to function pointer variables
 (\code{TRUE} rarely needed).}
+
+\item{variadic}{logical, that indicates whether wrappers should call C
+variadic functions using \code{\link[=dyncall_variadic]{dyncall_variadic()}}. Cannot be combined with
+\code{funcptr = TRUE}.}
 
 \item{x}{S3 \code{dynbind.report} object to print.}
 
@@ -114,6 +119,11 @@ As a special case, \code{\link[=dynbind]{dynbind()}} supports binding of pointer
 variables, indicated by setting \code{funcptr} to \code{TRUE}, in which case
 \verb{<TARGET>} is replaced with the expression \verb{unpack(<TARGET>,"p",0)} in order
 to dereference \verb{<TARGET>} as a pointer-to-function variable at call-time.
+
+\code{variadic = TRUE} creates wrappers for C functions declared with \code{...}.
+Generated wrappers accept normal call arguments through \code{...} and a named
+\code{.varargs} argument that describes the run-time vararg signature passed to
+\code{\link[=dyncall_variadic]{dyncall_variadic()}}.
 }
 \examples{
 \donttest{

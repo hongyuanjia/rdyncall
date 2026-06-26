@@ -220,6 +220,7 @@ dynport_parse_field <- function(key, value, lnum, envir = parent.frame()) {
             "Package"  = dynport_parse_package(value,  lnum),
             "Version"  = dynport_parse_version(value,  lnum),
             "Library"  = dynport_parse_library(value,  lnum),
+            "Constant" = dynport_parse_constant(value, lnum),
             "Function" = dynport_parse_function(value, lnum, envir),
             "FuncPtr"  = dynport_parse_funcptr(value,  lnum, envir),
             "Variadic" = dynport_parse_variadic(value, lnum, envir),
@@ -316,6 +317,56 @@ dynport_parse_library <- function(value, lnum = 1L) {
     }
 
     gsub("\\", "/", vals, fixed = TRUE)
+}
+
+dynport_parse_constant <- function(value, lnum = 1L) {
+    if (trimws(value) == "") return(NULL)
+
+    s <- trimws(strsplit(value, "[\r]?\n")[[1L]])
+    l <- lnum + seq_along(s) - 1L
+    l <- l[s != ""]
+    s <- s[s != ""]
+
+    nms_vals <- strsplit(s, "=", fixed = TRUE)
+    if (any(invld <- lengths(nms_vals) != 2L)) {
+        dynport_issue_error("Constant", NULL, l[invld], s[invld],
+            "Invalid constant specification found"
+        )
+    }
+
+    nms <- trimws(vapply(nms_vals, .subset2, "", 1L))
+    if (any(invld <- nms != make.names(nms))) {
+        dynport_issue_error("Constant", NULL, l[invld], s[invld],
+            "Invalid constant name found"
+        )
+    }
+
+    vals <- trimws(vapply(nms_vals, .subset2, "", 2L))
+    parsed <- mapply(dynport_parse_constant_value, vals, l, s, SIMPLIFY = FALSE)
+    names(parsed) <- nms
+    parsed
+}
+
+dynport_parse_constant_value <- function(value, lnum, raw) {
+    if (grepl('^"([^"\\\\]|\\\\.)*"$', value, perl = TRUE)) {
+        parsed <- tryCatch(eval(parse(text = value)), error = function(e) e)
+        if (inherits(parsed, "error") || !is.character(parsed) || length(parsed) != 1L || is.na(parsed)) {
+            dynport_issue_error("Constant", NULL, lnum, raw, "Invalid string constant value found")
+        }
+        return(parsed)
+    }
+
+    if (!grepl("^-?[0-9]+(?:\\.[0-9]+)?$", value, perl = TRUE)) {
+        dynport_issue_error("Constant", NULL, lnum, raw, "Invalid constant value found")
+    }
+    parsed <- suppressWarnings(as.numeric(value))
+    if (is.na(parsed) || !is.finite(parsed)) {
+        dynport_issue_error("Constant", NULL, lnum, raw, "Invalid constant value found")
+    }
+    if (parsed == trunc(parsed) && parsed >= -.Machine$integer.max && parsed <= .Machine$integer.max) {
+        return(as.integer(parsed))
+    }
+    parsed
 }
 
 dynport_parse_function <- function(value, lnum = 1L, envir = parent.frame()) {
@@ -756,6 +807,7 @@ dynport_load_into <- function(portfile, envir) {
     dynport_validate_export_names(dynport_export_names(port))
     dynport_assign_typeinfos(port[["Struct"]], envir)
     dynport_assign_typeinfos(port[["Union"]], envir)
+    dynport_assign_constants(port[["Constant"]], envir)
     dynport_assign_enums(port[["Enum"]], envir)
     dynport_assign_functions(port, "Function", envir, funcptr = FALSE)
     dynport_assign_functions(port, "FuncPtr", envir, funcptr = TRUE)
@@ -880,6 +932,7 @@ dynport_validate_package_name <- function(package) {
 
 dynport_export_names <- function(port) {
     exports <- character()
+    exports <- c(exports, names(port[["Constant"]]))
     exports <- c(exports, names(port[["Function"]]))
     exports <- c(exports, names(port[["FuncPtr"]]))
     exports <- c(exports, names(port[["Struct"]]))
@@ -918,6 +971,12 @@ dynport_assign_typeinfos <- function(objects, envir) {
     for (nm in names(objects)) {
         assign(nm, objects[[nm]], envir = envir)
     }
+    invisible()
+}
+
+dynport_assign_constants <- function(constants, envir) {
+    if (!length(constants)) return(invisible())
+    list2env(constants, envir = envir)
     invisible()
 }
 
