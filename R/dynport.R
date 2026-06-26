@@ -1068,7 +1068,10 @@ dynport_function_arg_names <- function(fun) {
 }
 
 dynport_wrapper_formals <- function(arg_names, variadic = FALSE) {
-    parts <- paste0(vapply(arg_names, dynport_formal_name, character(1L)), " = ")
+    parts <- character()
+    if (length(arg_names)) {
+        parts <- paste0(vapply(arg_names, dynport_formal_name, character(1L)), " = ")
+    }
     if (variadic) {
         parts <- c(parts, "... =", ".varargs = \"\"")
     }

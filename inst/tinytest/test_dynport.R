@@ -152,6 +152,12 @@ sdl3 <- rdyncall:::dynport_read(sdl3_portfile)
 expect_equal(as.character(sdl3$Package), "SDL3")
 expect_true("SDL_GetPlatform" %in% names(sdl3$Function))
 expect_true("SDL_FRect" %in% names(sdl3$Struct))
+expect_equal(
+    length(rdyncall:::dynport_wrapper_formals(
+        rdyncall:::dynport_function_arg_names(sdl3$Function$SDL_GetNumAllocations)
+    )),
+    0L
+)
 
 local({
     portfile <- write_dynport(c(
