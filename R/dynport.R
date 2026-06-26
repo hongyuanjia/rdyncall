@@ -306,11 +306,10 @@ dynport_parse_library <- function(value, lnum = 1L) {
     windows_reserved <- "^(con|prn|aux|nul|com[0-9]|lpt[0-9])([.].*)?$"
     windows_trailing <- "[. ]+$"
 
-    invld <- vapply(
+    invld <- Reduce(`|`, lapply(
         c(illegal, control, reserved, windows_reserved, windows_trailing),
-        grepl, logical(length(vals)), x = vals, ignore.case = TRUE
-    )
-    invld <- vapply(seq_len(nrow(invld)), function(i) Reduce(`||`, invld[i, ]), logical(1L))
+        grepl, x = vals, ignore.case = TRUE
+    ))
 
     if (any(invld)) {
         dynport_issue_error("Library", NULL, lnum[invld], vals[invld], "Invalid file name found")
@@ -1036,12 +1035,11 @@ dynport_compact_signature <- function(functions) {
 
 dynport_assign_unresolved <- function(symbols, envir) {
     for (symbol in symbols) {
-        f <- local({
-            unresolved <- symbol
-            function(...) {
-                stop("Unresolved DynPort symbol '", unresolved, "'.", call. = FALSE)
-            }
-        })
+        f <- function(...) NULL
+        body(f) <- substitute(
+            stop("Unresolved DynPort symbol '", symbol, "'.", call. = FALSE),
+            list(symbol = symbol)
+        )
         environment(f) <- envir
         assign(symbol, f, envir = envir)
     }
