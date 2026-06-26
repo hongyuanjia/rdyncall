@@ -12,6 +12,9 @@
   for macOS dyld shared cache libraries.
 - Generate real on-disk R packages from DCF DynPort files via
   [`dynport()`](https://hongyuanjia.github.io/rdyncall/reference/dynport.md).
+- Improve generated DynPort packages with argument-preserving wrappers,
+  variadic function metadata, generated help pages and a cleanup helper
+  for the managed DynPort library.
 - Add
   [`dyncall_variadic()`](https://hongyuanjia.github.io/rdyncall/reference/dyncall.md)
   for calling C variadic functions with explicit call-site vararg

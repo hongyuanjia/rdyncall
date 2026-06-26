@@ -74,7 +74,9 @@ wrappers for C functions, object-like macros, enums and data types.</p>
 <span></span>
 <span><span class="fu">dynport_load_into</span><span class="op">(</span><span class="va">portfile</span>, <span class="va">envir</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">dynport_lib</span><span class="op">(</span>create <span class="op">=</span> <span class="cn">TRUE</span>, add <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">dynport_lib</span><span class="op">(</span>create <span class="op">=</span> <span class="cn">TRUE</span>, add <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">dynport_clear_lib</span><span class="op">(</span>lib <span class="op">=</span> <span class="fu">dynport_lib</span><span class="op">(</span>create <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>, unload <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -135,6 +137,11 @@ when it does not exist.</p></dd>
 <dd><p>logical. If <code>TRUE</code>, prepend the DynPort package library to
 <code><a href="https://rdrr.io/r/base/libPaths.html" class="external-link">.libPaths()</a></code>.</p></dd>
 
+
+<dt id="arg-unload">unload<a class="anchor" aria-label="anchor" href="#arg-unload"></a></dt>
+<dd><p>logical. If <code>TRUE</code>, unload generated DynPort packages from the
+current session before removing them from <code>lib</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -142,7 +149,8 @@ when it does not exist.</p></dd>
 <code>dynport_install_package()</code> invisibly returns the installed package path with
 the generated package name stored in attribute <code>"package"</code>.
 <code>dynport_load_into()</code> invisibly returns <code>envir</code>.
-<code>dynport_lib()</code> returns the DynPort package library path.</p>
+<code>dynport_lib()</code> returns the DynPort package library path.
+<code>dynport_clear_lib()</code> invisibly returns the paths it removed.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

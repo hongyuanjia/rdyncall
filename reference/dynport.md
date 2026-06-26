@@ -32,6 +32,8 @@ dynport_install_package(
 dynport_load_into(portfile, envir)
 
 dynport_lib(create = TRUE, add = FALSE)
+
+dynport_clear_lib(lib = dynport_lib(create = FALSE), unload = TRUE)
 ```
 
 ## Arguments
@@ -89,13 +91,19 @@ dynport_lib(create = TRUE, add = FALSE)
   logical. If `TRUE`, prepend the DynPort package library to
   [`.libPaths()`](https://rdrr.io/r/base/libPaths.html).
 
+- unload:
+
+  logical. If `TRUE`, unload generated DynPort packages from the current
+  session before removing them from `lib`.
+
 ## Value
 
 `dynport()` invisibly returns the generated package name.
 `dynport_install_package()` invisibly returns the installed package path
 with the generated package name stored in attribute `"package"`.
 `dynport_load_into()` invisibly returns `envir`. `dynport_lib()` returns
-the DynPort package library path.
+the DynPort package library path. `dynport_clear_lib()` invisibly
+returns the paths it removed.
 
 ## Details
 

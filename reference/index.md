@@ -38,6 +38,7 @@
   [`dynport_install_package()`](https://hongyuanjia.github.io/rdyncall/reference/dynport.md)
   [`dynport_load_into()`](https://hongyuanjia.github.io/rdyncall/reference/dynport.md)
   [`dynport_lib()`](https://hongyuanjia.github.io/rdyncall/reference/dynport.md)
+  [`dynport_clear_lib()`](https://hongyuanjia.github.io/rdyncall/reference/dynport.md)
   : Dynamic R Bindings to standard and common C libraries
 - [`pack()`](https://hongyuanjia.github.io/rdyncall/reference/packing.md)
   [`unpack()`](https://hongyuanjia.github.io/rdyncall/reference/packing.md)
