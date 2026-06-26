@@ -4,6 +4,7 @@
 # Reference: https://examples.libsdl.org/SDL3/audio/05-planar-data/
 
 library(rdyncall)
+source(system.file("demo-support", "sdl3.R", package = "rdyncall", mustWork = TRUE), local = TRUE)
 
 # SDL_FRect is used for drawing clickable button rectangles.
 cstruct("SDL_FRect{ffff}x y w h;")
@@ -16,7 +17,7 @@ cstruct("SDL_AudioPlanes{pp}left right;")
 sdl <- new.env(parent = globalenv())
 sdl_info <- tryCatch(
     dynbind(
-        c("SDL3", "SDL3-0", "SDL3-3"),
+        find_sdl3(),
         paste(
             "SDL_Init(I)B",
             "SDL_Quit()v",
@@ -46,7 +47,7 @@ sdl_info <- tryCatch(
     error = function(e) {
         stop(
             conditionMessage(e),
-            " Install SDL3 or make it visible through the system library search path.",
+            " Install SDL3, set SDL3_LIB, or set SDL3_DEMO_AUTO_DOWNLOAD=true or RDYNCALL_DEMO_AUTO_DOWNLOAD=true.",
             call. = FALSE
         )
     }

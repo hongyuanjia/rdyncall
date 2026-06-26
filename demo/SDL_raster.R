@@ -3,6 +3,7 @@
 # Description: SDL3/OpenGL Mandelbrot raster demo with dynamic base R comparison.
 
 library(rdyncall)
+source(system.file("demo-support", "sdl3.R", package = "rdyncall", mustWork = TRUE), local = TRUE)
 
 # Convert private `--sdl-raster-*` worker arguments into environment variables.
 # The parent process uses this to start child workers from the same source file.
@@ -27,8 +28,7 @@ apply_demo_cli_overrides <- function() {
 apply_demo_cli_overrides()
 
 # Bind SDL3 window/event/OpenGL-context functions used by this demo.
-sdl3_libs <- c(Sys.getenv("SDL3_LIB", unset = ""), "SDL3", "SDL3-0", "SDL3-3")
-sdl3_libs <- sdl3_libs[nzchar(sdl3_libs)]
+sdl3_libs <- find_sdl3()
 
 sdl <- new.env(parent = globalenv())
 sdl_info <- tryCatch(
@@ -56,7 +56,7 @@ sdl_info <- tryCatch(
     error = function(e) {
         stop(
             conditionMessage(e),
-            " Install SDL3 with a common package manager or set SDL3_LIB to the shared library path.",
+            " Install SDL3, set SDL3_LIB, or set SDL3_DEMO_AUTO_DOWNLOAD=true or RDYNCALL_DEMO_AUTO_DOWNLOAD=true.",
             call. = FALSE
         )
     }

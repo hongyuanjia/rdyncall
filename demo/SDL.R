@@ -4,6 +4,7 @@
 # Reference: https://examples.libsdl.org/SDL3/demo/01-snake/
 
 library(rdyncall)
+source(system.file("demo-support", "sdl3.R", package = "rdyncall", mustWork = TRUE), local = TRUE)
 
 # Run an SDL3 snake game through wrappers generated from SDL3.dynport.
 run_sdl_demo <- function() {
@@ -11,6 +12,7 @@ run_sdl_demo <- function() {
     # package behind after it exits.
     dynport_lib <- tempfile("rdyncall-sdl3-demo-lib-")
     dir.create(dynport_lib, recursive = TRUE)
+    dynport_file <- NULL
     old_libpaths <- .libPaths()
     dyn_sdl3_was_attached <- "package:dyn.SDL3" %in% search()
     dyn_sdl3_was_loaded <- "dyn.SDL3" %in% loadedNamespaces()
@@ -39,17 +41,21 @@ run_sdl_demo <- function() {
                 try(unloadNamespace("dyn.SDL3"), silent = TRUE)
             }
             .libPaths(old_libpaths)
+            if (!is.null(dynport_file)) {
+                unlink(dynport_file, force = TRUE)
+            }
             unlink(dynport_lib, recursive = TRUE, force = TRUE)
         },
         add = TRUE
     )
 
+    dynport_file <- sdl3_demo_dynport()
     tryCatch(
-        dynport(SDL3, lib = dynport_lib, rebuild = TRUE, quiet = FALSE),
+        dynport(SDL3, portfile = dynport_file, lib = dynport_lib, rebuild = TRUE, quiet = FALSE),
         error = function(e) {
             stop(
                 conditionMessage(e),
-                " Install SDL3 or make it visible through the system library search path.",
+                " Install SDL3, set SDL3_LIB, or set SDL3_DEMO_AUTO_DOWNLOAD=true or RDYNCALL_DEMO_AUTO_DOWNLOAD=true.",
                 call. = FALSE
             )
         }

@@ -1,5 +1,15 @@
 # Download a dynamic library from a GitHub latest-release asset and cache it.
 
+demo_truthy_env <- function(name, default = "false") {
+    value <- tolower(Sys.getenv(name, default))
+    value %in% c("1", "true", "yes", "on")
+}
+
+demo_auto_download_enabled <- function(name) {
+    demo_truthy_env(paste0(toupper(name), "_DEMO_AUTO_DOWNLOAD")) ||
+        demo_truthy_env("RDYNCALL_DEMO_AUTO_DOWNLOAD")
+}
+
 github_release_library <- function(repo, asset_pattern, cache_name,
                                    exclude_pattern = NULL,
                                    preferred_libraries = character(),
@@ -35,8 +45,60 @@ github_release_library <- function(repo, asset_pattern, cache_name,
         file.path(home, ".cache", "rdyncall")
     }
 
+    is_framework_binary <- function(path) {
+        parts <- strsplit(path, .Platform$file.sep, fixed = TRUE)[[1L]]
+        idx <- grep("\\.framework$", parts)
+        if (!length(idx)) {
+            return(FALSE)
+        }
+        framework_name <- sub("\\.framework$", "", parts[[idx[[length(idx)]]]])
+        identical(basename(path), framework_name)
+    }
+
     dynamic_libraries <- function(paths) {
-        paths[file.exists(paths) & grepl("(\\.dylib$|\\.so(\\.[0-9]+)*$|\\.dll$)", paths)]
+        paths <- paths[file.exists(paths) & !dir.exists(paths)]
+        paths[
+            grepl("(\\.dylib$|\\.so(\\.[0-9]+)*$|\\.dll$)", paths) |
+                vapply(paths, is_framework_binary, logical(1))
+        ]
+    }
+
+    extract_archive <- function(archive, extract_dir) {
+        if (grepl("\\.zip$", archive, ignore.case = TRUE)) {
+            utils::unzip(archive, exdir = extract_dir)
+        } else if (grepl("\\.dmg$", archive, ignore.case = TRUE)) {
+            if (!identical(Sys.info()[["sysname"]], "Darwin")) {
+                stop("DMG release assets can only be extracted on macOS", call. = FALSE)
+            }
+            mount_dir <- tempfile("rdyncall-dmg-")
+            dir.create(mount_dir, recursive = TRUE)
+            attached <- FALSE
+            on.exit({
+                if (attached) {
+                    system2("hdiutil", c("detach", mount_dir, "-quiet"), stdout = FALSE, stderr = FALSE)
+                }
+                unlink(mount_dir, recursive = TRUE, force = TRUE)
+            }, add = TRUE)
+
+            status <- system2(
+                "hdiutil",
+                c("attach", "-readonly", "-nobrowse", "-mountpoint", mount_dir, archive),
+                stdout = FALSE,
+                stderr = FALSE
+            )
+            if (!identical(status, 0L)) {
+                stop("failed to mount DMG release asset: ", archive, call. = FALSE)
+            }
+            attached <- TRUE
+
+            entries <- list.files(mount_dir, all.files = TRUE, no.. = TRUE, full.names = TRUE)
+            ok <- file.copy(entries, extract_dir, recursive = TRUE, copy.date = TRUE)
+            if (!all(ok)) {
+                stop("failed to copy files from DMG release asset: ", archive, call. = FALSE)
+            }
+        } else {
+            utils::untar(archive, exdir = extract_dir)
+        }
     }
 
     preferred_library <- function(paths) {
@@ -104,11 +166,7 @@ github_release_library <- function(repo, asset_pattern, cache_name,
     extract_dir <- file.path(version_dir, "extract")
     if (!dir.exists(extract_dir)) {
         dir.create(extract_dir, recursive = TRUE)
-        if (grepl("\\.zip$", archive, ignore.case = TRUE)) {
-            utils::unzip(archive, exdir = extract_dir)
-        } else {
-            utils::untar(archive, exdir = extract_dir)
-        }
+        extract_archive(archive, extract_dir)
     }
 
     lib <- preferred_library(list.files(extract_dir, recursive = TRUE, full.names = TRUE))
