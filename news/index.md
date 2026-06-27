@@ -67,7 +67,8 @@
   column ([\#21](https://github.com/hongyuanjia/rdyncall/issues/21)).
 - Fix DynPort union size calculation when known storage fields appear
   alongside opaque members, allowing `SDL_Event` values to be allocated
-  from the generated SDL3 binding.
+  from the generated SDL3 binding
+  ([\#56](https://github.com/hongyuanjia/rdyncall/issues/56)).
 - Add dedicated print methods for `typeinfo`, `struct`, `ctype`,
   `dynbind.report` and `floatraw` objects
   ([\#41](https://github.com/hongyuanjia/rdyncall/issues/41)).
