@@ -221,7 +221,7 @@ run_sdl_demo <- function() {
     # Main loop: poll events, read keyboard state, update game logic at a fixed
     # cadence, and render as often as the loop allows.
     game <- reset_game()
-    event <- raw(128L)
+    event <- cdata(dyn.SDL3::SDL_Event)
     last_step <- proc.time()[["elapsed"]]
     started <- last_step
     last_fps <- last_step
