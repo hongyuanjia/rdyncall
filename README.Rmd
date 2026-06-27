@@ -18,21 +18,34 @@ The package is intended for developers who already know the C API they want to
 call and need an exploratory or dynamic binding layer from R without writing a
 compiled wrapper for every function.
 
-## Native Library Showcase
+## Showcase
 
 `rdyncall` can call into native libraries directly from R: generate an SDL3
 binding package from DynPort metadata, open a real SDL3 window, or bind raylib
-drawing calls and drive a rotating 3D scene. The SDL3 asciinema capture shows
-the binding workflow; the raylib GIF shows the rendered result.
+drawing calls and drive a rotating 3D scene.
 
 <table>
 <tr>
+<th width="50%" align="left">SDL3 generated binding package</th>
+<th width="50%" align="left">raylib 3D rendering from R</th>
+</tr>
+<tr>
 <td width="50%" valign="top">
-<strong>SDL3 generated binding package</strong><br>
+<strong>Terminal workflow</strong><br>
 <img src="man/figures/sdl3-demo.svg" alt="Terminal recording of an SDL3 DynPort package opening a window from rdyncall" width="100%" />
 </td>
 <td width="50%" valign="top">
-<strong>raylib 3D rendering from R</strong><br>
+<strong>Terminal workflow</strong><br>
+<img src="man/figures/raylib-3d-demo.svg" alt="Terminal recording of a raylib 3D cube example driven through rdyncall" width="100%" />
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<strong>Native window result</strong><br>
+<em>SDL3 window recording will be added after capture.</em>
+</td>
+<td width="50%" valign="top">
+<strong>Native window result</strong><br>
 <img src="man/figures/raylib-3d-demo.gif" alt="Animated raylib 3D cube rendered through rdyncall" width="100%" />
 </td>
 </tr>
