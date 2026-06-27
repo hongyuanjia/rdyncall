@@ -2,6 +2,10 @@
 output: github_document
 ---
 
+```{r setup, include=FALSE}
+library(rdyncall)
+```
+
 # rdyncall <img src="man/figures/logo.svg" alt="rdyncall logo" align="right" height="138" />
 
 <!-- badges: start -->
@@ -83,7 +87,7 @@ dyncall(add, "ii)i", 20L, 3L)
 Foreign aggregate layouts are described once and then used through raw-backed
 objects:
 
-```r
+```{r}
 cstruct("Rect{ssSS}x y w h;")
 
 rect <- cdata(Rect)
@@ -92,7 +96,7 @@ rect$y <- 60
 rect$w <- 10
 rect$h <- 15
 
-rect$w
+rect$w * rect$h
 ```
 
 ## Learn rdyncall

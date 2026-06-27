@@ -114,8 +114,10 @@ rect$y <- 60
 rect$w <- 10
 rect$h <- 15
 
-rect$w
+rect$w * rect$h
 ```
+
+    ## [1] 150
 
 ## Learn rdyncall
 
