@@ -1,5 +1,5 @@
 
-# rdyncall <img src="man/figures/logo.svg" align="right" height="138" />
+# rdyncall <img src="man/figures/logo.svg" alt="rdyncall logo" align="right" height="138" />
 
 <!-- badges: start -->
 
@@ -114,8 +114,8 @@ supports several layout features needed by real C APIs:
 - nested aggregate fields and by-value aggregate calls on supported
   DynCall backends.
 
-Callback signatures currently do not support aggregate by-value
-arguments or returns.
+For callbacks, `ccallback()` supports aggregate by-value arguments and
+returns on the implemented x86_64 and ARM64 dyncallback backends.
 
 ## DynPort Bindings
 

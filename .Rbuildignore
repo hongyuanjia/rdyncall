@@ -17,6 +17,7 @@
 ^src/\.cache$
 ^tools/\.cache$
 ^tools/legacy-vignettes($|/)
+^inst/tinytest/.*\.(o|so|dll|dylib|a)$
 ^src/dyncall/dyncall/libdyncall_s\.a$
 ^src/dyncall/dyncallback/libdyncallback_s\.a$
 ^src/dyncall/dynload/libdynload_s\.a$
