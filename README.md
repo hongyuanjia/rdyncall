@@ -16,6 +16,34 @@ The package is intended for developers who already know the C API they
 want to call and need an exploratory or dynamic binding layer from R
 without writing a compiled wrapper for every function.
 
+## Native Library Showcase
+
+`rdyncall` can call into native libraries directly from R: generate an
+SDL3 binding package from DynPort metadata, open a real SDL3 window, or
+bind raylib drawing calls and drive a rotating 3D scene. The SDL3
+asciinema capture shows the binding workflow; the raylib GIF shows the
+rendered result.
+
+<table>
+
+<tr>
+
+<td width="50%" valign="top">
+
+<strong>SDL3 generated binding package</strong><br>
+<img src="man/figures/sdl3-demo.svg" alt="Terminal recording of an SDL3 DynPort package opening a window from rdyncall" width="100%" />
+</td>
+
+<td width="50%" valign="top">
+
+<strong>raylib 3D rendering from R</strong><br>
+<img src="man/figures/raylib-3d-demo.gif" alt="Animated raylib 3D cube rendered through rdyncall" width="100%" />
+</td>
+
+</tr>
+
+</table>
+
 ## Installation
 
 ``` r
@@ -107,7 +135,7 @@ The pkgdown articles are the main documentation path:
 - `dynport()` builds and loads generated R packages from DCF `.dynport`
   binding specifications.
 
-## Generated Bindings
+## Structs, Unions and Memory
 
 `rdyncall` can model ordinary C `struct` and `union` layouts and
 supports several layout features needed by real C APIs:
@@ -133,79 +161,6 @@ The package ships one maintained DynPort example,
 [`porter`](https://github.com/hongyuanjia/porter). See the
 generated-binding articles for how to create DynPort metadata for a C
 library, load it with `dynport()`, and run a non-GUI SDL3 smoke test.
-
-To generate an unprefixed SDL3 binding package and open a minimal SDL3
-window, call the generated wrappers through `SDL3::`:
-
-``` r
-library(rdyncall)
-dynport(SDL3, package = "SDL3", rebuild = TRUE, quiet = FALSE)
-
-SDL3::SDL_Init(SDL3::SDL_INIT_VIDEO)
-window <- SDL3::SDL_CreateWindow("rdyncall SDL3 window", 640L, 360L, 0)
-renderer <- SDL3::SDL_CreateRenderer(window, "software")
-
-SDL3::SDL_SetRenderDrawColor(renderer, 24L, 28L, 36L, 255L)
-SDL3::SDL_RenderClear(renderer)
-SDL3::SDL_SetRenderDrawColor(renderer, 255L, 255L, 255L, 255L)
-SDL3::SDL_RenderDebugText(renderer, 40, 40, "Hello from rdyncall!")
-SDL3::SDL_RenderPresent(renderer)
-SDL3::SDL_Delay(2000L)
-SDL3::SDL_DestroyRenderer(renderer)
-SDL3::SDL_DestroyWindow(window)
-SDL3::SDL_Quit()
-```
-
-<img src="man/figures/sdl3-demo.svg" alt="Terminal recording of an SDL3 DynPort package opening a window from rdyncall" width="100%" />
-
-This raylib example binds a few 3D drawing calls and shows a rotating
-cube on a grid:
-
-``` r
-library(rdyncall)
-source(system.file("demo-support", "raylib.R", package = "rdyncall", mustWork = TRUE), local = TRUE)
-
-cstruct("Color{CCCC}r g b a;")
-cstruct("Vector3{fff}x y z;")
-cstruct("Camera3D{ffffffffffi}px py pz tx ty tz ux uy uz fovy projection;")
-
-color <- function(r, g, b, a = 255L) { x <- cdata(Color); x$r <- r; x$g <- g; x$b <- b; x$a <- a; x }
-vector3 <- function(x, y, z) { v <- cdata(Vector3); v$x <- x; v$y <- y; v$z <- z; v }
-
-camera <- cdata(Camera3D)
-camera$px <- 4; camera$py <- 3; camera$pz <- 4
-camera$tx <- 0; camera$ty <- 1; camera$tz <- 0
-camera$ux <- 0; camera$uy <- 1; camera$uz <- 0
-camera$fovy <- 45; camera$projection <- 0L
-
-ray <- new.env(parent = globalenv())
-dynbind(find_raylib(), paste(
-  "InitWindow(iiZ)v", "CloseWindow()v", "BeginDrawing()v", "EndDrawing()v",
-  "ClearBackground(<Color>)v", "BeginMode3D(<Camera3D>)v", "EndMode3D()v",
-  "DrawCube(<Vector3>fff<Color>)v", "DrawCubeWires(<Vector3>fff<Color>)v",
-  "DrawGrid(if)v", "SetTargetFPS(i)v", "GetTime()d", "WindowShouldClose()B",
-  "rlPushMatrix()v", "rlPopMatrix()v", "rlTranslatef(fff)v", "rlRotatef(ffff)v",
-  sep = ";"
-), envir = ray)
-
-ray$InitWindow(800L, 450L, "rdyncall raylib 3D cube")
-ray$SetTargetFPS(60L)
-started <- ray$GetTime()
-
-while (!isTRUE(ray$WindowShouldClose()) && ray$GetTime() - started < 2) {
-  angle <- 120 * (ray$GetTime() - started)
-  ray$BeginDrawing(); ray$ClearBackground(color(245L, 245L, 245L))
-  ray$BeginMode3D(camera); ray$DrawGrid(12L, 1)
-  ray$rlPushMatrix(); ray$rlTranslatef(0, 1, 0); ray$rlRotatef(angle, 0.3, 1, 0)
-  ray$DrawCube(vector3(0, 0, 0), 1.6, 1.6, 1.6, color(0L, 121L, 241L))
-  ray$DrawCubeWires(vector3(0, 0, 0), 1.6, 1.6, 1.6, color(20L, 48L, 80L))
-  ray$rlPopMatrix(); ray$EndMode3D(); ray$EndDrawing()
-}
-
-ray$CloseWindow()
-```
-
-<img src="man/figures/raylib-3d-demo.svg" alt="Terminal recording of a raylib 3D cube example driven through rdyncall" width="100%" />
 
 ## Demos
 
