@@ -132,7 +132,7 @@ dynport <- function(portname, portfile = NULL, repo = system.file("dynports", pa
 }
 
 # ref: {r-lib/desc:::read_dcf()}
-dynport_read <- function(file) {
+dynport_read <- function(file, envir = dynport_parse_env()) {
     tryCatch(
         lines <- readLines(file),
         error = function(e) {
@@ -194,7 +194,11 @@ dynport_read <- function(file) {
         stop("Both 'Enum' and 'Enum/...' found. Should have either one.", call. = FALSE)
     }
 
-    dynport_parse_fields(keys, values, lnums, envir = parent.frame(2L))
+    dynport_parse_fields(keys, values, lnums, envir = envir)
+}
+
+dynport_parse_env <- function() {
+    new.env(parent = emptyenv())
 }
 
 dynport_parse_fields <- function(keys, values, lnums, envir = parent.frame()) {
@@ -472,7 +476,7 @@ dynport_parse_function <- function(value, lnum = 1L, envir = parent.frame()) {
             }
         }
 
-        ret <- dynport_parse_types("struct", ret_nm[[1L]], allow_arrays = FALSE)
+        ret <- dynport_parse_types("struct", ret_nm[[1L]], envir, allow_arrays = FALSE)
         dynport_issue_type_error(ret, ret_nm[[1L]], issue_error, name, "return")
 
         lnum <- lnum + lncnt[[i]]
