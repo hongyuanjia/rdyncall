@@ -42,13 +42,11 @@ raylib 3D rendering from R
 
 <td width="50%" valign="top">
 
-<strong>Terminal workflow</strong><br>
 <img src="man/figures/sdl3-demo.svg" alt="Terminal recording of an SDL3 DynPort package opening a window from rdyncall" width="100%" />
 </td>
 
 <td width="50%" valign="top">
 
-<strong>Terminal workflow</strong><br>
 <img src="man/figures/raylib-3d-demo.svg" alt="Terminal recording of a raylib 3D cube example driven through rdyncall" width="100%" />
 </td>
 
@@ -58,13 +56,11 @@ raylib 3D rendering from R
 
 <td width="50%" valign="top">
 
-<strong>Native window result</strong><br> <em>SDL3 window recording will
-be added after capture.</em>
+<img src="man/figures/sdl3-demo.gif" alt="Animated SDL3 window with moving text rendered through rdyncall" width="100%" />
 </td>
 
 <td width="50%" valign="top">
 
-<strong>Native window result</strong><br>
 <img src="man/figures/raylib-3d-demo.gif" alt="Animated raylib 3D cube rendered through rdyncall" width="100%" />
 </td>
 
