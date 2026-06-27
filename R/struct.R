@@ -415,6 +415,8 @@ parse_aggregate_types <- function(kind = c("struct", "union"), signature,
     array_lens <- integer()
     max_size <- 0L
     max_align <- 1L
+    has_known_union_field <- FALSE
+    has_unknown_union_field <- FALSE
 
     if (kind == "struct") {
         offset <- 0L
@@ -464,8 +466,14 @@ parse_aggregate_types <- function(kind = c("struct", "union"), signature,
             offsets <- c(offsets, offset)
             offset <- offset + field_size
         } else {
-            max_align <- max(max_align, aggregate_member_alignment(info$align, layout))
-            max_size <- max(max_size, field_size)
+            alignment <- aggregate_member_alignment(info$align, layout)
+            if (is.na(field_size) || is.na(alignment)) {
+                has_unknown_union_field <- TRUE
+            } else {
+                has_known_union_field <- TRUE
+                max_align <- max(max_align, alignment)
+                max_size <- max(max_size, field_size)
+            }
         }
     }
 
@@ -473,8 +481,13 @@ parse_aggregate_types <- function(kind = c("struct", "union"), signature,
         max_align <- aggregate_final_alignment(max_align, layout)
         size <- align(offset, max_align)
     } else {
-        max_align <- aggregate_final_alignment(max_align, layout)
-        size <- align(max_size, max_align)
+        if (!has_known_union_field && has_unknown_union_field) {
+            max_align <- NA_integer_
+            size <- NA_integer_
+        } else {
+            max_align <- aggregate_final_alignment(max_align, layout)
+            size <- align(max_size, max_align)
+        }
         offsets <- rep(0L, length(types))
     }
 

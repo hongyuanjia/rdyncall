@@ -191,6 +191,16 @@ expect_equal(sdl3$Constant$SDL_INIT_VIDEO, 32L)
 expect_true("SDL_GetPlatform" %in% names(sdl3$Function))
 expect_true(sdl3$Function$SDL_Log$variadic)
 expect_true("SDL_FRect" %in% names(sdl3$Struct))
+expect_true("SDL_Event" %in% names(sdl3$Union))
+expect_equal(sdl3$Union$SDL_Event$size, 128L)
+expect_equal(sdl3$Union$SDL_Event$align, 4L)
+expect_equal(
+    sdl3$Union$SDL_Event$fields$array_len[
+        sdl3$Union$SDL_Event$fields$name == "padding"
+    ],
+    128L
+)
+expect_equal(length(cdata(sdl3$Union$SDL_Event)), 128L)
 expect_equal(
     length(rdyncall:::dynport_wrapper_formals(
         rdyncall:::dynport_function_arg_names(sdl3$Function$SDL_GetNumAllocations)
