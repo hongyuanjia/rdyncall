@@ -134,6 +134,49 @@ The package ships one maintained DynPort example,
 generated-binding articles for how to create DynPort metadata for a C
 library, load it with `dynport()`, and run a non-GUI SDL3 smoke test.
 
+To generate an unprefixed SDL3 binding package and open a minimal SDL3
+window, pass an explicit package name and call the generated wrappers
+through `SDL3::`:
+
+``` r
+library(rdyncall)
+
+dynport(SDL3, package = "SDL3", rebuild = TRUE, quiet = FALSE)
+
+window <- NULL
+renderer <- NULL
+on.exit({
+  if (!is.null(renderer) && !is.nullptr(renderer)) {
+    SDL3::SDL_DestroyRenderer(renderer)
+  }
+  if (!is.null(window) && !is.nullptr(window)) {
+    SDL3::SDL_DestroyWindow(window)
+  }
+  SDL3::SDL_Quit()
+}, add = TRUE)
+
+if (!SDL3::SDL_Init(SDL3::SDL_INIT_VIDEO)) {
+  stop("SDL_Init failed: ", SDL3::SDL_GetError(), call. = FALSE)
+}
+
+window <- SDL3::SDL_CreateWindow("rdyncall SDL3 minimal window", 640L, 360L, 0)
+renderer <- SDL3::SDL_CreateRenderer(window, "software")
+
+SDL3::SDL_SetRenderDrawColor(renderer, 24L, 28L, 36L, 255L)
+SDL3::SDL_RenderClear(renderer)
+SDL3::SDL_SetRenderDrawColor(renderer, 255L, 255L, 255L, 255L)
+SDL3::SDL_RenderDebugText(renderer, 40, 40, "Hello from rdyncall!")
+SDL3::SDL_RenderPresent(renderer)
+
+until <- Sys.time() + 2
+while (Sys.time() < until) {
+  SDL3::SDL_PumpEvents()
+  SDL3::SDL_Delay(16L)
+}
+```
+
+<img src="man/figures/sdl3-demo.svg" alt="Terminal recording of an SDL3 DynPort package opening a window from rdyncall" width="100%" />
+
 ## Demos
 
 <a href="https://hongyuanjia.github.io/rdyncall/articles/gui-demos.html">
