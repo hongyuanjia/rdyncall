@@ -144,7 +144,6 @@ dynport(SDL3, package = "SDL3", rebuild = TRUE, quiet = FALSE)
 SDL3::SDL_Init(SDL3::SDL_INIT_VIDEO)
 window <- SDL3::SDL_CreateWindow("rdyncall SDL3 window", 640L, 360L, 0)
 renderer <- SDL3::SDL_CreateRenderer(window, "software")
-on.exit({ SDL3::SDL_DestroyRenderer(renderer); SDL3::SDL_DestroyWindow(window); SDL3::SDL_Quit() })
 
 SDL3::SDL_SetRenderDrawColor(renderer, 24L, 28L, 36L, 255L)
 SDL3::SDL_RenderClear(renderer)
@@ -152,6 +151,9 @@ SDL3::SDL_SetRenderDrawColor(renderer, 255L, 255L, 255L, 255L)
 SDL3::SDL_RenderDebugText(renderer, 40, 40, "Hello from rdyncall!")
 SDL3::SDL_RenderPresent(renderer)
 SDL3::SDL_Delay(2000L)
+SDL3::SDL_DestroyRenderer(renderer)
+SDL3::SDL_DestroyWindow(window)
+SDL3::SDL_Quit()
 ```
 
 <img src="man/figures/sdl3-demo.svg" alt="Terminal recording of an SDL3 DynPort package opening a window from rdyncall" width="100%" />
@@ -185,7 +187,6 @@ dynbind(find_raylib(), paste(
 ), envir = ray)
 
 ray$InitWindow(800L, 450L, "rdyncall raylib 3D cube")
-on.exit(ray$CloseWindow(), add = TRUE)
 ray$BeginDrawing(); ray$ClearBackground(color(245L, 245L, 245L))
 ray$BeginMode3D(camera)
 ray$DrawGrid(12L, 1)
@@ -193,6 +194,7 @@ ray$DrawCube(vector3(0, 1, 0), 1.6, 1.6, 1.6, color(0L, 121L, 241L))
 ray$DrawCubeWires(vector3(0, 1, 0), 1.6, 1.6, 1.6, color(20L, 48L, 80L))
 ray$EndMode3D(); ray$EndDrawing()
 ray$WaitTime(2)
+ray$CloseWindow()
 ```
 
 <img src="man/figures/raylib-3d-demo.svg" alt="Terminal recording of a raylib 3D cube example driven through rdyncall" width="100%" />

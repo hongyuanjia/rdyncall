@@ -47,7 +47,6 @@ dynbind(find_raylib(), paste(
 ), envir = ray)
 
 ray$InitWindow(800L, 450L, "rdyncall raylib 3D cube")
-on.exit(ray$CloseWindow(), add = TRUE)
 
 ray$BeginDrawing()
 ray$ClearBackground(color(245L, 245L, 245L))
@@ -60,3 +59,4 @@ ray$DrawText("Hello from rdyncall + raylib!", 24L, 24L, 22L, color(40L, 45L, 53L
 ray$EndDrawing()
 
 ray$WaitTime(as.numeric(Sys.getenv("RDYNCALL_RECORD_RAYLIB_SECONDS", "2")))
+ray$CloseWindow()
