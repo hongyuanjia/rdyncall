@@ -151,7 +151,7 @@
 <li>packed and aligned layouts via <code>@packed</code>, <code>@pack(n)</code> and <code>@align(n)</code>;</li>
 <li>nested aggregate fields and by-value aggregate calls on supported DynCall backends.</li>
 </ul>
-<p>Callback signatures currently do not support aggregate by-value arguments or returns.</p>
+<p>For callbacks, <code><a href="reference/callback.html">ccallback()</a></code> supports aggregate by-value arguments and returns on the implemented x86_64 and ARM64 dyncallback backends.</p>
 </div>
 <div class="section level2">
 <h2 id="dynport-bindings">DynPort Bindings<a class="anchor" aria-label="anchor" href="#dynport-bindings"></a>

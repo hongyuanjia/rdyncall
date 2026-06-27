@@ -127,8 +127,10 @@ supports several layout features needed by real C APIs:
 - nested aggregate fields and by-value aggregate calls on supported
   DynCall backends.
 
-Callback signatures currently do not support aggregate by-value
-arguments or returns.
+For callbacks,
+[`ccallback()`](https://hongyuanjia.github.io/rdyncall/reference/callback.md)
+supports aggregate by-value arguments and returns on the implemented
+x86_64 and ARM64 dyncallback backends.
 
 ## DynPort Bindings
 
