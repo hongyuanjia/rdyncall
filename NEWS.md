@@ -29,7 +29,7 @@
 - Store aggregate field names in the explicit `typeinfo$fields$name` column (#21).
 - Fix DynPort union size calculation when known storage fields appear alongside
   opaque members, allowing `SDL_Event` values to be allocated from the generated
-  SDL3 binding.
+  SDL3 binding (#56).
 - Add dedicated print methods for `typeinfo`, `struct`, `ctype`,
   `dynbind.report` and `floatraw` objects (#41).
 - Add `callback_status()`, `callback_is_active()` and `callback_last_error()`
