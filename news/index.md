@@ -19,6 +19,10 @@
   variadic function metadata, generated help pages and a cleanup helper
   for the managed DynPort library
   ([\#52](https://github.com/hongyuanjia/rdyncall/issues/52)).
+- Keep DynPort parsing isolated from already attached generated packages
+  so rebuilding or rerunning a generated package in the same R session
+  remains repeatable
+  ([\#55](https://github.com/hongyuanjia/rdyncall/issues/55)).
 - Support `Constant` and `Variadic` fields in DCF DynPort files,
   including binding variadic entries through
   [`dyncall_variadic()`](https://hongyuanjia.github.io/rdyncall/reference/dyncall.md)
