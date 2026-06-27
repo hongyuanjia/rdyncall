@@ -125,49 +125,28 @@ articles for how to create DynPort metadata for a C library, load it with
 `dynport()`, and run a non-GUI SDL3 smoke test.
 
 To generate an unprefixed SDL3 binding package and open a minimal SDL3 window,
-pass an explicit package name and call the generated wrappers through `SDL3::`:
+call the generated wrappers through `SDL3::`:
 
 ```r
 library(rdyncall)
-
 dynport(SDL3, package = "SDL3", rebuild = TRUE, quiet = FALSE)
 
-window <- NULL
-renderer <- NULL
-on.exit({
-  if (!is.null(renderer) && !is.nullptr(renderer)) {
-    SDL3::SDL_DestroyRenderer(renderer)
-  }
-  if (!is.null(window) && !is.nullptr(window)) {
-    SDL3::SDL_DestroyWindow(window)
-  }
-  SDL3::SDL_Quit()
-}, add = TRUE)
-
-if (!SDL3::SDL_Init(SDL3::SDL_INIT_VIDEO)) {
-  stop("SDL_Init failed: ", SDL3::SDL_GetError(), call. = FALSE)
-}
-
-window <- SDL3::SDL_CreateWindow("rdyncall SDL3 minimal window", 640L, 360L, 0)
+SDL3::SDL_Init(SDL3::SDL_INIT_VIDEO)
+window <- SDL3::SDL_CreateWindow("rdyncall SDL3 window", 640L, 360L, 0)
 renderer <- SDL3::SDL_CreateRenderer(window, "software")
+on.exit({ SDL3::SDL_DestroyRenderer(renderer); SDL3::SDL_DestroyWindow(window); SDL3::SDL_Quit() })
 
 SDL3::SDL_SetRenderDrawColor(renderer, 24L, 28L, 36L, 255L)
 SDL3::SDL_RenderClear(renderer)
 SDL3::SDL_SetRenderDrawColor(renderer, 255L, 255L, 255L, 255L)
 SDL3::SDL_RenderDebugText(renderer, 40, 40, "Hello from rdyncall!")
 SDL3::SDL_RenderPresent(renderer)
-
-until <- Sys.time() + 2
-while (Sys.time() < until) {
-  SDL3::SDL_PumpEvents()
-  SDL3::SDL_Delay(16L)
-}
+SDL3::SDL_Delay(2000L)
 ```
 
 <img src="man/figures/sdl3-demo.svg" alt="Terminal recording of an SDL3 DynPort package opening a window from rdyncall" width="100%" />
 
-For a compact 3D example, raylib can be bound directly with `dynbind()` and
-aggregate by-value arguments:
+This raylib example binds a few 3D drawing calls and shows a cube on a grid:
 
 ```r
 library(rdyncall)
@@ -175,30 +154,35 @@ source(system.file("demo-support", "raylib.R", package = "rdyncall", mustWork = 
 
 cstruct("Color{CCCC}r g b a;")
 cstruct("Vector3{fff}x y z;")
-cstruct("Camera3D{ffffffffffi}position_x position_y position_z target_x target_y target_z up_x up_y up_z fovy projection;")
+cstruct("Camera3D{ffffffffffi}px py pz tx ty tz ux uy uz fovy projection;")
+
+color <- function(r, g, b, a = 255L) { x <- cdata(Color); x$r <- r; x$g <- g; x$b <- b; x$a <- a; x }
+vector3 <- function(x, y, z) { v <- cdata(Vector3); v$x <- x; v$y <- y; v$z <- z; v }
+
+camera <- cdata(Camera3D)
+camera$px <- 4; camera$py <- 3; camera$pz <- 4
+camera$tx <- 0; camera$ty <- 1; camera$tz <- 0
+camera$ux <- 0; camera$uy <- 1; camera$uz <- 0
+camera$fovy <- 45; camera$projection <- 0L
 
 ray <- new.env(parent = globalenv())
-dynbind(
-  find_raylib(),
-  paste(
-    "InitWindow(iiZ)v",
-    "CloseWindow()v",
-    "BeginDrawing()v",
-    "EndDrawing()v",
-    "ClearBackground(<Color>)v",
-    "BeginMode3D(<Camera3D>)v",
-    "EndMode3D()v",
-    "DrawCube(<Vector3>fff<Color>)v",
-    "DrawCubeWires(<Vector3>fff<Color>)v",
-    "DrawGrid(if)v",
-    sep = ";"
-  ),
-  envir = ray
-)
-```
+dynbind(find_raylib(), paste(
+  "InitWindow(iiZ)v", "CloseWindow()v", "BeginDrawing()v", "EndDrawing()v",
+  "ClearBackground(<Color>)v", "BeginMode3D(<Camera3D>)v", "EndMode3D()v",
+  "DrawCube(<Vector3>fff<Color>)v", "DrawCubeWires(<Vector3>fff<Color>)v",
+  "DrawGrid(if)v", "WaitTime(d)v", sep = ";"
+), envir = ray)
 
-The recording source in `tools/asciicast/raylib-3d.R` opens a raylib window,
-draws an orbiting camera view of a cube and grid, and closes it cleanly.
+ray$InitWindow(800L, 450L, "rdyncall raylib 3D cube")
+on.exit(ray$CloseWindow(), add = TRUE)
+ray$BeginDrawing(); ray$ClearBackground(color(245L, 245L, 245L))
+ray$BeginMode3D(camera)
+ray$DrawGrid(12L, 1)
+ray$DrawCube(vector3(0, 1, 0), 1.6, 1.6, 1.6, color(0L, 121L, 241L))
+ray$DrawCubeWires(vector3(0, 1, 0), 1.6, 1.6, 1.6, color(20L, 48L, 80L))
+ray$EndMode3D(); ray$EndDrawing()
+ray$WaitTime(2)
+```
 
 <img src="man/figures/raylib-3d-demo.svg" alt="Terminal recording of a raylib 3D cube example driven through rdyncall" width="100%" />
 
