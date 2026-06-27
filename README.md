@@ -80,8 +80,18 @@ toolchains.
 
 ## Quick Start
 
-Call a C function directly by loading a library, resolving a symbol, and
-providing a call signature:
+Generated DynPort packages can be called through ordinary package
+namespaces:
+
+``` r
+dynport(SDL3, package = "SDL3")
+SDL3::SDL_GetPlatform()
+```
+
+    ## [1] "macOS"
+
+You can also call a C function directly by loading a library, resolving
+a symbol, and providing a call signature:
 
 ``` r
 library(rdyncall)
