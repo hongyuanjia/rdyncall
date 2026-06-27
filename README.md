@@ -177,6 +177,43 @@ while (Sys.time() < until) {
 
 <img src="man/figures/sdl3-demo.svg" alt="Terminal recording of an SDL3 DynPort package opening a window from rdyncall" width="100%" />
 
+For a compact 3D example, raylib can be bound directly with `dynbind()`
+and aggregate by-value arguments:
+
+``` r
+library(rdyncall)
+source(system.file("demo-support", "raylib.R", package = "rdyncall", mustWork = TRUE), local = TRUE)
+
+cstruct("Color{CCCC}r g b a;")
+cstruct("Vector3{fff}x y z;")
+cstruct("Camera3D{ffffffffffi}position_x position_y position_z target_x target_y target_z up_x up_y up_z fovy projection;")
+
+ray <- new.env(parent = globalenv())
+dynbind(
+  find_raylib(),
+  paste(
+    "InitWindow(iiZ)v",
+    "CloseWindow()v",
+    "BeginDrawing()v",
+    "EndDrawing()v",
+    "ClearBackground(<Color>)v",
+    "BeginMode3D(<Camera3D>)v",
+    "EndMode3D()v",
+    "DrawCube(<Vector3>fff<Color>)v",
+    "DrawCubeWires(<Vector3>fff<Color>)v",
+    "DrawGrid(if)v",
+    sep = ";"
+  ),
+  envir = ray
+)
+```
+
+The recording source in `tools/asciicast/raylib-3d.R` opens a raylib
+window, draws an orbiting camera view of a cube and grid, and closes it
+cleanly.
+
+<img src="man/figures/raylib-3d-demo.svg" alt="Terminal recording of a raylib 3D cube example driven through rdyncall" width="100%" />
+
 ## Demos
 
 <a href="https://hongyuanjia.github.io/rdyncall/articles/gui-demos.html">

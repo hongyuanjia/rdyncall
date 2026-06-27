@@ -16,3 +16,4 @@ docs
 .cache
 compile_commands.json
 man/figures/sdl3-demo.cast
+man/figures/raylib-3d-demo.cast
