@@ -42,21 +42,36 @@ dynbind(find_raylib(), paste(
     "DrawCubeWires(<Vector3>fff<Color>)v",
     "DrawGrid(if)v",
     "DrawText(Ziii<Color>)v",
-    "WaitTime(d)v",
+    "SetTargetFPS(i)v",
+    "GetTime()d",
+    "WindowShouldClose()B",
+    "rlPushMatrix()v",
+    "rlPopMatrix()v",
+    "rlTranslatef(fff)v",
+    "rlRotatef(ffff)v",
     sep = ";"
 ), envir = ray)
 
 ray$InitWindow(800L, 450L, "rdyncall raylib 3D cube")
+ray$SetTargetFPS(60L)
+started <- ray$GetTime()
+seconds <- as.numeric(Sys.getenv("RDYNCALL_RECORD_RAYLIB_SECONDS", "2"))
 
-ray$BeginDrawing()
-ray$ClearBackground(color(245L, 245L, 245L))
-ray$BeginMode3D(camera)
-ray$DrawGrid(12L, 1)
-ray$DrawCube(vector3(0, 1, 0), 1.6, 1.6, 1.6, color(0L, 121L, 241L))
-ray$DrawCubeWires(vector3(0, 1, 0), 1.6, 1.6, 1.6, color(20L, 48L, 80L))
-ray$EndMode3D()
-ray$DrawText("Hello from rdyncall + raylib!", 24L, 24L, 22L, color(40L, 45L, 53L))
-ray$EndDrawing()
+while (!isTRUE(ray$WindowShouldClose()) && ray$GetTime() - started < seconds) {
+    angle <- 120 * (ray$GetTime() - started)
+    ray$BeginDrawing()
+    ray$ClearBackground(color(245L, 245L, 245L))
+    ray$BeginMode3D(camera)
+    ray$DrawGrid(12L, 1)
+    ray$rlPushMatrix()
+    ray$rlTranslatef(0, 1, 0)
+    ray$rlRotatef(angle, 0.3, 1, 0)
+    ray$DrawCube(vector3(0, 0, 0), 1.6, 1.6, 1.6, color(0L, 121L, 241L))
+    ray$DrawCubeWires(vector3(0, 0, 0), 1.6, 1.6, 1.6, color(20L, 48L, 80L))
+    ray$rlPopMatrix()
+    ray$EndMode3D()
+    ray$DrawText("Hello from rdyncall + raylib!", 24L, 24L, 22L, color(40L, 45L, 53L))
+    ray$EndDrawing()
+}
 
-ray$WaitTime(as.numeric(Sys.getenv("RDYNCALL_RECORD_RAYLIB_SECONDS", "2")))
 ray$CloseWindow()

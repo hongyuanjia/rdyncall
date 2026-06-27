@@ -158,8 +158,8 @@ SDL3::SDL_Quit()
 
 <img src="man/figures/sdl3-demo.svg" alt="Terminal recording of an SDL3 DynPort package opening a window from rdyncall" width="100%" />
 
-This raylib example binds a few 3D drawing calls and shows a cube on a
-grid:
+This raylib example binds a few 3D drawing calls and shows a rotating
+cube on a grid:
 
 ``` r
 library(rdyncall)
@@ -183,17 +183,25 @@ dynbind(find_raylib(), paste(
   "InitWindow(iiZ)v", "CloseWindow()v", "BeginDrawing()v", "EndDrawing()v",
   "ClearBackground(<Color>)v", "BeginMode3D(<Camera3D>)v", "EndMode3D()v",
   "DrawCube(<Vector3>fff<Color>)v", "DrawCubeWires(<Vector3>fff<Color>)v",
-  "DrawGrid(if)v", "WaitTime(d)v", sep = ";"
+  "DrawGrid(if)v", "SetTargetFPS(i)v", "GetTime()d", "WindowShouldClose()B",
+  "rlPushMatrix()v", "rlPopMatrix()v", "rlTranslatef(fff)v", "rlRotatef(ffff)v",
+  sep = ";"
 ), envir = ray)
 
 ray$InitWindow(800L, 450L, "rdyncall raylib 3D cube")
-ray$BeginDrawing(); ray$ClearBackground(color(245L, 245L, 245L))
-ray$BeginMode3D(camera)
-ray$DrawGrid(12L, 1)
-ray$DrawCube(vector3(0, 1, 0), 1.6, 1.6, 1.6, color(0L, 121L, 241L))
-ray$DrawCubeWires(vector3(0, 1, 0), 1.6, 1.6, 1.6, color(20L, 48L, 80L))
-ray$EndMode3D(); ray$EndDrawing()
-ray$WaitTime(2)
+ray$SetTargetFPS(60L)
+started <- ray$GetTime()
+
+while (!isTRUE(ray$WindowShouldClose()) && ray$GetTime() - started < 2) {
+  angle <- 120 * (ray$GetTime() - started)
+  ray$BeginDrawing(); ray$ClearBackground(color(245L, 245L, 245L))
+  ray$BeginMode3D(camera); ray$DrawGrid(12L, 1)
+  ray$rlPushMatrix(); ray$rlTranslatef(0, 1, 0); ray$rlRotatef(angle, 0.3, 1, 0)
+  ray$DrawCube(vector3(0, 0, 0), 1.6, 1.6, 1.6, color(0L, 121L, 241L))
+  ray$DrawCubeWires(vector3(0, 0, 0), 1.6, 1.6, 1.6, color(20L, 48L, 80L))
+  ray$rlPopMatrix(); ray$EndMode3D(); ray$EndDrawing()
+}
+
 ray$CloseWindow()
 ```
 
