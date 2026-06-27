@@ -59,6 +59,23 @@ expect_dynport_portfile_error("Enum: a = 1", "Invalid specification")
 expect_dynport_portfile_error("Enum/test: a = 1 b = 2", "member specification")
 expect_dynport_portfile_error("Enum/test: a = 1.2", "member value")
 
+local({
+    search_name <- "package:rdyncallDynportCollision"
+    attach(list(DynportCollisionEnum = c(DYNPORT_COLLISION_ONE = 1L)), name = search_name)
+    on.exit(detach(search_name, character.only = TRUE), add = TRUE)
+
+    port <- rdyncall:::dynport_read(write_dynport(c(
+        "Package: CollisionPort",
+        "Version: 1.0.0",
+        "Function:",
+        "    missing_collision()<DynportCollisionEnum>;",
+        "Enum/DynportCollisionEnum:",
+        "    DYNPORT_COLLISION_ONE=1"
+    )))
+    expect_equal(port$Function$missing_collision$return, "<DynportCollisionEnum>")
+    expect_equal(port$Enum$DynportCollisionEnum, c(DYNPORT_COLLISION_ONE = 1L))
+})
+
 # struct
 expect_dynport_portfile_error(c("Struct: test", " }"), "\\{")
 expect_dynport_portfile_error(c("Struct: test{", " }}"), "\\}")
@@ -301,6 +318,31 @@ local({
         "rebuild = TRUE"
     )
     expect_silent(dynport_install_package(rebuild, portfile = portfile, lib = lib, rebuild = TRUE, quiet = TRUE))
+})
+
+local({
+    if (!is.null(dynfind(libc_names))) {
+        portfile <- write_dynport(c(
+            "Package: RerunEnumPort",
+            "Version: 1.0.0",
+            "Library:",
+            "    msvcrt",
+            "    c",
+            "    c.so.6",
+            "Function:",
+            "    missing_rerun_enum()<RerunEnum>;",
+            "Enum/RerunEnum:",
+            "    RERUN_ENUM_ONE=1"
+        ))
+        lib <- tempfile("rdyncall-dynport-lib")
+        package <- "RerunEnumPort"
+        unload_test_package(package)
+        on.exit(unload_test_package(package), add = TRUE)
+
+        expect_silent(dynport(rerun, portfile = portfile, package = package, lib = lib, rebuild = TRUE, quiet = TRUE))
+        expect_true(paste0("package:", package) %in% search())
+        expect_silent(dynport(rerun, portfile = portfile, package = package, lib = lib, rebuild = TRUE, quiet = TRUE))
+    }
 })
 
 local({
