@@ -65,6 +65,9 @@
   ([\#21](https://github.com/hongyuanjia/rdyncall/issues/21)).
 - Store aggregate field names in the explicit `typeinfo$fields$name`
   column ([\#21](https://github.com/hongyuanjia/rdyncall/issues/21)).
+- Fix DynPort union size calculation when known storage fields appear
+  alongside opaque members, allowing `SDL_Event` values to be allocated
+  from the generated SDL3 binding.
 - Add dedicated print methods for `typeinfo`, `struct`, `ctype`,
   `dynbind.report` and `floatraw` objects
   ([\#41](https://github.com/hongyuanjia/rdyncall/issues/41)).
