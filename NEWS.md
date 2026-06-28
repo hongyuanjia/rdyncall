@@ -12,7 +12,7 @@
   rebuilding or rerunning a generated package in the same R session remains
   repeatable (#55).
 - Preserve original C symbol names in generated DynPort packages while
-  validating unsafe DynPort metadata and generated namespace/help output.
+  validating unsafe DynPort metadata and generated namespace/help output (#62).
 - Support `Constant` and `Variadic` fields in DCF DynPort files, including
   binding variadic entries through `dyncall_variadic()` (#53).
 - Add `dyncall_variadic()` for calling C variadic functions with explicit
