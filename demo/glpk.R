@@ -4,6 +4,7 @@
 
 library(rdyncall)
 
+# Bind the GLPK routines used by this small linear-programming example.
 glpk <- new.env(parent = globalenv())
 binding <- tryCatch(
     dynbind(c("glpk", "glpk40", "glpk_4_65"), paste(
@@ -30,14 +31,22 @@ binding <- tryCatch(
 )
 stopifnot(!length(binding$unresolved.symbols))
 
+# GLPK row/column bound type: lower bound only.
 GLP_LO <- 2L
+# GLPK objective direction: maximize the objective.
 GLP_MAX <- 2L
+# GLPK row/column bound type: upper bound only.
 GLP_UP <- 3L
 
+# Build and solve:
+#   maximize 10*x1 + 6*x2 + 4*x3
+# subject to three upper-bounded linear constraints and x >= 0.
 run_glpk_demo <- function() {
+    # Create the opaque `glp_prob*` problem object and release it on exit.
     lp <- glpk$glp_create_prob()
     on.exit(glpk$glp_delete_prob(lp), add = TRUE)
 
+    # Set objective direction and add three constraint rows.
     glpk$glp_set_prob_name(lp, "sample")
     glpk$glp_set_obj_dir(lp, GLP_MAX)
 
@@ -49,6 +58,8 @@ run_glpk_demo <- function() {
     glpk$glp_set_row_name(lp, 3L, "r")
     glpk$glp_set_row_bnds(lp, 3L, GLP_UP, 0, 300)
 
+    # Add decision variables, their nonnegative lower bounds, and objective
+    # coefficients.
     glpk$glp_add_cols(lp, 3L)
     glpk$glp_set_col_name(lp, 1L, "x1")
     glpk$glp_set_col_bnds(lp, 1L, GLP_LO, 0, 0)
@@ -60,13 +71,17 @@ run_glpk_demo <- function() {
     glpk$glp_set_col_bnds(lp, 3L, GLP_LO, 0, 0)
     glpk$glp_set_obj_coef(lp, 3L, 4)
 
+    # GLPK sparse matrices are 1-based. Element 0 is an unused sentinel so the
+    # vectors can be passed directly to `glp_load_matrix()`.
     ia <- c(0L, 1L, 1L, 1L, 2L, 3L, 2L, 3L, 3L, 3L)
     ja <- c(0L, 1L, 2L, 3L, 1L, 1L, 2L, 2L, 1L, 3L)
     ar <- c(0, 1, 1, 1, 10, 2, 4, 2, 5, 6)
 
+    # Load the constraint matrix and solve with GLPK's simplex method.
     glpk$glp_load_matrix(lp, 9L, ia, ja, ar)
     glpk$glp_simplex(lp, NULL)
 
+    # Read the objective value and primal column values back from GLPK.
     result <- c(
         z = glpk$glp_get_obj_val(lp),
         x1 = glpk$glp_get_col_prim(lp, 1L),

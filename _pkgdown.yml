@@ -15,10 +15,18 @@ articles:
   navbar: Generated bindings
   contents:
   - articles/dynbind-dynport
+  - articles/creating-dynports
+  - articles/sdl3-non-gui
+- title: Demos
+  navbar: Demos
+  contents:
+  - articles/non-gui-demos
+  - articles/gui-demos
 - title: Diagnostics
   navbar: Diagnostics
   contents:
   - articles/troubleshooting
+  - articles/ffi-safety
 reference:
 - title: Find and load shared libraries
   desc: Locate libraries, open dynamic library handles, and resolve C symbols.

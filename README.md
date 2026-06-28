@@ -16,6 +16,58 @@ The package is intended for developers who already know the C API they
 want to call and need an exploratory or dynamic binding layer from R
 without writing a compiled wrapper for every function.
 
+## Showcase
+
+`rdyncall` can call into native libraries directly from R: generate an
+SDL3 binding package from DynPort metadata, open a real SDL3 window, or
+bind raylib drawing calls and drive a rotating 3D scene.
+
+<table>
+
+<tr>
+
+<th width="50%" align="left">
+
+SDL3 generated binding package
+</th>
+
+<th width="50%" align="left">
+
+raylib 3D rendering from R
+</th>
+
+</tr>
+
+<tr>
+
+<td width="50%" valign="top">
+
+<img src="man/figures/sdl3-demo.svg" alt="Terminal recording of an SDL3 DynPort package opening a window from rdyncall" width="100%" />
+</td>
+
+<td width="50%" valign="top">
+
+<img src="man/figures/raylib-3d-demo.svg" alt="Terminal recording of a raylib 3D cube example driven through rdyncall" width="100%" />
+</td>
+
+</tr>
+
+<tr>
+
+<td width="50%" valign="top">
+
+<img src="man/figures/sdl3-demo.gif" alt="Animated SDL3 window with moving text rendered through rdyncall" width="100%" />
+</td>
+
+<td width="50%" valign="top">
+
+<img src="man/figures/raylib-3d-demo.gif" alt="Animated raylib 3D cube rendered through rdyncall" width="100%" />
+</td>
+
+</tr>
+
+</table>
+
 ## Installation
 
 ``` r
@@ -28,8 +80,18 @@ toolchains.
 
 ## Quick Start
 
-Call a C function directly by loading a library, resolving a symbol, and
-providing a call signature:
+Generated DynPort packages can be called through ordinary package
+namespaces:
+
+``` r
+dynport(SDL3, package = "SDL3")
+SDL3::SDL_GetPlatform()
+```
+
+    ## [1] "macOS"
+
+You can also call a C function directly by loading a library, resolving
+a symbol, and providing a call signature:
 
 ``` r
 library(rdyncall)
@@ -62,29 +124,35 @@ rect$y <- 60
 rect$w <- 10
 rect$h <- 15
 
-rect$w
+rect$w * rect$h
 ```
+
+    ## [1] 150
 
 ## Learn rdyncall
 
-The pkgdown articles are organized as a short learning path:
+The pkgdown articles are the main documentation path:
 
-- [Getting
+- Start with [Getting
   started](https://hongyuanjia.github.io/rdyncall/articles/rdyncall.html)
-  introduces the basic load-resolve-call workflow.
-- [Signatures for C
-  calls](https://hongyuanjia.github.io/rdyncall/articles/signatures.html)
-  shows how to translate C declarations into rdyncall signatures.
-- [Structs, unions, and
+  and [Signatures for C
+  calls](https://hongyuanjia.github.io/rdyncall/articles/signatures.html).
+- Continue with [Structs, unions, and
   memory](https://hongyuanjia.github.io/rdyncall/articles/structs-unions-memory.html)
-  covers raw buffers, aggregate layouts, bitfields, and packed/aligned
-  data.
-- [Callbacks from C to
-  R](https://hongyuanjia.github.io/rdyncall/articles/callbacks.html)
-  explains callback pointers and lifetime rules.
-- [dynbind and DynPort
-  bindings](https://hongyuanjia.github.io/rdyncall/articles/dynbind-dynport.html)
-  shows how to move from one-off calls to generated binding packages.
+  and [Callbacks from C to
+  R](https://hongyuanjia.github.io/rdyncall/articles/callbacks.html).
+- Build larger bindings with [dynbind and DynPort
+  bindings](https://hongyuanjia.github.io/rdyncall/articles/dynbind-dynport.html),
+  [Creating DynPort
+  files](https://hongyuanjia.github.io/rdyncall/articles/creating-dynports.html),
+  and [SDL3 non-GUI
+  probing](https://hongyuanjia.github.io/rdyncall/articles/sdl3-non-gui.html).
+- Use
+  [Troubleshooting](https://hongyuanjia.github.io/rdyncall/articles/troubleshooting.html)
+  and [FFI safety
+  boundaries](https://hongyuanjia.github.io/rdyncall/articles/ffi-safety.html)
+  before binding ownership-sensitive, callback-heavy, or
+  platform-specific APIs.
 
 ## API Map
 
@@ -124,20 +192,17 @@ data file. The current implementation supports DCF `.dynport` files and
 generates ordinary on-disk R packages whose namespace is populated from
 the DynPort metadata.
 
-The package ships one current-format DynPort,
+The package ships one maintained DynPort example,
 `inst/dynports/SDL3.dynport`, generated from SDL3 headers with
-[`porter`](https://github.com/hongyuanjia/porter):
-
-``` r
-dynport(SDL3)
-dyn.SDL3::SDL_GetPlatform()
-```
-
-For other C libraries, generate a DCF `.dynport` file with porter or
-another header-processing workflow and pass it to
-`dynport(portfile = ...)`.
+[`porter`](https://github.com/hongyuanjia/porter). See the
+generated-binding articles for how to create DynPort metadata for a C
+library, load it with `dynport()`, and run a non-GUI SDL3 smoke test.
 
 ## Demos
+
+<a href="https://hongyuanjia.github.io/rdyncall/articles/gui-demos.html">
+<img src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-snake-poster.png" alt="rdyncall SDL3 Snake demo" width="720">
+</a>
 
 Run `demo(package = "rdyncall")` to list installed demos. The package
 includes small examples for direct FFI calls, callbacks, `qsort`,
@@ -147,13 +212,24 @@ Some demos require system shared libraries or open GUI windows.
 Automated checks should prefer non-GUI examples or explicit probe modes
 rather than entering an event loop.
 
+See the [Non-GUI
+demos](https://hongyuanjia.github.io/rdyncall/articles/non-gui-demos.html)
+article for XML parsing, C sorting, GLPK optimization, and stdio
+examples. The [GUI
+demos](https://hongyuanjia.github.io/rdyncall/articles/gui-demos.html)
+article shows SDL3 and raylib examples with media placeholders for
+locally captured screenshots or videos.
+
 ## Safety
 
 This is a low-level FFI. A wrong function address, call signature,
 calling convention, pointer lifetime or struct layout can crash the R
 process. Keep the C declaration beside the R signature when writing
 bindings, and hold an R reference to callback objects for as long as
-foreign code may call them.
+foreign code may call them. Read the [FFI safety
+boundaries](https://hongyuanjia.github.io/rdyncall/articles/ffi-safety.html)
+article before binding APIs that allocate memory, store pointers,
+register callbacks, or run event loops.
 
 ## Project Status
 

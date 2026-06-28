@@ -352,21 +352,25 @@ dynport_parse_library <- function(value, lnum = 1L) {
     lnum <- lnum[vals != ""]
     vals <- vals[vals != ""]
 
-    # check if valid file names
+    # Check short library names, while still allowing paths that dynbind()
+    # can pass directly to dynload().
     # ref: fs::path_sanitize
     illegal <- "[/\\?<>\\:*|\":]"
     control <- "[[:cntrl:]]"
     reserved <- "^[.]+$"
     windows_reserved <- "^(con|prn|aux|nul|com[0-9]|lpt[0-9])([.].*)?$"
     windows_trailing <- "[. ]+$"
+    is_path <- grepl("[/\\\\]", vals)
+    short_vals <- vals[!is_path]
+    short_lnum <- lnum[!is_path]
 
     invld <- Reduce(`|`, lapply(
         c(illegal, control, reserved, windows_reserved, windows_trailing),
-        grepl, x = vals, ignore.case = TRUE
+        grepl, x = short_vals, ignore.case = TRUE
     ))
 
     if (any(invld)) {
-        dynport_issue_error("Library", NULL, lnum[invld], vals[invld], "Invalid file name found")
+        dynport_issue_error("Library", NULL, short_lnum[invld], short_vals[invld], "Invalid file name found")
     }
 
     gsub("\\", "/", vals, fixed = TRUE)
