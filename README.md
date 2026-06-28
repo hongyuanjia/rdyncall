@@ -200,17 +200,18 @@ library, load it with `dynport()`, and run a non-GUI SDL3 smoke test.
 
 ## Demos
 
-<a href="https://hongyuanjia.github.io/rdyncall/articles/gui-demos.html">
-<img src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-snake-poster.png" alt="rdyncall SDL3 Snake demo" width="720">
-</a>
+<video controls muted loop playsinline width="360" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-snake-poster.png">
+
+<source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-snake.mp4" type="video/mp4">
+
+</video>
 
 Run `demo(package = "rdyncall")` to list installed demos. The package
 includes small examples for direct FFI calls, callbacks, `qsort`,
 `stdio`, GLPK, libxml2, SDL3 and raylib.
 
-Some demos require system shared libraries or open GUI windows.
-Automated checks should prefer non-GUI examples or static parsing rather
-than entering an interactive event loop.
+Some demos require system shared libraries or open GUI windows. For
+non-interactive environments, see the Non-GUI demos article.
 
 See the [Non-GUI
 demos](https://hongyuanjia.github.io/rdyncall/articles/non-gui-demos.html)
