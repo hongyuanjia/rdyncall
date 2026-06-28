@@ -209,16 +209,15 @@ includes small examples for direct FFI calls, callbacks, `qsort`,
 `stdio`, GLPK, libxml2, SDL3 and raylib.
 
 Some demos require system shared libraries or open GUI windows.
-Automated checks should prefer non-GUI examples or explicit probe modes
-rather than entering an event loop.
+Automated checks should prefer non-GUI examples or static parsing rather
+than entering an interactive event loop.
 
 See the [Non-GUI
 demos](https://hongyuanjia.github.io/rdyncall/articles/non-gui-demos.html)
 article for XML parsing, C sorting, GLPK optimization, and stdio
 examples. The [GUI
 demos](https://hongyuanjia.github.io/rdyncall/articles/gui-demos.html)
-article shows SDL3 and raylib examples with media placeholders for
-locally captured screenshots or videos.
+article shows SDL3 and raylib examples with release-hosted media clips.
 
 ## Safety
 

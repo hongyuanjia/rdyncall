@@ -34,11 +34,9 @@ The SDL3 audio demo combines a small visual window with planar audio buffers.
 It prepares low-level audio structs and feeds sample data into an SDL3 audio
 stream from R.
 
-<!-- Replace with a screenshot or video after uploading media:
-<video controls muted loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-audio-poster.png">
-  <source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-audio.mp4" type="video/mp4">
+<video controls loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-planar-audio-poster.png">
+  <source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-planar-audio.mp4" type="video/mp4">
 </video>
--->
 
 ```{r sdl-audio, eval=FALSE}
 demo("SDL_audio", package = "rdyncall", ask = FALSE)
@@ -53,11 +51,9 @@ The SDL3/OpenGL raster demo opens an SDL3 window with an OpenGL context and
 renders a Mandelbrot raster. It is a compact example of using rdyncall for a
 graphics pipeline rather than only individual scalar function calls.
 
-<!-- Replace with a screenshot or video after uploading media:
 <video controls muted loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-raster-poster.png">
   <source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-raster.mp4" type="video/mp4">
 </video>
--->
 
 ```{r sdl-raster, eval=FALSE}
 demo("SDL_raster", package = "rdyncall", ask = FALSE)
@@ -72,11 +68,9 @@ The raylib recursive tree demo draws animated branch geometry with raylib. The R
 side generates branch endpoints and passes raylib aggregate values such as
 `Vector2` and `Color` by value.
 
-<!-- Replace with a screenshot or video after uploading media:
 <video controls muted loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-raylib-tree-poster.png">
   <source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-raylib-tree.mp4" type="video/mp4">
 </video>
--->
 
 ```{r raylib-tree, eval=FALSE}
 demo("raylib", package = "rdyncall", ask = FALSE)
@@ -84,6 +78,25 @@ demo("raylib", package = "rdyncall", ask = FALSE)
 
 This demo highlights aggregate-by-value calls, generated geometry in R, and a
 foreign drawing loop managed through raylib.
+
+## raylib Rtinycc recursive tree
+
+The raylib Rtinycc recursive tree demo keeps the same control-panel shape but
+compiles the recursive tree renderer with `Rtinycc`. R owns the window loop and
+slider state, while the compiled renderer calls raylib drawing functions through
+function pointers resolved by rdyncall.
+
+<video controls muted loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-raylib-rtinycc-tree-poster.png">
+  <source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-raylib-rtinycc-tree.mp4" type="video/mp4">
+</video>
+
+```{r raylib-rtinycc-tree, eval=FALSE}
+demo("raylib_tinycc", package = "rdyncall", ask = FALSE)
+```
+
+This variant shows how a demo can combine three layers in one loop: R for UI
+state, rdyncall for native symbol binding, and Rtinycc for a small compiled
+renderer that still draws through the same raylib API.
 
 ## What these demos exercise
 
@@ -93,6 +106,7 @@ foreign drawing loop managed through raylib.
 | SDL3 audio | SDL3 audio and renderer | aggregate pointers, raw audio buffers, native resource cleanup |
 | SDL3/OpenGL raster | SDL3 and OpenGL | shared-library discovery, OpenGL context setup, raster buffer upload, timed rendering |
 | raylib recursive tree | raylib | aggregate by value, generated R geometry, drawing loop, downloaded native library |
+| raylib Rtinycc recursive tree | raylib and Rtinycc | native function pointers, aggregate by value, compiled renderer, drawing loop |
 
 Together, the demos show rdyncall operating at the boundary where R code owns the
 application logic while C libraries own windows, renderers, audio streams, and
