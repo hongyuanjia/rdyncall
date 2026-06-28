@@ -114,8 +114,8 @@ graphics contexts.
 
 ## Next steps
 
-- Use [SDL3 non-GUI probing](sdl3-non-gui.html) for a CI-friendly SDL3 binding
-  check.
+- Use [Non-GUI demos](non-gui-demos.html) for examples that run directly in
+  non-interactive sessions.
 - Use [dynbind and DynPort bindings](dynbind-dynport.html) to understand the
   wrapper layer used by the demos.
 - Use [structs, unions, and memory](structs-unions-memory.html) for aggregate

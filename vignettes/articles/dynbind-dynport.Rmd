@@ -159,13 +159,6 @@ sdl3 <- port_set(sdl3,
 port_write(sdl3, "inst/dynports/SDL3.dynport")
 ```
 
-## A non-GUI SDL3 probe
-
-The package includes SDL3 as the maintained bundled DynPort example. The
-CI-safe probe lives in [SDL3 non-GUI probing](sdl3-non-gui.html), where the
-external-library execution switch, generated package loading, and real
-`SDL_GetPlatform()` call are kept together.
-
 ## When to choose each layer
 
 - Use `dyncall()` for a single function address or a small experiment.
@@ -186,7 +179,7 @@ declarations and signatures correct.
 - Use [Creating DynPort files with porter](creating-dynports.html) for the
   header-to-DynPort workflow, including the SDL3 example that produces the
   bundled DynPort file.
-- Use [SDL3 non-GUI probing](sdl3-non-gui.html) for a real external library
-  example that can run in CI without opening windows.
+- Use [Non-GUI demos](non-gui-demos.html) for examples that run without opening
+  windows.
 - Use [troubleshooting](troubleshooting.html) when generated packages fail to
   find a library, resolve a symbol, or load into the current session.
