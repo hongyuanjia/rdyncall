@@ -174,8 +174,21 @@ Daniel Adler <dadler@uni-goettingen.de>
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-dynport(SDL3)
-dyn.SDL3::SDL_GetPlatform()
-} # }
+# \dontrun{
+if (run_external) {
+    portfile <- system.file("dynports", "SDL3.dynport",
+        package = "rdyncall", mustWork = TRUE
+    )
+    lib <- tempfile("rdyncall-dynport-lib")
+    generated <- dynport(
+        portfile = portfile,
+        package = "dyn.SDL3Example",
+        lib = lib,
+        rebuild = TRUE,
+        quiet = TRUE
+    )
+    getExportedValue(generated, "SDL_GetPlatform")()
+}
+#> [1] "Linux"
+# }
 ```
