@@ -49,11 +49,13 @@ The function `unpack()` extracts a C data type according to the
 C value to an R value and returns it.
 
 Byte `offset` calculations start at 0 relative to the first byte in an
-atomic vectors data area.
+atomic vectors data area. Offsets must be non-missing, non-negative
+integer scalars.
 
 If `x` is an atomic vector, a bound check is carried out before
 read/write access. Otherwise, if `x` is an external pointer, there is
-only a C NULL pointer check.
+only a C NULL pointer check. Values read from R vectors must have length
+greater than zero.
 
 ## See also
 

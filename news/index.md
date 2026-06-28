@@ -94,6 +94,9 @@
   for registered `struct` and `union` types on supported dyncall
   backends, including ARM64 aggregate ABI handling
   ([\#23](https://github.com/hongyuanjia/rdyncall/issues/23)).
+- Harden low-level argument validation for typed pointer signatures,
+  packing helpers and pointer offsets
+  ([\#59](https://github.com/hongyuanjia/rdyncall/issues/59)).
 - Support fixed-size array fields in `struct` and `union` type
   signatures via the `type[N]` suffix
   ([\#26](https://github.com/hongyuanjia/rdyncall/issues/26)).

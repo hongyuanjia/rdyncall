@@ -89,11 +89,12 @@ data value at byte position <code>offset</code> into the object <code>x</code>.<
 <a href="dyncall.html">signature</a> <code>sigchar</code> at byte position <code>offset</code> from the
 object <code>x</code> and converts the C value to an R value and returns it.</p>
 <p>Byte <code>offset</code> calculations start at 0 relative to the first byte in an atomic
-vectors data area.</p>
+vectors data area. Offsets must be non-missing, non-negative integer scalars.</p>
 <p>If <code>x</code> is an atomic vector, a bound check is carried out before read/write
 access.
 Otherwise, if <code>x</code> is an external pointer, there is only a C NULL pointer
-check.</p>
+check.
+Values read from R vectors must have length greater than zero.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

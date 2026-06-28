@@ -167,7 +167,7 @@ supported C types.
 | '`Z`'                   | char\*               | character,NULL                                                                            | character or NULL |
 | '`x`'                   | SEXP                 | any                                                                                       | any               |
 | '`v`'                   | void                 | invalid                                                                                   | NULL              |
-| '`*`' ...               | C type\* (pointer)   | any vector,externalptr,NULL                                                               | externalptr       |
+| '`*`' ...               | C type\* (pointer)   | compatible vector,externalptr,NULL                                                        | externalptr       |
 | '`*<`' *typename* '`>`' | typename\* (pointer) | raw,externalptr                                                                           | externalptr       |
 | '`<`' *typename* '`>`'  | typename (by value)  | raw `struct` from [`cdata()`](https://hongyuanjia.github.io/rdyncall/reference/struct.md) | raw `struct`      |
 
@@ -184,7 +184,11 @@ The last typed pointer rows of the table above refer to *typed pointer*
 signatures. If they appear as a return type signature, the external
 pointer returned is a S3 `struct` object. See
 [`cdata()`](https://hongyuanjia.github.io/rdyncall/reference/struct.md)
-for details.
+for details. Low-level typed pointer signatures accept `NULL` and
+external pointers for all base pointer types. Vector-backed convenience
+arguments are available when the R vector storage matches the C pointee
+type, for example integer for `*i`/`*I`, numeric for `*d`, `floatraw`
+for `*f`, character/raw for `*c`/`*C`, and general vectors for `*v`.
 
 ## Call Signature
 

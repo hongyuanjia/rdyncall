@@ -110,7 +110,7 @@ with class <code>floatraw</code>.
 <p><code>as.externalptr()</code> returns an external pointer to the data area of atomic
 vector given by <code>x</code>.
 The external pointer holds an additional reference to the <code>x</code> R object to
-prevent it from garbage collection.</p>
+prevent it from garbage collection. <code>x</code> must have length greater than zero.</p>
 <p><code>is.externalptr()</code> tests if the object given by <code>x</code> is an external pointer.</p>
 <p><code>floatraw()</code> creates an array with a capacity to store <code>n</code> single-precision C
 <code>float</code> values.
@@ -124,10 +124,11 @@ This function is useful when calling foreign functions that expect a C
 <p><code>floatraw2numeric()</code> coerces a C <code>float</code> (raw) vector to a numeric vector.</p>
 <p><code>ptr2str()</code>, <code>strarrayptr()</code>, <code>strptr()</code> are currently experimental.</p>
 <p><code>offset_ptr()</code> creates a new external pointer pointing to <code>x</code> plus
-the byte <code>offset</code>.
+the non-negative byte <code>offset</code>.
 If <code>x</code> is given as an external pointer, the address is increased by the
 <code>offset</code>, or, if <code>x</code> is given as a atomic vector, the address of the data
 (pointing to offset zero) is taken as basis and increased by the <code>offset</code>.
+Atomic vector offsets are checked against the vector byte size.
 The returned external pointer is protected (as offered by the C function <code>R_MakeExternalPtr</code>) by the
 external pointer <code>x</code>.</p>
     </div>
