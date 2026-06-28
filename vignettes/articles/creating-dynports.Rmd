@@ -148,7 +148,7 @@ current headers rather than copied from historical DynPort files.
 
 - Use [dynbind and DynPort bindings](dynbind-dynport.html) for the rdyncall
   loading layer.
-- Use [SDL3 non-GUI probing](sdl3-non-gui.html) for a CI-safe call through the
-  bundled SDL3 example.
+- Use [Non-GUI demos](non-gui-demos.html) for examples that can run without
+  opening a window.
 - Use [troubleshooting](troubleshooting.html) when a generated DynPort package
   cannot find its library or reports unresolved symbols.

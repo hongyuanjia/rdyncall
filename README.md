@@ -145,8 +145,8 @@ The pkgdown articles are the main documentation path:
   bindings](https://hongyuanjia.github.io/rdyncall/articles/dynbind-dynport.html),
   [Creating DynPort
   files](https://hongyuanjia.github.io/rdyncall/articles/creating-dynports.html),
-  and [SDL3 non-GUI
-  probing](https://hongyuanjia.github.io/rdyncall/articles/sdl3-non-gui.html).
+  and the [demo
+  articles](https://hongyuanjia.github.io/rdyncall/articles/non-gui-demos.html).
 - Use
   [Troubleshooting](https://hongyuanjia.github.io/rdyncall/articles/troubleshooting.html)
   and [FFI safety

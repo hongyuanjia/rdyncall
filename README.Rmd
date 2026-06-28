@@ -116,7 +116,7 @@ The pkgdown articles are the main documentation path:
   and [Callbacks from C to R](https://hongyuanjia.github.io/rdyncall/articles/callbacks.html).
 - Build larger bindings with [dynbind and DynPort bindings](https://hongyuanjia.github.io/rdyncall/articles/dynbind-dynport.html),
   [Creating DynPort files](https://hongyuanjia.github.io/rdyncall/articles/creating-dynports.html),
-  and [SDL3 non-GUI probing](https://hongyuanjia.github.io/rdyncall/articles/sdl3-non-gui.html).
+  and the [demo articles](https://hongyuanjia.github.io/rdyncall/articles/non-gui-demos.html).
 - Use [Troubleshooting](https://hongyuanjia.github.io/rdyncall/articles/troubleshooting.html)
   and [FFI safety boundaries](https://hongyuanjia.github.io/rdyncall/articles/ffi-safety.html)
   before binding ownership-sensitive, callback-heavy, or platform-specific APIs.
