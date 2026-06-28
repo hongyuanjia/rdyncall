@@ -224,6 +224,13 @@ raylib 3D rendering from R
 <p>This repository is the active maintenance branch for modern R. Recent work has restored compilation on current toolchains, refreshed the bundled DynCall source, modernized CI, added variadic calls, improved dynamic library discovery, and expanded aggregate layout support.</p>
 </div>
 <div class="section level2">
+<h2 id="acknowledgements">Acknowledgements<a class="anchor" aria-label="anchor" href="#acknowledgements"></a>
+</h2>
+<p><code>rdyncall</code> builds on the <a href="https://dyncall.org" class="external-link">DynCall</a> project. The DynCall libraries make portable dynamic calls, callback bridges, and low-level library loading possible across platforms.</p>
+<p>This package was originally created by Daniel Adler. The current repository continues that work for modern R toolchains and expands the package with updated documentation, demos, and binding workflows.</p>
+<p>The optional <a href="https://github.com/sounkou-bioinfo/Rtinycc" class="external-link">Rtinycc</a> package by Sounkou Mahamane Toure is also a strong companion for <code>rdyncall</code>. It makes it possible to compile small C kernels at runtime from R, while <code>rdyncall</code> can bind the surrounding native libraries and call through function pointers.</p>
+</div>
+<div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
 <ul>
