@@ -36,12 +36,13 @@ The function \code{unpack()} extracts a C data type according to the
 object \code{x} and converts the C value to an R value and returns it.
 
 Byte \code{offset} calculations start at 0 relative to the first byte in an atomic
-vectors data area.
+vectors data area. Offsets must be non-missing, non-negative integer scalars.
 
 If \code{x} is an atomic vector, a bound check is carried out before read/write
 access.
 Otherwise, if \code{x} is an external pointer, there is only a C NULL pointer
 check.
+Values read from R vectors must have length greater than zero.
 }
 \examples{
 # transfer double to array of floats and back, compare precision:

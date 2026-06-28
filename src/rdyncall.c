@@ -250,6 +250,114 @@ static void rdyncall_set_struct_attrib(SEXP x, const char *name)
   Rf_setAttrib(x, R_ClassSymbol, Rf_mkString("struct"));
 }
 
+static int rdyncall_has_class(SEXP x, const char *class_name)
+{
+  SEXP classes = Rf_getAttrib(x, R_ClassSymbol);
+  if (TYPEOF(classes) != STRSXP) return 0;
+
+  for (R_xlen_t i = 0; i < XLENGTH(classes); i++) {
+    SEXP cls = STRING_ELT(classes, i);
+    if (cls != NA_STRING && strcmp(CHAR(cls), class_name) == 0) return 1;
+  }
+
+  return 0;
+}
+
+static const char* rdyncall_struct_attr(SEXP x, int argpos)
+{
+  SEXP structName = Rf_getAttrib(x, Rf_install("struct"));
+  if (TYPEOF(structName) != STRSXP || XLENGTH(structName) < 1 ||
+      STRING_ELT(structName, 0) == NA_STRING) {
+    Rf_error("Argument type mismatch at position %d: expected struct metadata on typed pointer argument", argpos);
+  }
+
+  return CHAR(STRING_ELT(structName, 0));
+}
+
+static void rdyncall_expect_nonempty_vector_arg(SEXP arg, int argpos)
+{
+  switch(TYPEOF(arg)) {
+    case LGLSXP:
+    case INTSXP:
+    case REALSXP:
+    case CPLXSXP:
+    case RAWSXP:
+    case STRSXP:
+      if (XLENGTH(arg) == 0) {
+        Rf_error("Argument type mismatch at position %d: expected length greater zero.", argpos);
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+static DCpointer rdyncall_lowlevel_pointer_arg(SEXP arg, char ch, int ptrcnt, int argpos)
+{
+  int type_id = TYPEOF(arg);
+
+  if (type_id == NILSXP) return (DCpointer) 0;
+  if (type_id == EXTPTRSXP) return R_ExternalPtrAddr(arg);
+  if (ptrcnt > 1) {
+    Rf_error("Argument type mismatch at position %d: expected NULL or external pointer for multi-level typed pointer", argpos);
+  }
+
+  rdyncall_expect_nonempty_vector_arg(arg, argpos);
+
+  switch(ch) {
+    case DC_SIGCHAR_VOID:
+      switch(type_id)
+      {
+        case STRSXP:  return (DCpointer) CHAR(STRING_ELT(arg, 0));
+        case LGLSXP:  return (DCpointer) LOGICAL(arg);
+        case INTSXP:  return (DCpointer) INTEGER(arg);
+        case REALSXP: return (DCpointer) REAL(arg);
+        case CPLXSXP: return (DCpointer) COMPLEX(arg);
+        case RAWSXP:  return (DCpointer) RAW(arg);
+        default:
+          Rf_error("Argument type mismatch at position %d: expected pointer convertable value", argpos);
+      }
+      break;
+    case DC_SIGCHAR_CHAR:
+    case DC_SIGCHAR_UCHAR:
+      switch(type_id)
+      {
+        case STRSXP: return (DCpointer) CHAR(STRING_ELT(arg, 0));
+        case RAWSXP: return (DCpointer) RAW(arg);
+        default:
+          Rf_error("Argument type mismatch at position %d: expected character, raw, external pointer, or NULL for C character pointer", argpos);
+      }
+      break;
+    case DC_SIGCHAR_INT:
+    case DC_SIGCHAR_UINT:
+      if (type_id == INTSXP) return (DCpointer) INTEGER(arg);
+      Rf_error("Argument type mismatch at position %d: expected integer, external pointer, or NULL for C integer pointer", argpos);
+      break;
+    case DC_SIGCHAR_DOUBLE:
+      if (type_id == REALSXP) return (DCpointer) REAL(arg);
+      Rf_error("Argument type mismatch at position %d: expected numeric, external pointer, or NULL for C double pointer", argpos);
+      break;
+    case DC_SIGCHAR_FLOAT:
+      if (type_id == RAWSXP && rdyncall_has_class(arg, "floatraw")) return (DCpointer) RAW(arg);
+      Rf_error("Argument type mismatch at position %d: expected floatraw, external pointer, or NULL for C float pointer", argpos);
+      break;
+    case DC_SIGCHAR_SHORT:
+    case DC_SIGCHAR_USHORT:
+    case DC_SIGCHAR_LONG:
+    case DC_SIGCHAR_ULONG:
+    case DC_SIGCHAR_LONGLONG:
+    case DC_SIGCHAR_ULONGLONG:
+    case DC_SIGCHAR_POINTER:
+    case DC_SIGCHAR_STRING:
+      Rf_error("Argument type mismatch at position %d: expected external pointer or NULL for this typed pointer signature", argpos);
+      break;
+    default:
+      Rf_error("Unsupported typed pointer signature at position %d", argpos);
+  }
+
+  return (DCpointer) 0;
+}
+
 static int rdyncall_mode_from_signature_char(char ch)
 {
   switch(ch)
@@ -419,10 +527,7 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
         continue;
       }
 
-      if ( type_id != NILSXP && type_id != EXTPTRSXP && LENGTH(arg) == 0 ) {
-        Rf_error("Argument type mismatch at position %d: expected length greater zero.", argpos);
-        /* dummy */ return R_NilValue;
-      }
+      if (type_id != NILSXP && type_id != EXTPTRSXP) rdyncall_expect_nonempty_vector_arg(arg, argpos);
       switch(ch) {
         case DC_SIGCHAR_BOOL:
         {
@@ -660,14 +765,9 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
         sig++;
         /* check pointer type */
         if (type_id != NILSXP) {
-          SEXP structName = Rf_getAttrib(arg, Rf_install("struct"));
-          if (structName == R_NilValue) {
-            Rf_error("typed pointer needed here");
-            return R_NilValue; /* Dummy */
-          }
+          n = rdyncall_struct_attr(arg, argpos);
           e = sig-1;
           l = e - b;
-          n = CHAR(STRING_ELT(structName,0));
           if ( (strlen(n) != l) || (strncmp(b,n,l) != 0) ) {
             Rf_error("incompatible pointer types");
             return R_NilValue; /* Dummy */
@@ -683,110 +783,7 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
         dcArgPointer(pvm, ptrValue);
         ptrcnt = 0;
       } else { /* typed low-level pointers */
-        switch(ch) {
-          case DC_SIGCHAR_VOID:
-            switch(type_id)
-            {
-              case NILSXP:    ptrValue = (DCpointer) 0; break;
-              case STRSXP:    ptrValue = (DCpointer) CHAR(STRING_ELT(arg,0)); break;
-              case LGLSXP:    ptrValue = (DCpointer) LOGICAL(arg); break;
-              case INTSXP:    ptrValue = (DCpointer) INTEGER(arg); break;
-              case REALSXP:   ptrValue = (DCpointer) REAL(arg); break;
-              case CPLXSXP:   ptrValue = (DCpointer) COMPLEX(arg); break;
-              case RAWSXP:    ptrValue = (DCpointer) RAW(arg); break;
-              case EXTPTRSXP: ptrValue = R_ExternalPtrAddr(arg); break;
-              default:        Rf_error("Argument type mismatch at position %d: expected pointer convertable value", argpos);
-                return R_NilValue; /* dummy */
-            }
-            break;
-          case DC_SIGCHAR_CHAR:
-          case DC_SIGCHAR_UCHAR:
-            switch(type_id)
-            {
-              case NILSXP:    ptrValue = (DCpointer) 0; break;
-              case STRSXP:
-                if (ptrcnt == 1) {
-                  ptrValue = (DCpointer) CHAR( STRING_ELT(arg,0) );
-                } else {
-                  Rf_error("Argument type mismatch at position %d: expected 'C string' convertable value", argpos);
-                  return R_NilValue; /* dummy */
-                }
-                break;
-              case RAWSXP:
-                if (ptrcnt == 1) {
-                  ptrValue = RAW(arg);
-                } else {
-                  Rf_error("Argument type mismatch at position %d: expected 'C string' convertable value", argpos);
-                  return R_NilValue; /* dummy */
-                }
-                break;
-              case EXTPTRSXP: ptrValue = R_ExternalPtrAddr(arg); break;
-              default:
-                Rf_error("Argument type mismatch at position %d: expected 'C string' convertable value", argpos);
-                return R_NilValue; /* dummy */
-            }
-            break;
-          case DC_SIGCHAR_USHORT:
-          case DC_SIGCHAR_SHORT:
-              Rf_error("Signature '*[sS]' not implemented");
-              return R_NilValue; /* dummy */
-          case DC_SIGCHAR_UINT:
-          case DC_SIGCHAR_INT:
-            switch(type_id)
-            {
-              case NILSXP:  ptrValue = (DCpointer) 0; break;
-              case INTSXP:  ptrValue = (DCpointer) INTEGER(arg); break;
-              default:      Rf_error("Argument type mismatch at position %d: expected 'pointer to C integer' convertable value", argpos);
-                return R_NilValue; /* dummy */
-            }
-            break;
-          case DC_SIGCHAR_ULONG:
-          case DC_SIGCHAR_LONG:
-              Rf_error("Signature '*[jJ]' not implemented");
-              return R_NilValue; /* dummy */
-          case DC_SIGCHAR_ULONGLONG:
-          case DC_SIGCHAR_LONGLONG:
-              Rf_error("Signature '*[lJ]' not implemented");
-              return R_NilValue; /* dummy */
-          case DC_SIGCHAR_FLOAT:
-            switch(type_id)
-            {
-              case NILSXP:  ptrValue = (DCpointer) 0; break;
-              case RAWSXP:
-                if ( strcmp( CHAR(STRING_ELT(Rf_getAttrib(arg, Rf_install("class")),0)),"floatraw") == 0 ) {
-                  ptrValue = (DCpointer) RAW(arg);
-                } else {
-                  Rf_error("Argument type mismatch at position %d: expected 'pointer to C double' convertable value", argpos);
-                  return R_NilValue; /* dummy */
-                }
-                break;
-              default:      Rf_error("Argument type mismatch at position %d: expected 'pointer to C double' convertable value", argpos);
-                return R_NilValue; /* dummy */
-            }
-            break;
-          case DC_SIGCHAR_DOUBLE:
-            switch(type_id)
-            {
-              case NILSXP:  ptrValue = (DCpointer) 0; break;
-              case REALSXP: ptrValue = (DCpointer) REAL(arg); break;
-              default:      Rf_error("Argument type mismatch at position %d: expected 'pointer to C double' convertable value", argpos);
-                return R_NilValue; /* dummy */
-            }
-            break;
-          case DC_SIGCHAR_POINTER:
-          case DC_SIGCHAR_STRING:
-            switch(type_id)
-            {
-              case EXTPTRSXP:
-                ptrValue = R_ExternalPtrAddr( arg ); break;
-              default: Rf_error("low-level typed pointer on pointer not implemented");
-                return R_NilValue; /* dummy */
-            }
-            break;
-          default:
-            Rf_error("low-level typed pointer on C char pointer not implemented");
-            return R_NilValue; /* dummy */
-        }
+        ptrValue = rdyncall_lowlevel_pointer_arg(arg, ch, ptrcnt, argpos);
         dcArgPointer(pvm, ptrValue);
         ptrcnt = 0;
       }
@@ -862,8 +859,16 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
           char buf[128];
           const char* begin = ++sig;
           const char* end   = strchr(sig, '>');
+          if (end == NULL) {
+            Rf_error("Invalid signature '%s' - missing '>' marker for aggregate pointer return.", signature);
+            return R_NilValue;
+          }
           size_t n = end - begin;
-          strncpy(buf, begin, n);
+          if (n == 0 || n >= sizeof(buf)) {
+            Rf_error("Invalid signature '%s' - aggregate pointer return type name is too long.", signature);
+            return R_NilValue;
+          }
+          memcpy(buf, begin, n);
           buf[n] = '\0';
           rdyncall_set_struct_attrib(ans, buf);
         } break;

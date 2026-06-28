@@ -352,7 +352,7 @@ dyncall_variadic_signature <- function(signature, varargs) {
 #' | '`Z`'                    | char*               | character,NULL              | character or NULL |
 #' | '`x`'                    | SEXP                | any                         | any               |
 #' | '`v`'                    | void                | invalid                     | NULL              |
-#' | '`*`' ...                | C type* (pointer)   | any vector,externalptr,NULL | externalptr       |
+#' | '`*`' ...                | C type* (pointer)   | compatible vector,externalptr,NULL | externalptr       |
 #' | '`*<`' _typename_ '`>`'  | typename* (pointer) | raw,externalptr             | externalptr       |
 #' | '`<`' _typename_ '`>`'   | typename (by value) | raw `struct` from [cdata()] | raw `struct`      |
 #'
@@ -365,6 +365,11 @@ dyncall_variadic_signature <- function(signature, varargs) {
 #' The last typed pointer rows of the table above refer to _typed pointer_ signatures.
 #' If they appear as a return type signature, the external pointer returned is a
 #' S3 `struct` object. See [cdata()] for details.
+#' Low-level typed pointer signatures accept `NULL` and external pointers for
+#' all base pointer types. Vector-backed convenience arguments are available
+#' when the R vector storage matches the C pointee type, for example integer
+#' for `*i`/`*I`, numeric for `*d`, `floatraw` for `*f`, character/raw for
+#' `*c`/`*C`, and general vectors for `*v`.
 #'
 #'
 #' # Call Signature
