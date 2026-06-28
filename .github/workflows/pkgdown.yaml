@@ -19,7 +19,9 @@ jobs:
       group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      NOT_CRAN: "true"
       RDYNCALL_ARTICLE_EXTERNAL: "true"
+      RDYNCALL_EXAMPLES_EXTERNAL: "true"
       SDL3_VERSION: "3.4.10"
       SDL3_PREFIX: ${{ github.workspace }}/.cache/sdl3/3.4.10
     permissions:
@@ -83,7 +85,12 @@ jobs:
           needs: website
 
       - name: Build site
-        run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
+        run: |
+          pkgdown::build_site_github_pages(
+            new_process = FALSE,
+            install = FALSE,
+            run_dont_run = identical(Sys.getenv("NOT_CRAN"), "true")
+          )
         shell: Rscript {0}
 
       - name: Deploy to GitHub pages 🚀
