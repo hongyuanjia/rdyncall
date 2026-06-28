@@ -156,9 +156,9 @@ DynPort files.
 - Use [dynbind and DynPort
   bindings](https://hongyuanjia.github.io/rdyncall/articles/dynbind-dynport.md)
   for the rdyncall loading layer.
-- Use [SDL3 non-GUI
-  probing](https://hongyuanjia.github.io/rdyncall/articles/sdl3-non-gui.md)
-  for a CI-safe call through the bundled SDL3 example.
+- Use [Non-GUI
+  demos](https://hongyuanjia.github.io/rdyncall/articles/non-gui-demos.md)
+  for examples that can run without opening a window.
 - Use
   [troubleshooting](https://hongyuanjia.github.io/rdyncall/articles/troubleshooting.md)
   when a generated DynPort package cannot find its library or reports

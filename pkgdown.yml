@@ -9,11 +9,10 @@ articles:
   articles/gui-demos: gui-demos.html
   articles/non-gui-demos: non-gui-demos.html
   articles/rdyncall: rdyncall.html
-  articles/sdl3-non-gui: sdl3-non-gui.html
   articles/signatures: signatures.html
   articles/structs-unions-memory: structs-unions-memory.html
   articles/troubleshooting: troubleshooting.html
-last_built: 2026-06-28T19:20Z
+last_built: 2026-06-28T19:38Z
 urls:
   reference: https://hongyuanjia.github.io/rdyncall/reference
   article: https://hongyuanjia.github.io/rdyncall/articles

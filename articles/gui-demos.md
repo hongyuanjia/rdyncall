@@ -91,9 +91,9 @@ audio streams, and graphics contexts.
 
 ## Next steps
 
-- Use [SDL3 non-GUI
-  probing](https://hongyuanjia.github.io/rdyncall/articles/sdl3-non-gui.md)
-  for a CI-friendly SDL3 binding check.
+- Use [Non-GUI
+  demos](https://hongyuanjia.github.io/rdyncall/articles/non-gui-demos.md)
+  for examples that run directly in non-interactive sessions.
 - Use [dynbind and DynPort
   bindings](https://hongyuanjia.github.io/rdyncall/articles/dynbind-dynport.md)
   to understand the wrapper layer used by the demos.

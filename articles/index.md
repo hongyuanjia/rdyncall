@@ -18,8 +18,6 @@
   bindings](https://hongyuanjia.github.io/rdyncall/articles/dynbind-dynport.md):
 - [Creating DynPort files with
   porter](https://hongyuanjia.github.io/rdyncall/articles/creating-dynports.md):
-- [SDL3 non-GUI
-  probing](https://hongyuanjia.github.io/rdyncall/articles/sdl3-non-gui.md):
 
 ### Demos
 

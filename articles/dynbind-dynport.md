@@ -168,14 +168,6 @@ sdl3 <- port_set(sdl3,
 port_write(sdl3, "inst/dynports/SDL3.dynport")
 ```
 
-## A non-GUI SDL3 probe
-
-The package includes SDL3 as the maintained bundled DynPort example. The
-CI-safe probe lives in [SDL3 non-GUI
-probing](https://hongyuanjia.github.io/rdyncall/articles/sdl3-non-gui.md),
-where the external-library execution switch, generated package loading,
-and real `SDL_GetPlatform()` call are kept together.
-
 ## When to choose each layer
 
 - Use
@@ -204,10 +196,9 @@ the C declarations and signatures correct.
   porter](https://hongyuanjia.github.io/rdyncall/articles/creating-dynports.md)
   for the header-to-DynPort workflow, including the SDL3 example that
   produces the bundled DynPort file.
-- Use [SDL3 non-GUI
-  probing](https://hongyuanjia.github.io/rdyncall/articles/sdl3-non-gui.md)
-  for a real external library example that can run in CI without opening
-  windows.
+- Use [Non-GUI
+  demos](https://hongyuanjia.github.io/rdyncall/articles/non-gui-demos.md)
+  for examples that run without opening windows.
 - Use
   [troubleshooting](https://hongyuanjia.github.io/rdyncall/articles/troubleshooting.md)
   when generated packages fail to find a library, resolve a symbol, or
