@@ -20,10 +20,18 @@
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/signatures.html">Signatures for C calls</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Start</h6></li>
+    <li><a class="dropdown-item" href="../articles/signatures.html">Signatures for C calls</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Core FFI</h6></li>
     <li><a class="dropdown-item" href="../articles/structs-unions-memory.html">Structs, unions, and memory</a></li>
     <li><a class="dropdown-item" href="../articles/callbacks.html">Callbacks from C to R</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Generated bindings</h6></li>
     <li><a class="dropdown-item" href="../articles/dynbind-dynport.html">dynbind and DynPort bindings</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Diagnostics</h6></li>
     <li><a class="dropdown-item" href="../articles/troubleshooting.html">Troubleshooting rdyncall bindings</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -40,9 +48,9 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="find-and-load-shared-libraries">Find and load shared libraries<a class="anchor" aria-label="anchor" href="#find-and-load-shared-libraries"></a></h2>
 
-
+      <div class="section-desc"><p>Locate libraries, open dynamic library handles, and resolve C symbols.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -50,27 +58,6 @@
 
 
       <dl><dt>
-
-          <code><a href="callback.html">ccallback()</a></code> <code><a href="callback.html">callback_status()</a></code> <code><a href="callback.html">callback_is_active()</a></code> <code><a href="callback.html">callback_last_error()</a></code> <code><a href="callback.html">print(<i>&lt;callback_status&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Dynamic wrapping of R functions as C callbacks</dd>
-
-        <dt>
-
-          <code><a href="dynbind.html">dynbind()</a></code> <code><a href="dynbind.html">print(<i>&lt;dynbind.report&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Binding C library functions via thin call wrappers</dd>
-
-        <dt>
-
-          <code><a href="dyncall.html">dyncall()</a></code> <code><a href="dyncall.html">dyncall_variadic()</a></code> <code><a href="dyncall.html">dyncall.cdecl()</a></code> <code><a href="dyncall.html">dyncall.default()</a></code> <code><a href="dyncall.html">dyncall.stdcall()</a></code> <code><a href="dyncall.html">dyncall.thiscall.gcc()</a></code> <code><a href="dyncall.html">dyncall.thiscall.msvc()</a></code> <code><a href="dyncall.html">dyncall.fastcall.gcc()</a></code> <code><a href="dyncall.html">dyncall.fastcall.msvc()</a></code> <code><a href="dyncall.html">dyncall.thiscall()</a></code> <code><a href="dyncall.html">dyncall.fastcall()</a></code>
-
-        </dt>
-        <dd>Foreign Function Interface with support for almost all C types</dd>
-
-        <dt>
 
           <code><a href="dynfind.html">dynfind()</a></code> <code><a href="dynfind.html">dynfind_explain()</a></code>
 
@@ -83,29 +70,40 @@
 
         </dt>
         <dd>Loading of shared libraries and resolving of symbols (Alternative Framework)</dd>
+      </dl></div><div class="section level2">
+      <h2 id="call-and-bind-c-functions">Call and bind C functions<a class="anchor" aria-label="anchor" href="#call-and-bind-c-functions"></a></h2>
 
-        <dt>
+      <div class="section-desc"><p>Call C function pointers directly or create thin R wrappers from signatures.</p></div>
 
-          <code><a href="dynport.html">dynport()</a></code> <code><a href="dynport.html">dynport_install_package()</a></code> <code><a href="dynport.html">dynport_load_into()</a></code> <code><a href="dynport.html">dynport_lib()</a></code> <code><a href="dynport.html">dynport_clear_lib()</a></code>
+      <dl></dl></div><div class="section level2">
 
-        </dt>
-        <dd>Dynamic R Bindings to standard and common C libraries</dd>
 
-        <dt>
 
-          <code><a href="packing.html">pack()</a></code> <code><a href="packing.html">unpack()</a></code>
 
-        </dt>
-        <dd>Handling of foreign C fundamental data types</dd>
+      <dl><dt>
 
-        <dt>
-
-          <code><a href="rdyncall-demos.html">rdyncall-demos</a></code>
+          <code><a href="dyncall.html">dyncall()</a></code> <code><a href="dyncall.html">dyncall_variadic()</a></code> <code><a href="dyncall.html">dyncall.cdecl()</a></code> <code><a href="dyncall.html">dyncall.default()</a></code> <code><a href="dyncall.html">dyncall.stdcall()</a></code> <code><a href="dyncall.html">dyncall.thiscall.gcc()</a></code> <code><a href="dyncall.html">dyncall.thiscall.msvc()</a></code> <code><a href="dyncall.html">dyncall.fastcall.gcc()</a></code> <code><a href="dyncall.html">dyncall.fastcall.msvc()</a></code> <code><a href="dyncall.html">dyncall.thiscall()</a></code> <code><a href="dyncall.html">dyncall.fastcall()</a></code>
 
         </dt>
-        <dd>rdyncall demos: shared library notes</dd>
+        <dd>Foreign Function Interface with support for almost all C types</dd>
 
         <dt>
+
+          <code><a href="dynbind.html">dynbind()</a></code> <code><a href="dynbind.html">print(<i>&lt;dynbind.report&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Binding C library functions via thin call wrappers</dd>
+      </dl></div><div class="section level2">
+      <h2 id="structures-unions-and-memory">Structures, unions, and memory<a class="anchor" aria-label="anchor" href="#structures-unions-and-memory"></a></h2>
+
+      <div class="section-desc"><p>Describe aggregate C types and read or write low-level memory values.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="struct.html">cstruct()</a></code> <code><a href="struct.html">cunion()</a></code> <code><a href="struct.html">as.ctype()</a></code> <code><a href="struct.html">cdata()</a></code> <code><a href="struct.html">`$`(<i>&lt;struct&gt;</i>)</a></code> <code><a href="struct.html">`$&lt;-`(<i>&lt;struct&gt;</i>)</a></code> <code><a href="struct.html">print(<i>&lt;struct&gt;</i>)</a></code> <code><a href="struct.html">print(<i>&lt;ctype&gt;</i>)</a></code>
 
@@ -121,12 +119,68 @@
 
         <dt>
 
+          <code><a href="packing.html">pack()</a></code> <code><a href="packing.html">unpack()</a></code>
+
+        </dt>
+        <dd>Handling of foreign C fundamental data types</dd>
+
+        <dt>
+
           <code><a href="utils.html">is.nullptr()</a></code> <code><a href="utils.html">as.externalptr()</a></code> <code><a href="utils.html">offset_ptr()</a></code> <code><a href="utils.html">is.externalptr()</a></code> <code><a href="utils.html">as.floatraw()</a></code> <code><a href="utils.html">floatraw2numeric()</a></code> <code><a href="utils.html">floatraw()</a></code> <code><a href="utils.html">print(<i>&lt;floatraw&gt;</i>)</a></code> <code><a href="utils.html">ptr2str()</a></code> <code><a href="utils.html">strarrayptr()</a></code> <code><a href="utils.html">strptr()</a></code>
 
         </dt>
         <dd>Utility functions for working with foreign C data types</dd>
+      </dl></div><div class="section level2">
+      <h2 id="callbacks">Callbacks<a class="anchor" aria-label="anchor" href="#callbacks"></a></h2>
+
+      <div class="section-desc"><p>Expose R functions as C callback pointers and inspect callback state.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="callback.html">ccallback()</a></code> <code><a href="callback.html">callback_status()</a></code> <code><a href="callback.html">callback_is_active()</a></code> <code><a href="callback.html">callback_last_error()</a></code> <code><a href="callback.html">print(<i>&lt;callback_status&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Dynamic wrapping of R functions as C callbacks</dd>
+      </dl></div><div class="section level2">
+      <h2 id="generated-dynport-bindings">Generated DynPort bindings<a class="anchor" aria-label="anchor" href="#generated-dynport-bindings"></a></h2>
+
+      <div class="section-desc"><p>Build, load, and manage generated R packages from DynPort metadata.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="dynport.html">dynport()</a></code> <code><a href="dynport.html">dynport_install_package()</a></code> <code><a href="dynport.html">dynport_load_into()</a></code> <code><a href="dynport.html">dynport_lib()</a></code> <code><a href="dynport.html">dynport_clear_lib()</a></code>
+
+        </dt>
+        <dd>Dynamic R Bindings to standard and common C libraries</dd>
+      </dl></div><div class="section level2">
+      <h2 id="demos">Demos<a class="anchor" aria-label="anchor" href="#demos"></a></h2>
+
+      <div class="section-desc"><p>Shared library notes for the bundled demos.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="rdyncall-demos.html">rdyncall-demos</a></code>
+
+        </dt>
+        <dd>rdyncall demos: shared library notes</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
