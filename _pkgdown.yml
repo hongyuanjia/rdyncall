@@ -18,7 +18,7 @@ articles:
   - articles/creating-dynports
   - articles/sdl3-non-gui
 - title: Demos
-  navbar:
+  navbar: Demos
   contents:
   - articles/non-gui-demos
   - articles/gui-demos
