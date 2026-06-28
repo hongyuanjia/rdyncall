@@ -132,9 +132,22 @@ other libraries, generate a DCF \code{.dynport} file externally and pass it with
 \code{portfile}.
 }
 \examples{
+\dontshow{run_external <- identical(Sys.getenv("RDYNCALL_EXAMPLES_EXTERNAL"), "true")}
 \dontrun{
-dynport(SDL3)
-dyn.SDL3::SDL_GetPlatform()
+if (run_external) {
+    portfile <- system.file("dynports", "SDL3.dynport",
+        package = "rdyncall", mustWork = TRUE
+    )
+    lib <- tempfile("rdyncall-dynport-lib")
+    generated <- dynport(
+        portfile = portfile,
+        package = "dyn.SDL3Example",
+        lib = lib,
+        rebuild = TRUE,
+        quiet = TRUE
+    )
+    getExportedValue(generated, "SDL_GetPlatform")()
+}
 }
 }
 \references{
