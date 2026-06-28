@@ -214,6 +214,39 @@ dynport_parse_env <- function() {
     new.env(parent = emptyenv())
 }
 
+dynport_is_object_name <- function(names) {
+    !is.na(names) & nzchar(names) & !grepl("[[:cntrl:]]|`", names)
+}
+
+dynport_check_names <- function(names, type, parent_name = NULL, lnums, values,
+                                what, allow_empty = FALSE, check_duplicates = FALSE) {
+    if (!length(names)) return(invisible(names))
+
+    invalid <- is.na(names) | grepl("[[:cntrl:]]|`", names)
+    if (!allow_empty) invalid <- invalid | !nzchar(names)
+    if (any(invalid)) {
+        dynport_issue_error(type, parent_name,
+            rep_len(lnums, length(names))[invalid],
+            rep_len(values, length(names))[invalid],
+            sprintf("Invalid %s name found", what)
+        )
+    }
+
+    if (check_duplicates) {
+        duplicates <- duplicated(names)
+        if (allow_empty) duplicates <- duplicates & nzchar(names)
+        if (any(duplicates)) {
+            dynport_issue_error(type, parent_name,
+                rep_len(lnums, length(names))[duplicates],
+                rep_len(values, length(names))[duplicates],
+                sprintf("Duplicate %s name found", what)
+            )
+        }
+    }
+
+    invisible(names)
+}
+
 dynport_parse_fields <- function(keys, values, lnums, envir = parent.frame()) {
     out <- mapply(dynport_parse_field,
         key = keys, value = values, lnum = lnums, MoreArgs = list(envir = envir),
@@ -226,7 +259,9 @@ dynport_parse_fields <- function(keys, values, lnums, envir = parent.frame()) {
         names(enums) <- vapply(out[is_enum], names, "", USE.NAMES = FALSE)
         out <- c(out[!is_enum], list(Enum = enums))
     }
-    dynport_apply_variadic_metadata(out)
+    out <- dynport_apply_variadic_metadata(out)
+    dynport_export_names(out)
+    out
 }
 
 dynport_parse_field <- function(key, value, lnum, envir = parent.frame()) {
@@ -244,7 +279,9 @@ dynport_parse_field <- function(key, value, lnum, envir = parent.frame()) {
             "Struct"   = dynport_parse_struct(value,   lnum, envir),
             "Union"    = dynport_parse_union(value,    lnum, envir),
             "Enum"     = dynport_parse_enum(value,     lnum, key = "Enum"),
-            NULL
+            dynport_issue_error("DynPort", NULL, lnum, paste0(key, ":"),
+                sprintf("Unknown DynPort field %s found", sQuote(key))
+            )
         )
     }
 }
@@ -258,7 +295,7 @@ dynport_parse_package <- function(value, lnum = 1L) {
 
     if (any(empty)) {
         val <- val[!empty]
-        lnum <- lnum[!lnum]
+        lnum <- lnum[!empty]
     }
 
     if (length(val) > 1L) {
@@ -273,7 +310,7 @@ dynport_parse_package <- function(value, lnum = 1L) {
         dynport_issue_error("Package", NULL, lnum, val, "At least two character long is required")
     }
 
-    if (!grepl("^[a-zA-z]", val)) {
+    if (!grepl("^[A-Za-z]", val)) {
         dynport_issue_error("Package", NULL, lnum, val, "First character should be a letter")
     }
 
@@ -293,7 +330,7 @@ dynport_parse_version <- function(value, lnum = 1L) {
 
     if (any(empty)) {
         val <- val[!empty]
-        lnum <- lnum[!lnum]
+        lnum <- lnum[!empty]
     }
 
     if (length(val) > 1L) {
@@ -351,11 +388,9 @@ dynport_parse_constant <- function(value, lnum = 1L) {
     }
 
     nms <- trimws(vapply(nms_vals, .subset2, "", 1L))
-    if (any(invld <- nms != make.names(nms))) {
-        dynport_issue_error("Constant", NULL, l[invld], s[invld],
-            "Invalid constant name found"
-        )
-    }
+    dynport_check_names(nms, "Constant", lnums = l, values = s,
+        what = "constant", check_duplicates = TRUE
+    )
 
     vals <- trimws(vapply(nms_vals, .subset2, "", 2L))
     parsed <- mapply(dynport_parse_constant_value, vals, l, s, SIMPLIFY = FALSE)
@@ -424,6 +459,9 @@ dynport_parse_function <- function(value, lnum = 1L, envir = parent.frame()) {
         if (!nchar(name)) {
             issue_error(NULL, "Missing name in specification")
         }
+        if (!dynport_is_object_name(name)) {
+            issue_error(NULL, "Invalid function name found")
+        }
 
         # split argument signature and return value
         if (!grepl(")", sig[[2L]], fixed = TRUE)) {
@@ -467,6 +505,15 @@ dynport_parse_function <- function(value, lnum = 1L, envir = parent.frame()) {
             nm <- nm[-length(nm)]
         }
         if (length(nm)) {
+            if (any(!dynport_is_object_name(nm))) {
+                issue_error(name, "Invalid argument name found")
+            }
+            if (any(nm == "...")) {
+                issue_error(name, "Fixed argument names must not be '...'")
+            }
+            if (variadic && any(nm == ".varargs")) {
+                issue_error(name, "Variadic argument names must not be '.varargs'")
+            }
             if (length(arg$type) != length(nm)) {
                 issue_error(name,
                     sprintf("Imbalance number of argument types (%s) and names (%s) found",
@@ -530,15 +577,9 @@ dynport_parse_variadic <- function(value, lnum = 1L, envir = parent.frame()) {
         )
     }
 
-    invld <- vals != make.names(vals)
-    if (any(invld)) {
-        dynport_issue_error("Variadic", NULL, lnum, vals[invld], "Invalid function name found")
-    }
-
-    dups <- unique(vals[duplicated(vals)])
-    if (length(dups)) {
-        dynport_issue_error("Variadic", NULL, lnum, dups, "Duplicate function name found")
-    }
+    dynport_check_names(vals, "Variadic", lnums = lnum, values = vals,
+        what = "function", check_duplicates = TRUE
+    )
 
     vals
 }
@@ -623,6 +664,9 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
         if (!nchar(name)) {
             issue_error(NULL, "Missing name in specification")
         }
+        if (!dynport_is_object_name(name)) {
+            issue_error(NULL, sprintf("Invalid %s name found", kind))
+        }
 
         # split struct signature and field names
         if (!grepl("}", sig[[2L]], fixed = TRUE)) {
@@ -645,6 +689,17 @@ dynport_parse_struct_union <- function(value, lnum = 1L, envir = parent.frame(),
             # this is the case when there are extra '}'
             if (!nrow(field_layout$fields)) {
                 issue_error(name, "Extra '}' in specification")
+            }
+        }
+
+        field_names <- field_layout$fields$name
+        if (length(field_names)) {
+            named <- nzchar(field_names)
+            if (any(named & !dynport_is_object_name(field_names))) {
+                issue_error(name, "Invalid field name found")
+            }
+            if (any(duplicated(field_names[named]))) {
+                issue_error(name, "Duplicate field name found")
             }
         }
 
@@ -721,6 +776,7 @@ dynport_parse_enum <- function(value, lnum, key) {
 
     # get the enum name
     if (grepl("^Enum/", key)) key <- sub("^Enum/", "", key)
+    dynport_check_names(key, "Enum", lnums = lnum, values = key, what = "enum")
 
     # split member names and values by "="
     nms_vals <- strsplit(s, "=", fixed = TRUE)
@@ -734,12 +790,7 @@ dynport_parse_enum <- function(value, lnum, key) {
 
     # valid names
     nms <- trimws(vapply(nms_vals, .subset2, "", 1L))
-    # TODO: check if this is sufficient
-    if (any(invld <- nms != make.names(nms))) {
-        dynport_issue_error("Enum", key, l[invld], s[invld],
-            "Invalid member name found"
-        )
-    }
+    dynport_check_names(nms, "Enum", key, l, s, "member", check_duplicates = TRUE)
 
     # check values
     vals <- trimws(vapply(nms_vals, .subset2, "", 2L))
@@ -964,8 +1015,7 @@ dynport_export_names <- function(port) {
 }
 
 dynport_validate_export_names <- function(names) {
-    names <- names[nzchar(names)]
-    invalid <- names != make.names(names)
+    invalid <- !dynport_is_object_name(names)
     if (any(invalid)) {
         stop("Invalid export names found in 'dynport' file: ",
             paste(sQuote(names[invalid]), collapse = ", "),
@@ -1300,8 +1350,16 @@ dynport_write_description <- function(src, port, portname, package, dynport_file
 }
 
 dynport_write_namespace <- function(src, exports) {
-    lines <- if (length(exports)) paste0("export(", exports, ")") else character()
+    lines <- if (length(exports)) {
+        paste0("export(", vapply(exports, dynport_deparse_string, character(1L)), ")")
+    } else {
+        character()
+    }
     writeLines(lines, file.path(src, "NAMESPACE"), useBytes = TRUE)
+}
+
+dynport_deparse_string <- function(x) {
+    encodeString(as.character(x), quote = "\"")
 }
 
 dynport_write_loader <- function(src, dynport_file) {
@@ -1319,14 +1377,15 @@ dynport_write_man <- function(src, port) {
     if (!length(functions)) return(invisible())
 
     dir.create(file.path(src, "man"), recursive = TRUE, showWarnings = FALSE)
-    for (fun in functions) {
-        dynport_write_function_rd(src, fun)
+    for (i in seq_along(functions)) {
+        dynport_write_function_rd(src, functions[[i]], i)
     }
     invisible()
 }
 
-dynport_write_function_rd <- function(src, fun) {
+dynport_write_function_rd <- function(src, fun, index = 1L) {
     name <- fun$name
+    topic <- dynport_rd_topic(name, index)
     arg_names <- dynport_function_arg_names(fun)
     arg_types <- dynport_signature_types(fun$argument$sig)
     usage <- dynport_rd_usage(name, arg_names, isTRUE(fun$variadic))
@@ -1353,7 +1412,7 @@ dynport_write_function_rd <- function(src, fun) {
     }
 
     lines <- c(
-        paste0("\\name{", dynport_rd_escape(name), "}"),
+        paste0("\\name{", dynport_rd_escape(topic), "}"),
         paste0("\\alias{", dynport_rd_escape(name), "}"),
         paste0("\\title{", dynport_rd_escape(name), "}"),
         "\\usage{",
@@ -1369,7 +1428,12 @@ dynport_write_function_rd <- function(src, fun) {
         "\\keyword{programming}",
         "\\keyword{interface}"
     )
-    writeLines(lines, file.path(src, "man", paste0(name, ".Rd")), useBytes = TRUE)
+    writeLines(lines, file.path(src, "man", paste0(topic, ".Rd")), useBytes = TRUE)
+}
+
+dynport_rd_topic <- function(name, index) {
+    if (identical(dynport_formal_name(name), name)) return(name)
+    sprintf("dynport-function-%03d", index)
 }
 
 dynport_rd_usage <- function(name, arg_names, variadic = FALSE) {
@@ -1377,7 +1441,7 @@ dynport_rd_usage <- function(name, arg_names, variadic = FALSE) {
     if (variadic) {
         args <- c(args, "...", ".varargs = \"\"")
     }
-    paste0(name, "(", paste(args, collapse = ", "), ")")
+    paste0(dynport_formal_name(name), "(", paste(args, collapse = ", "), ")")
 }
 
 dynport_rd_type_description <- function(type) {

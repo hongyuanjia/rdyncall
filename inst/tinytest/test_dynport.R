@@ -49,15 +49,34 @@ expect_dynport_portfile_error(c("Version: 1", "  2"), "single string")
 # library
 expect_dynport_portfile_error(c("Library: com", " |.o"), "file name")
 
+# unknown fields
+expect_dynport_portfile_error("Functon: f()v;", "Unknown DynPort field")
+
 # constant
 expect_dynport_portfile_error("Constant: a", "constant specification")
-expect_dynport_portfile_error("Constant: a-b = 1", "constant name")
+expect_dynport_portfile_error("Constant: = 1", "constant name")
+expect_dynport_portfile_error("Constant: `bad` = 1", "constant name")
+expect_dynport_portfile_error(c("Constant:", "    DUP=1", "    DUP=2"), "Duplicate constant name")
 expect_dynport_portfile_error("Constant: a = b", "constant value")
+non_syntactic_constant <- rdyncall:::dynport_parse_constant("_CONST-VALUE = 1")
+expect_equal(non_syntactic_constant[["_CONST-VALUE"]], 1L)
 
 # enum
 expect_dynport_portfile_error("Enum: a = 1", "Invalid specification")
 expect_dynport_portfile_error("Enum/test: a = 1 b = 2", "member specification")
+expect_dynport_portfile_error("Enum/`bad`: a = 1", "enum name")
+expect_dynport_portfile_error("Enum/test: `bad` = 1", "member name")
+expect_dynport_portfile_error(c("Enum/test:", "    DUP=1", "    DUP=2"), "Duplicate member name")
 expect_dynport_portfile_error("Enum/test: a = 1.2", "member value")
+non_syntactic_enum <- rdyncall:::dynport_parse_enum("_ENUM-MEMBER = 1", 1L, "Enum/_Enum-Name")
+expect_equal(non_syntactic_enum[["_Enum-Name"]][["_ENUM-MEMBER"]], 1L)
+
+expect_dynport_portfile_error(c(
+    "Constant:",
+    "    SAME=1",
+    "Enum/SAME:",
+    "    SAME_MEMBER=1"
+), "Duplicate export names")
 
 local({
     search_name <- "package:rdyncallDynportCollision"
@@ -82,9 +101,12 @@ expect_dynport_portfile_error(c("Struct: test{", " }}"), "\\}")
 expect_dynport_portfile_error("Struct: a = 1", "\\{")
 expect_dynport_portfile_error(c("Struct: s", " {1"), "\\}")
 expect_dynport_portfile_error("Struct: {}", "name")
+expect_dynport_portfile_error("Struct: `bad`{i} a", "struct name")
 expect_dynport_portfile_error("Struct: test{ab}", "type name")
 expect_dynport_portfile_error("Struct: test{ii}a", "number")
 expect_dynport_portfile_error("Struct: test{i} a b", "number")
+expect_dynport_portfile_error("Struct: test{ii} a a", "field name")
+expect_dynport_portfile_error("Struct: test{i} `bad`", "field name")
 expect_dynport_portfile_error("Struct: test{d} a:1", "integer")
 expect_dynport_portfile_error("Struct: test{I} a:33", "exceeds")
 expect_dynport_portfile_error("Struct: test{I} a:0", "zero-width")
@@ -97,6 +119,8 @@ packed_struct <- rdyncall:::dynport_parse_struct("PackedDyn{Cd} c d @packed;")
 expect_equal(packed_struct$PackedDyn$size, 9L)
 expect_equal(packed_struct$PackedDyn$align, 1L)
 expect_equal(packed_struct$PackedDyn$fields$offset, c(0L, 1L))
+non_syntactic_struct <- rdyncall:::dynport_parse_struct("_Struct-Name{i} _field-name;")
+expect_equal(non_syntactic_struct[["_Struct-Name"]]$fields$name, "_field-name")
 
 # union
 expect_dynport_portfile_error(c("Union: test", " }"), "\\{")
@@ -104,9 +128,11 @@ expect_dynport_portfile_error(c("Union: test{", " }}"), "\\}")
 expect_dynport_portfile_error("Union: a = 1", "\\{")
 expect_dynport_portfile_error(c("Union: s", " {1"), "\\}")
 expect_dynport_portfile_error("Union: {}", "name")
+expect_dynport_portfile_error("Union: `bad`{i} a", "union name")
 expect_dynport_portfile_error("Union: test{ab}", "type name")
 expect_dynport_portfile_error("Union: test{ii}a", "number")
 expect_dynport_portfile_error("Union: test{i} a b", "number")
+expect_dynport_portfile_error("Union: test{ii} a a", "field name")
 expect_dynport_portfile_error("Union: test{d} a:1", "integer")
 expect_dynport_portfile_error("Union: test{C} c @align(3)", "power-of-two")
 
@@ -125,12 +151,20 @@ expect_dynport_portfile_error(c("Function: test(", " ))"), "Extra")
 expect_dynport_portfile_error("Function: a = 1", "spec")
 expect_dynport_portfile_error(c("Function: s", " (1"), "\\)")
 expect_dynport_portfile_error("Function: ()", "name")
+expect_dynport_portfile_error("Function: `bad`()v;", "function name")
 expect_dynport_portfile_error("Function: test(ab)", "return")
 expect_dynport_portfile_error("Function: test(ii)a", "type name")
 expect_dynport_portfile_error("Function: test(C[2])v arg", "C\\[2\\].*argument")
 expect_dynport_portfile_error("Function: test(i) i a b", "number")
 expect_dynport_portfile_error("Function: test(ii)i a a", "name")
+expect_dynport_portfile_error("Function: test(i)i `bad`", "argument name")
+expect_dynport_portfile_error("Function: test(i)i ...", "Fixed argument names")
+expect_dynport_portfile_error("Function: test(i.)i .varargs ...", "Variadic argument names")
 expect_dynport_portfile_error("Function: test(i.i)v x y", "Variadic marker")
+
+non_syntactic_function <- rdyncall:::dynport_parse_function("_weird-function(i)v _arg-name;")
+expect_equal(names(non_syntactic_function), "_weird-function")
+expect_equal(non_syntactic_function[["_weird-function"]]$argument$name, "_arg-name")
 
 inline_variadic <- rdyncall:::dynport_parse_function("printf(Z.)i fmt ...;")
 expect_true(inline_variadic$printf$variadic)
@@ -159,6 +193,14 @@ expect_dynport_portfile_error(c(
     "Variadic:",
     "    printf"
 ), "not defined")
+expect_dynport_portfile_error(c(
+    "Package: VarDuplicate",
+    "Function:",
+    "    printf()v;",
+    "Variadic:",
+    "    printf",
+    "    printf"
+), "Duplicate function name")
 
 parsed_port <- rdyncall:::dynport_read(write_dynport(c(
     "Package: ParsePort",
@@ -174,6 +216,29 @@ expect_equal(parsed_port$Constant$PARSE_INT, 32L)
 expect_equal(parsed_port$Constant$PARSE_WIDE, 2147483648)
 expect_equal(parsed_port$Constant$PARSE_STR, "hello")
 expect_true(parsed_port$Function$parse_printf$variadic)
+
+local({
+    portfile <- write_dynport(c(
+        "Package: WeirdFunction",
+        "Version: 1.0.0",
+        "Function:",
+        "    _weird-function(i)v _arg-name;"
+    ))
+    port <- rdyncall:::dynport_read(portfile)
+    src <- rdyncall:::dynport_create_package_source(
+        port, portfile, "weird_function", "dyn.WeirdFunction", "md5"
+    )
+    on.exit(unlink(src, recursive = TRUE, force = TRUE), add = TRUE)
+
+    ns <- readLines(file.path(src, "NAMESPACE"))
+    expect_true('export("_weird-function")' %in% ns)
+
+    rd <- file.path(src, "man", "dynport-function-001.Rd")
+    expect_true(file.exists(rd))
+    rd_text <- readLines(rd)
+    expect_true(any(grepl("`_weird-function`(`_arg-name`)", rd_text, fixed = TRUE)))
+    expect_silent(tools::parse_Rd(rd))
+})
 
 empty_port <- tempfile(fileext = ".dynport")
 expect_true(file.create(empty_port))
@@ -233,6 +298,28 @@ local({
     expect_equal(getExportedValue(package, "TINY_STR"), "tiny")
     expect_equal(getExportedValue(package, "TINY_ONE"), 1L)
     expect_true("package:dyn.TinyPort" %in% search())
+})
+
+local({
+    portfile <- write_dynport(c(
+        "Package: WeirdNames",
+        "Version: 1.0.0",
+        "Constant:",
+        "    _CONST-VALUE=42",
+        "Enum/_Enum-Name:",
+        "    _ENUM-MEMBER=1",
+        "Struct:",
+        "    _Struct-Name{i} _field-name;"
+    ))
+    lib <- tempfile("rdyncall-dynport-lib")
+    package <- "dyn.WeirdNames"
+    unload_test_package(package)
+    on.exit(unload_test_package(package), add = TRUE)
+
+    expect_silent(dynport(weird_names, portfile = portfile, lib = lib, quiet = TRUE))
+    expect_equal(getExportedValue(package, "_CONST-VALUE"), 42L)
+    expect_equal(getExportedValue(package, "_ENUM-MEMBER"), 1L)
+    expect_true(inherits(getExportedValue(package, "_Struct-Name"), "typeinfo"))
 })
 
 local({
