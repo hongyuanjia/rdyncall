@@ -45,9 +45,16 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Generated bindings</h6></li>
     <li><a class="dropdown-item" href="../articles/dynbind-dynport.html">dynbind and DynPort bindings</a></li>
+    <li><a class="dropdown-item" href="../articles/creating-dynports.html">Creating DynPort files with porter</a></li>
+    <li><a class="dropdown-item" href="../articles/sdl3-non-gui.html">SDL3 non-GUI probing</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Demos</h6></li>
+    <li><a class="dropdown-item" href="../articles/non-gui-demos.html">Non-GUI demos</a></li>
+    <li><a class="dropdown-item" href="../articles/gui-demos.html">GUI demos</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Diagnostics</h6></li>
     <li><a class="dropdown-item" href="../articles/troubleshooting.html">Troubleshooting rdyncall bindings</a></li>
+    <li><a class="dropdown-item" href="../articles/ffi-safety.html">FFI safety boundaries</a></li>
   </ul>
 </li>
       </ul>
@@ -80,6 +87,11 @@
 <p>Many C APIs exchange data through structs, unions, arrays, and
 pointers. <code>rdyncall</code> models those layouts at run time so R
 code can read and write the same memory shape that C expects.</p>
+<p>Use this article when a C function takes a struct, fills an output
+buffer, returns a pointer to memory, or expects fields with C-specific
+alignment, packing, arrays, bitfields, or unions. The goal is to choose
+the highest-level rdyncall memory interface that still matches the C API
+exactly.</p>
 <div class="section level2">
 <h2 id="raw-memory-with-pack-and-unpack">Raw memory with <code>pack()</code> and <code>unpack()</code><a class="anchor" aria-label="anchor" href="#raw-memory-with-pack-and-unpack"></a>
 </h2>
@@ -188,12 +200,30 @@ aggregate</td>
 <p>The object returned by <code><a href="../reference/struct.html">cdata()</a></code> is a raw vector with
 class metadata. Field access is translated into byte-level reads and
 writes.</p>
+<p>You can inspect the registered layout before passing data to C:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    size <span class="op">=</span> <span class="va">DocRect</span><span class="op">$</span><span class="va">size</span>,</span>
+<span>    align <span class="op">=</span> <span class="va">DocRect</span><span class="op">$</span><span class="va">align</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt;  size align </span></span>
+<span><span class="co">#&gt;     8     2</span></span>
+<span></span>
+<span><span class="va">DocRect</span><span class="op">$</span><span class="va">fields</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"name"</span>, <span class="st">"type"</span>, <span class="st">"offset"</span>, <span class="st">"array_len"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;   name type offset array_len</span></span>
+<span><span class="co">#&gt; 1    x    s      0         1</span></span>
+<span><span class="co">#&gt; 2    y    s      2         1</span></span>
+<span><span class="co">#&gt; 3    w    S      4         1</span></span>
+<span><span class="co">#&gt; 4    h    S      6         1</span></span></code></pre></div>
+<p>The field offsets are byte offsets in the aggregate. If values appear
+shifted or truncated after a foreign call, compare this table with the C
+compiler’s layout for the same type.</p>
 </div>
 <div class="section level2">
 <h2 id="fixed-size-array-fields">Fixed-size array fields<a class="anchor" aria-label="anchor" href="#fixed-size-array-fields"></a>
 </h2>
 <p>Array lengths are written after the field type.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/struct.html">cstruct</a></span><span class="op">(</span><span class="st">"DocColor{C[4]}rgba;"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">color</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/struct.html">cdata</a></span><span class="op">(</span><span class="va">DocColor</span><span class="op">)</span></span>
@@ -207,7 +237,7 @@ writes.</p>
 </h2>
 <p>Struct fields can contain other registered aggregate types, including
 fixed-size arrays of nested structs.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/struct.html">cstruct</a></span><span class="op">(</span><span class="st">"DocVec2{ff}x y;"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/struct.html">cstruct</a></span><span class="op">(</span><span class="st">"DocSegment{&lt;DocVec2&gt;[2]}points;"</span><span class="op">)</span></span>
 <span></span>
@@ -241,7 +271,7 @@ are passed by value to C functions on supported platforms.</p>
 </h2>
 <p>Bitfields keep their ordinary integer storage type in the type list
 and put the bit width in the field-name list.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/struct.html">cstruct</a></span><span class="op">(</span><span class="st">"DocBits{IIII}enabled:1 mode:3 :4 code:8;"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bits</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/struct.html">cdata</a></span><span class="op">(</span><span class="va">DocBits</span><span class="op">)</span></span>
@@ -255,7 +285,15 @@ and put the bit width in the field-name list.</p>
 <span>    code <span class="op">=</span> <span class="va">bits</span><span class="op">$</span><span class="va">code</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; enabled    mode    code </span></span>
-<span><span class="co">#&gt;       1       5     171</span></span></code></pre></div>
+<span><span class="co">#&gt;       1       5     171</span></span>
+<span></span>
+<span><span class="va">DocBits</span><span class="op">$</span><span class="va">fields</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"name"</span>, <span class="st">"type"</span>, <span class="st">"offset"</span>, <span class="st">"bit_offset"</span>, <span class="st">"bit_width"</span>,</span>
+<span>                   <span class="st">"storage_offset"</span>, <span class="st">"storage_size"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;      name type offset bit_offset bit_width storage_offset storage_size</span></span>
+<span><span class="co">#&gt; 1 enabled    I      0          0         1              0            4</span></span>
+<span><span class="co">#&gt; 2    mode    I      0          1         3              0            4</span></span>
+<span><span class="co">#&gt; 3            I      0          4         4              0            4</span></span>
+<span><span class="co">#&gt; 4    code    I      1          8         8              0            4</span></span></code></pre></div>
 <p>Unnamed bitfields such as <code>:4</code> reserve padding bits. A
 zero-width unnamed bitfield, written <code>:0</code>, aligns the next
 bitfield to a new storage unit.</p>
@@ -264,7 +302,7 @@ bitfield to a new storage unit.</p>
 <h2 id="packed-and-aligned-layouts">Packed and aligned layouts<a class="anchor" aria-label="anchor" href="#packed-and-aligned-layouts"></a>
 </h2>
 <p>Layout directives appear after the field list.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/struct.html">cstruct</a></span><span class="op">(</span><span class="st">"DocPacked{Cd}tag value @packed;"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/struct.html">cstruct</a></span><span class="op">(</span><span class="st">"DocPack4{Cd}tag value @pack(4);"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/struct.html">cstruct</a></span><span class="op">(</span><span class="st">"DocAligned{C}tag @align(8);"</span><span class="op">)</span></span>
@@ -276,7 +314,12 @@ bitfield to a new storage unit.</p>
 <span>    aligned_align <span class="op">=</span> <span class="va">DocAligned</span><span class="op">$</span><span class="va">align</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;   packed_size  packed_align   pack4_align aligned_align </span></span>
-<span><span class="co">#&gt;             9             1             4             8</span></span></code></pre></div>
+<span><span class="co">#&gt;             9             1             4             8</span></span>
+<span></span>
+<span><span class="va">DocPacked</span><span class="op">$</span><span class="va">fields</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"name"</span>, <span class="st">"type"</span>, <span class="st">"offset"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;    name type offset</span></span>
+<span><span class="co">#&gt; 1   tag    C      0</span></span>
+<span><span class="co">#&gt; 2 value    d      1</span></span></code></pre></div>
 <p><code>@packed</code> is equivalent to <code>@pack(1)</code>.
 <code>@pack(n)</code> caps member alignment at <code>n</code>, and
 <code>@align(n)</code> raises the final aggregate alignment to at least
@@ -287,7 +330,7 @@ bitfield to a new storage unit.</p>
 </h2>
 <p>Unions use <code>|</code> instead of <code>{</code> after the type
 name.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/struct.html">cunion</a></span><span class="op">(</span><span class="st">"DocValue|iC[4]}i bytes;"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">value</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/struct.html">cdata</a></span><span class="op">(</span><span class="va">DocValue</span><span class="op">)</span></span>
@@ -308,6 +351,21 @@ what another field reads from the same bytes.</p>
 bitfields.</li>
 <li>Treat external pointers as borrowed memory unless the C API
 explicitly says that R owns or must free the pointer.</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="next-steps">Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
+</h2>
+<ul>
+<li>Use <a href="signatures.html">signatures</a> to connect these memory
+layouts to function call signatures.</li>
+<li>Use <a href="callbacks.html">callbacks</a> when a struct or pointer
+is passed into an R callback from C.</li>
+<li>Use <a href="ffi-safety.html">FFI safety</a> before passing
+ownership-sensitive pointers or memory allocated by a foreign
+library.</li>
+<li>Use <a href="troubleshooting.html">troubleshooting</a> when field
+values look shifted, truncated, or platform-dependent.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

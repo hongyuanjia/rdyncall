@@ -3,12 +3,17 @@ pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   articles/callbacks: callbacks.html
+  articles/creating-dynports: creating-dynports.html
   articles/dynbind-dynport: dynbind-dynport.html
+  articles/ffi-safety: ffi-safety.html
+  articles/gui-demos: gui-demos.html
+  articles/non-gui-demos: non-gui-demos.html
   articles/rdyncall: rdyncall.html
+  articles/sdl3-non-gui: sdl3-non-gui.html
   articles/signatures: signatures.html
   articles/structs-unions-memory: structs-unions-memory.html
   articles/troubleshooting: troubleshooting.html
-last_built: 2026-06-28T07:34Z
+last_built: 2026-06-28T17:59Z
 urls:
   reference: https://hongyuanjia.github.io/rdyncall/reference
   article: https://hongyuanjia.github.io/rdyncall/articles

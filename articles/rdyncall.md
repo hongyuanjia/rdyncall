@@ -8,6 +8,12 @@ It is useful for exploration, prototypes, dynamic bindings, and small
 direct interfaces. For stable high-level R packages, a compiled `.Call`
 wrapper may still be the better long-term interface.
 
+Use this article when you already know one C declaration and want to
+prove that R can load the library, resolve the symbol, call the
+function, and handle the basic data shapes involved. It is the shortest
+path through the package before moving on to signatures, memory layouts,
+callbacks, or generated bindings.
+
 ## A first direct call
 
 The basic workflow has three steps:
@@ -104,7 +110,7 @@ rect$w * rect$h
 returns a raw-backed object with struct metadata. Field access reads and
 writes the raw bytes according to the registered layout.
 
-## What to learn next
+## Next steps
 
 - Use
   [signatures](https://hongyuanjia.github.io/rdyncall/articles/signatures.md)
@@ -118,3 +124,7 @@ writes the raw bytes according to the registered layout.
 - Use [dynbind and
   dynport](https://hongyuanjia.github.io/rdyncall/articles/dynbind-dynport.md)
   for larger bindings.
+- Use
+  [troubleshooting](https://hongyuanjia.github.io/rdyncall/articles/troubleshooting.md)
+  when a library, symbol, signature, or pointer does not behave as
+  expected.

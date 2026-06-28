@@ -9,6 +9,29 @@ and
 [`dynport()`](https://hongyuanjia.github.io/rdyncall/reference/dynport.md)
 fit.
 
+Use this article when you already know several function signatures and
+want to move beyond address-by-address calls. It shows when to keep a
+small binding in an environment with
+[`dynbind()`](https://hongyuanjia.github.io/rdyncall/reference/dynbind.md),
+and when to put binding metadata in a DynPort file so
+[`dynport()`](https://hongyuanjia.github.io/rdyncall/reference/dynport.md)
+can generate and load an R package.
+
+The three layers have different jobs:
+
+| Layer                                                                      | Input                                          | Output                       | Best use                             |
+|:---------------------------------------------------------------------------|:-----------------------------------------------|:-----------------------------|:-------------------------------------|
+| [`dyncall()`](https://hongyuanjia.github.io/rdyncall/reference/dyncall.md) | a function pointer and one call signature      | one foreign call             | probes and one-off calls             |
+| [`dynbind()`](https://hongyuanjia.github.io/rdyncall/reference/dynbind.md) | library candidates and hand-written signatures | R wrappers in an environment | small, explicit bindings             |
+| [`dynport()`](https://hongyuanjia.github.io/rdyncall/reference/dynport.md) | a DCF `.dynport` file                          | a generated R package        | repeatable bindings from metadata    |
+| [porter](https://github.com/hongyuanjia/porter)                            | C headers                                      | a `.dynport` file            | generating metadata outside rdyncall |
+
+[porter](https://github.com/hongyuanjia/porter) is not required at run
+time by rdyncall. It is the tool used to generate DynPort files from
+headers before
+[`dynport()`](https://hongyuanjia.github.io/rdyncall/reference/dynport.md)
+loads those files.
+
 ## Bind a small function set
 
 [`dynbind()`](https://hongyuanjia.github.io/rdyncall/reference/dynbind.md)
@@ -113,9 +136,15 @@ The package ships one current-format DynPort file:
 [porter](https://github.com/hongyuanjia/porter) and kept in the package
 as a realistic, non-toy binding example.
 
-For other C libraries, generate a `.dynport` file with porter and pass
-it to `dynport(portfile = ...)`. A regeneration script for SDL3 follows
-this shape once the SDL3 header directory is known:
+`rdyncall` intentionally does not bundle a broad catalog of old DynPort
+files. The supported in-package example is SDL3. For other libraries,
+generate a fresh DCF file for the headers and library version you want
+to bind.
+
+For other C libraries, generate a `.dynport` file with
+[porter](https://github.com/hongyuanjia/porter) and pass it to
+`dynport(portfile = ...)`. A regeneration script for SDL3 follows this
+shape once the SDL3 header directory is known:
 
 ``` r
 library(porter)
@@ -141,40 +170,11 @@ port_write(sdl3, "inst/dynports/SDL3.dynport")
 
 ## A non-GUI SDL3 probe
 
-When `RDYNCALL_ARTICLE_EXTERNAL=true` and SDL3 is available, this
-article builds and loads a generated package from the bundled DynPort,
-then calls a non-GUI platform query. The chunk does not open a window or
-enter an event loop.
-
-``` r
-sdl3_names <- c("SDL3", "SDL3-0", "SDL3-3")
-```
-
-During normal local rendering, `RDYNCALL_ARTICLE_EXTERNAL` can stay
-unset or `false`; the SDL3 code is shown but skipped. The pkgdown
-workflow sets it to `true`, installs SDL3 system libraries, and
-therefore executes this non-GUI probe in CI.
-
-``` r
-Sys.setenv(RDYNCALL_ARTICLE_EXTERNAL = "true")
-```
-
-``` r
-portfile <- system.file("dynports", "SDL3.dynport",
-                        package = "rdyncall", mustWork = TRUE)
-lib <- tempfile("rdyncall-dynport-lib")
-
-generated <- dynport(portfile = portfile, package = "dyn.SDL3Article",
-                     lib = lib, rebuild = TRUE, quiet = TRUE)
-generated
-#> [1] "dyn.SDL3Article"
-
-getExportedValue(generated, "SDL_GetPlatform")()
-#> [1] "Linux"
-```
-
-If SDL3 is not installed, the code remains visible in the article but is
-skipped unless external article execution is explicitly requested.
+The package includes SDL3 as the maintained bundled DynPort example. The
+CI-safe probe lives in [SDL3 non-GUI
+probing](https://hongyuanjia.github.io/rdyncall/articles/sdl3-non-gui.md),
+where the external-library execution switch, generated package loading,
+and real `SDL_GetPlatform()` call are kept together.
 
 ## When to choose each layer
 
@@ -189,6 +189,26 @@ skipped unless external article execution is explicitly requested.
   [`dynport()`](https://hongyuanjia.github.io/rdyncall/reference/dynport.md)
   when the binding metadata should live in a data file and load as a
   generated R package.
+- Use [porter](https://github.com/hongyuanjia/porter) when the metadata
+  should come from C headers rather than from hand-written signatures.
 
 All three layers use the same underlying signatures, so start by getting
 the C declarations and signatures correct.
+
+## Next steps
+
+- Use
+  [signatures](https://hongyuanjia.github.io/rdyncall/articles/signatures.md)
+  before writing library signatures or DynPort `Function` entries.
+- Use [Creating DynPort files with
+  porter](https://hongyuanjia.github.io/rdyncall/articles/creating-dynports.md)
+  for the header-to-DynPort workflow, including the SDL3 example that
+  produces the bundled DynPort file.
+- Use [SDL3 non-GUI
+  probing](https://hongyuanjia.github.io/rdyncall/articles/sdl3-non-gui.md)
+  for a real external library example that can run in CI without opening
+  windows.
+- Use
+  [troubleshooting](https://hongyuanjia.github.io/rdyncall/articles/troubleshooting.md)
+  when generated packages fail to find a library, resolve a symbol, or
+  load into the current session.

@@ -45,9 +45,16 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Generated bindings</h6></li>
     <li><a class="dropdown-item" href="../articles/dynbind-dynport.html">dynbind and DynPort bindings</a></li>
+    <li><a class="dropdown-item" href="../articles/creating-dynports.html">Creating DynPort files with porter</a></li>
+    <li><a class="dropdown-item" href="../articles/sdl3-non-gui.html">SDL3 non-GUI probing</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Demos</h6></li>
+    <li><a class="dropdown-item" href="../articles/non-gui-demos.html">Non-GUI demos</a></li>
+    <li><a class="dropdown-item" href="../articles/gui-demos.html">GUI demos</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Diagnostics</h6></li>
     <li><a class="dropdown-item" href="../articles/troubleshooting.html">Troubleshooting rdyncall bindings</a></li>
+    <li><a class="dropdown-item" href="../articles/ffi-safety.html">FFI safety boundaries</a></li>
   </ul>
 </li>
       </ul>
@@ -81,6 +88,56 @@
 experiments. Larger bindings usually need names, wrappers, constants,
 types, and repeatable loading. That is where <code><a href="../reference/dynbind.html">dynbind()</a></code> and
 <code><a href="../reference/dynport.html">dynport()</a></code> fit.</p>
+<p>Use this article when you already know several function signatures
+and want to move beyond address-by-address calls. It shows when to keep
+a small binding in an environment with <code><a href="../reference/dynbind.html">dynbind()</a></code>, and when
+to put binding metadata in a DynPort file so <code><a href="../reference/dynport.html">dynport()</a></code> can
+generate and load an R package.</p>
+<p>The three layers have different jobs:</p>
+<table class="table">
+<colgroup>
+<col width="25%">
+<col width="25%">
+<col width="25%">
+<col width="25%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Layer</th>
+<th align="left">Input</th>
+<th align="left">Output</th>
+<th align="left">Best use</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code><a href="../reference/dyncall.html">dyncall()</a></code></td>
+<td align="left">a function pointer and one call signature</td>
+<td align="left">one foreign call</td>
+<td align="left">probes and one-off calls</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="../reference/dynbind.html">dynbind()</a></code></td>
+<td align="left">library candidates and hand-written signatures</td>
+<td align="left">R wrappers in an environment</td>
+<td align="left">small, explicit bindings</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="../reference/dynport.html">dynport()</a></code></td>
+<td align="left">a DCF <code>.dynport</code> file</td>
+<td align="left">a generated R package</td>
+<td align="left">repeatable bindings from metadata</td>
+</tr>
+<tr class="even">
+<td align="left"><a href="https://github.com/hongyuanjia/porter" class="external-link">porter</a></td>
+<td align="left">C headers</td>
+<td align="left">a <code>.dynport</code> file</td>
+<td align="left">generating metadata outside rdyncall</td>
+</tr>
+</tbody>
+</table>
+<p><a href="https://github.com/hongyuanjia/porter" class="external-link">porter</a> is not
+required at run time by rdyncall. It is the tool used to generate
+DynPort files from headers before <code><a href="../reference/dynport.html">dynport()</a></code> loads those
+files.</p>
 <div class="section level2">
 <h2 id="bind-a-small-function-set">Bind a small function set<a class="anchor" aria-label="anchor" href="#bind-a-small-function-set"></a>
 </h2>
@@ -173,10 +230,13 @@ Function:
 <code>inst/dynports/SDL3.dynport</code>. It is generated from SDL3
 headers with <a href="https://github.com/hongyuanjia/porter" class="external-link">porter</a>
 and kept in the package as a realistic, non-toy binding example.</p>
-<p>For other C libraries, generate a <code>.dynport</code> file with
-porter and pass it to <code>dynport(portfile = ...)</code>. A
-regeneration script for SDL3 follows this shape once the SDL3 header
-directory is known:</p>
+<p><code>rdyncall</code> intentionally does not bundle a broad catalog
+of old DynPort files. The supported in-package example is SDL3. For
+other libraries, generate a fresh DCF file for the headers and library
+version you want to bind.</p>
+<p>For other C libraries, generate a <code>.dynport</code> file with <a href="https://github.com/hongyuanjia/porter" class="external-link">porter</a> and pass it to
+<code>dynport(portfile = ...)</code>. A regeneration script for SDL3
+follows this shape once the SDL3 header directory is known:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">porter</span><span class="op">)</span></span>
 <span></span>
@@ -201,34 +261,11 @@ directory is known:</p>
 <div class="section level2">
 <h2 id="a-non-gui-sdl3-probe">A non-GUI SDL3 probe<a class="anchor" aria-label="anchor" href="#a-non-gui-sdl3-probe"></a>
 </h2>
-<p>When <code>RDYNCALL_ARTICLE_EXTERNAL=true</code> and SDL3 is
-available, this article builds and loads a generated package from the
-bundled DynPort, then calls a non-GUI platform query. The chunk does not
-open a window or enter an event loop.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sdl3_names</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"SDL3"</span>, <span class="st">"SDL3-0"</span>, <span class="st">"SDL3-3"</span><span class="op">)</span></span></code></pre></div>
-<p>During normal local rendering, <code>RDYNCALL_ARTICLE_EXTERNAL</code>
-can stay unset or <code>false</code>; the SDL3 code is shown but
-skipped. The pkgdown workflow sets it to <code>true</code>, installs
-SDL3 system libraries, and therefore executes this non-GUI probe in
-CI.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>RDYNCALL_ARTICLE_EXTERNAL <span class="op">=</span> <span class="st">"true"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">portfile</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"dynports"</span>, <span class="st">"SDL3.dynport"</span>,</span>
-<span>                        package <span class="op">=</span> <span class="st">"rdyncall"</span>, mustWork <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">lib</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"rdyncall-dynport-lib"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">generated</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dynport.html">dynport</a></span><span class="op">(</span>portfile <span class="op">=</span> <span class="va">portfile</span>, package <span class="op">=</span> <span class="st">"dyn.SDL3Article"</span>,</span>
-<span>                     lib <span class="op">=</span> <span class="va">lib</span>, rebuild <span class="op">=</span> <span class="cn">TRUE</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">generated</span></span>
-<span><span class="co">#&gt; [1] "dyn.SDL3Article"</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/ns-reflect.html" class="external-link">getExportedValue</a></span><span class="op">(</span><span class="va">generated</span>, <span class="st">"SDL_GetPlatform"</span><span class="op">)</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "Linux"</span></span></code></pre></div>
-<p>If SDL3 is not installed, the code remains visible in the article but
-is skipped unless external article execution is explicitly
-requested.</p>
+<p>The package includes SDL3 as the maintained bundled DynPort example.
+The CI-safe probe lives in <a href="sdl3-non-gui.html">SDL3 non-GUI
+probing</a>, where the external-library execution switch, generated
+package loading, and real <code>SDL_GetPlatform()</code> call are kept
+together.</p>
 </div>
 <div class="section level2">
 <h2 id="when-to-choose-each-layer">When to choose each layer<a class="anchor" aria-label="anchor" href="#when-to-choose-each-layer"></a>
@@ -240,9 +277,29 @@ experiment.</li>
 and want ordinary R wrappers in one environment.</li>
 <li>Use <code><a href="../reference/dynport.html">dynport()</a></code> when the binding metadata should live in
 a data file and load as a generated R package.</li>
+<li>Use <a href="https://github.com/hongyuanjia/porter" class="external-link">porter</a> when
+the metadata should come from C headers rather than from hand-written
+signatures.</li>
 </ul>
 <p>All three layers use the same underlying signatures, so start by
 getting the C declarations and signatures correct.</p>
+</div>
+<div class="section level2">
+<h2 id="next-steps">Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
+</h2>
+<ul>
+<li>Use <a href="signatures.html">signatures</a> before writing library
+signatures or DynPort <code>Function</code> entries.</li>
+<li>Use <a href="creating-dynports.html">Creating DynPort files with
+porter</a> for the header-to-DynPort workflow, including the SDL3
+example that produces the bundled DynPort file.</li>
+<li>Use <a href="sdl3-non-gui.html">SDL3 non-GUI probing</a> for a real
+external library example that can run in CI without opening
+windows.</li>
+<li>Use <a href="troubleshooting.html">troubleshooting</a> when
+generated packages fail to find a library, resolve a symbol, or load
+into the current session.</li>
+</ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

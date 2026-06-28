@@ -16,8 +16,21 @@
 
 - [dynbind and DynPort
   bindings](https://hongyuanjia.github.io/rdyncall/articles/dynbind-dynport.md):
+- [Creating DynPort files with
+  porter](https://hongyuanjia.github.io/rdyncall/articles/creating-dynports.md):
+- [SDL3 non-GUI
+  probing](https://hongyuanjia.github.io/rdyncall/articles/sdl3-non-gui.md):
+
+### Demos
+
+- [Non-GUI
+  demos](https://hongyuanjia.github.io/rdyncall/articles/non-gui-demos.md):
+- [GUI
+  demos](https://hongyuanjia.github.io/rdyncall/articles/gui-demos.md):
 
 ### Diagnostics
 
 - [Troubleshooting rdyncall
   bindings](https://hongyuanjia.github.io/rdyncall/articles/troubleshooting.md):
+- [FFI safety
+  boundaries](https://hongyuanjia.github.io/rdyncall/articles/ffi-safety.md):

@@ -45,9 +45,16 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Generated bindings</h6></li>
     <li><a class="dropdown-item" href="../articles/dynbind-dynport.html">dynbind and DynPort bindings</a></li>
+    <li><a class="dropdown-item" href="../articles/creating-dynports.html">Creating DynPort files with porter</a></li>
+    <li><a class="dropdown-item" href="../articles/sdl3-non-gui.html">SDL3 non-GUI probing</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Demos</h6></li>
+    <li><a class="dropdown-item" href="../articles/non-gui-demos.html">Non-GUI demos</a></li>
+    <li><a class="dropdown-item" href="../articles/gui-demos.html">GUI demos</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Diagnostics</h6></li>
     <li><a class="dropdown-item" href="../articles/troubleshooting.html">Troubleshooting rdyncall bindings</a></li>
+    <li><a class="dropdown-item" href="../articles/ffi-safety.html">FFI safety boundaries</a></li>
   </ul>
 </li>
       </ul>
@@ -80,6 +87,11 @@
 <p>Some C APIs do not just call functions immediately. They store a
 function pointer and call it later. <code><a href="../reference/callback.html">ccallback()</a></code> creates a C
 function pointer that enters R when the foreign code invokes it.</p>
+<p>Use this article when a C API asks for an <code>int (*)(...)</code>,
+event handler, comparison function, completion hook, or any other
+callback pointer. The main task is not just creating the pointer; it is
+also keeping the R function and its state alive for exactly as long as C
+can call it.</p>
 <div class="section level2">
 <h2 id="a-minimal-callback">A minimal callback<a class="anchor" aria-label="anchor" href="#a-minimal-callback"></a>
 </h2>
@@ -226,6 +238,21 @@ registration is removed</td>
 <p><code>qsort()</code> is comparatively safe because it finishes before
 control returns to R. Event loops are riskier because C may call the
 pointer long after the registration function has returned.</p>
+<p>For stored callbacks, make the owner explicit. A convenient rule is:
+the R object that represents the foreign registration should also keep
+the callback pointer and any R state used by the callback.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">registration</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">new.env</a></span><span class="op">(</span>parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">emptyenv</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">registration</span><span class="op">$</span><span class="va">handle</span> <span class="op">&lt;-</span> <span class="va">foreign_handle</span></span>
+<span><span class="va">registration</span><span class="op">$</span><span class="va">state</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>count <span class="op">=</span> <span class="fl">0L</span><span class="op">)</span></span>
+<span><span class="va">registration</span><span class="op">$</span><span class="va">callback</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/callback.html">ccallback</a></span><span class="op">(</span><span class="st">"ip)v"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">code</span>, <span class="va">userdata</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">registration</span><span class="op">$</span><span class="va">state</span><span class="op">$</span><span class="va">count</span> <span class="op">&lt;-</span> <span class="va">registration</span><span class="op">$</span><span class="va">state</span><span class="op">$</span><span class="va">count</span> <span class="op">+</span> <span class="fl">1L</span></span>
+<span>    <span class="cn">NULL</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">foreign_register_callback</span><span class="op">(</span><span class="va">registration</span><span class="op">$</span><span class="va">handle</span>, <span class="va">registration</span><span class="op">$</span><span class="va">callback</span><span class="op">)</span></span></code></pre></div>
+<p>When the C API provides an unregister or destroy function, call it
+before dropping the last R reference to the owner object.</p>
 </div>
 <div class="section level2">
 <h2 id="error-and-lifetime-rules">Error and lifetime rules<a class="anchor" aria-label="anchor" href="#error-and-lifetime-rules"></a>
@@ -251,7 +278,7 @@ created.</li>
 <p>When a callback does throw an R error, rdyncall disables that
 callback pointer for later invocations. The status helpers make that
 state inspectable:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">checked_callback</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/callback.html">ccallback</a></span><span class="op">(</span><span class="st">"i)i"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="kw">if</span> <span class="op">(</span><span class="va">x</span> <span class="op">&lt;</span> <span class="fl">0L</span><span class="op">)</span> <span class="op">{</span></span>
 <span>        <span class="kw"><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></span><span class="op">(</span><span class="st">"negative values are not supported"</span><span class="op">)</span></span>
@@ -266,13 +293,31 @@ state inspectable:</p>
 <p>Create a new callback when you need to recover after an error. The
 status helpers are intentionally read-only and do not re-enable disabled
 callbacks.</p>
+<p>Use <code><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch()</a></code> inside callbacks that may run under
+foreign control. Store the R error somewhere inspectable, and return a
+value that the C API documents as a failure.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">last_error</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
+<span></span>
+<span><span class="va">compare_ptr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/callback.html">ccallback</a></span><span class="op">(</span><span class="st">"pp)i"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">px</span>, <span class="va">py</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span></span>
+<span>        <span class="fu">compare_double</span><span class="op">(</span><span class="va">px</span>, <span class="va">py</span><span class="op">)</span>,</span>
+<span>        error <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">err</span><span class="op">)</span> <span class="op">{</span></span>
+<span>            <span class="va">last_error</span> <span class="op">&lt;&lt;-</span> <span class="va">err</span></span>
+<span>            <span class="fl">0L</span></span>
+<span>        <span class="op">}</span></span>
+<span>    <span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
+<p>This pattern does not make all foreign event loops safe, but it
+prevents an R condition from being the mechanism that crosses the C
+callback boundary.</p>
 </div>
 <div class="section level2">
 <h2 id="a-safe-registration-pattern">A safe registration pattern<a class="anchor" aria-label="anchor" href="#a-safe-registration-pattern"></a>
 </h2>
 <p>For APIs that register callbacks, keep a small R object that owns
 both the foreign handle and the callback pointer.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">make_registration</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">handle</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">state</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">new.env</a></span><span class="op">(</span>parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">emptyenv</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span>    <span class="va">state</span><span class="op">$</span><span class="va">handle</span> <span class="op">&lt;-</span> <span class="va">handle</span></span>
@@ -286,7 +331,25 @@ both the foreign handle and the callback pointer.</p>
 <span><span class="op">}</span></span></code></pre></div>
 <p>The important part is not the exact wrapper shape; it is that the
 callback pointer remains reachable for at least as long as the C library
-can use it.</p>
+can use it. For a real API, pair this with the corresponding unregister
+or destroy function and clear the R reference only after C no longer
+holds the pointer.</p>
+</div>
+<div class="section level2">
+<h2 id="next-steps">Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
+</h2>
+<ul>
+<li>Use <a href="signatures.html">signatures</a> to translate callback
+prototypes and callback pointer arguments.</li>
+<li>Use <a href="structs-unions-memory.html">structs, unions, and
+memory</a> when callback arguments are raw pointers to C data.</li>
+<li>Use <a href="ffi-safety.html">FFI safety</a> before registering
+callbacks that may be called asynchronously or from foreign event
+loops.</li>
+<li>Use <a href="troubleshooting.html">troubleshooting</a> when a
+callback crashes, returns nonsense, or is called after R state has been
+cleaned up.</li>
+</ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

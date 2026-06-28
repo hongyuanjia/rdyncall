@@ -6,6 +6,11 @@ function pointer and call it later.
 creates a C function pointer that enters R when the foreign code invokes
 it.
 
+Use this article when a C API asks for an `int (*)(...)`, event handler,
+comparison function, completion hook, or any other callback pointer. The
+main task is not just creating the pointer; it is also keeping the R
+function and its state alive for exactly as long as C can call it.
+
 ## A minimal callback
 
 This callback has the C shape:
@@ -148,6 +153,25 @@ current function call or stores it for later.
 returns to R. Event loops are riskier because C may call the pointer
 long after the registration function has returned.
 
+For stored callbacks, make the owner explicit. A convenient rule is: the
+R object that represents the foreign registration should also keep the
+callback pointer and any R state used by the callback.
+
+``` r
+registration <- new.env(parent = emptyenv())
+registration$handle <- foreign_handle
+registration$state <- list(count = 0L)
+registration$callback <- ccallback("ip)v", function(code, userdata) {
+    registration$state$count <- registration$state$count + 1L
+    NULL
+})
+
+foreign_register_callback(registration$handle, registration$callback)
+```
+
+When the C API provides an unregister or destroy function, call it
+before dropping the last R reference to the owner object.
+
 ## Error and lifetime rules
 
 Callbacks cross from C into R, so mistakes are more severe than ordinary
@@ -187,6 +211,29 @@ Create a new callback when you need to recover after an error. The
 status helpers are intentionally read-only and do not re-enable disabled
 callbacks.
 
+Use [`tryCatch()`](https://rdrr.io/r/base/conditions.html) inside
+callbacks that may run under foreign control. Store the R error
+somewhere inspectable, and return a value that the C API documents as a
+failure.
+
+``` r
+last_error <- NULL
+
+compare_ptr <- ccallback("pp)i", function(px, py) {
+    tryCatch(
+        compare_double(px, py),
+        error = function(err) {
+            last_error <<- err
+            0L
+        }
+    )
+})
+```
+
+This pattern does not make all foreign event loops safe, but it prevents
+an R condition from being the mechanism that crosses the C callback
+boundary.
+
 ## A safe registration pattern
 
 For APIs that register callbacks, keep a small R object that owns both
@@ -208,4 +255,23 @@ make_registration <- function(handle) {
 
 The important part is not the exact wrapper shape; it is that the
 callback pointer remains reachable for at least as long as the C library
-can use it.
+can use it. For a real API, pair this with the corresponding unregister
+or destroy function and clear the R reference only after C no longer
+holds the pointer.
+
+## Next steps
+
+- Use
+  [signatures](https://hongyuanjia.github.io/rdyncall/articles/signatures.md)
+  to translate callback prototypes and callback pointer arguments.
+- Use [structs, unions, and
+  memory](https://hongyuanjia.github.io/rdyncall/articles/structs-unions-memory.md)
+  when callback arguments are raw pointers to C data.
+- Use [FFI
+  safety](https://hongyuanjia.github.io/rdyncall/articles/ffi-safety.md)
+  before registering callbacks that may be called asynchronously or from
+  foreign event loops.
+- Use
+  [troubleshooting](https://hongyuanjia.github.io/rdyncall/articles/troubleshooting.md)
+  when a callback crashes, returns nonsense, or is called after R state
+  has been cleaned up.

@@ -45,9 +45,16 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Generated bindings</h6></li>
     <li><a class="dropdown-item" href="../articles/dynbind-dynport.html">dynbind and DynPort bindings</a></li>
+    <li><a class="dropdown-item" href="../articles/creating-dynports.html">Creating DynPort files with porter</a></li>
+    <li><a class="dropdown-item" href="../articles/sdl3-non-gui.html">SDL3 non-GUI probing</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Demos</h6></li>
+    <li><a class="dropdown-item" href="../articles/non-gui-demos.html">Non-GUI demos</a></li>
+    <li><a class="dropdown-item" href="../articles/gui-demos.html">GUI demos</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Diagnostics</h6></li>
     <li><a class="dropdown-item" href="../articles/troubleshooting.html">Troubleshooting rdyncall bindings</a></li>
+    <li><a class="dropdown-item" href="../articles/ffi-safety.html">FFI safety boundaries</a></li>
   </ul>
 </li>
       </ul>
@@ -299,6 +306,21 @@ type</td>
 may call it. For stored callbacks, pair the registration with the C
 API’s unregister function and clear the R reference only after the
 foreign registration is gone.</p>
+</div>
+<div class="section level2">
+<h2 id="dynport-and-generated-packages">DynPort and generated packages<a class="anchor" aria-label="anchor" href="#dynport-and-generated-packages"></a>
+</h2>
+<p>When <code><a href="../reference/dynport.html">dynport()</a></code> builds a generated package but functions
+are missing, inspect the returned report and the generated package
+name.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/dynport.html">dynport_lib</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "/home/runner/.cache/R/rdyncall/dynports/R-4.6.1"</span></span></code></pre></div>
+<p>Common causes are a stale <code>.dynport</code> file, a library
+candidate that does not exist on the current platform, or a function
+listed in the metadata that is not exported by the installed library
+version. Regenerate the DynPort file with <a href="https://github.com/hongyuanjia/porter" class="external-link">porter</a> when the headers
+or library version change.</p>
 </div>
 <div class="section level2">
 <h2 id="a-debugging-order">A debugging order<a class="anchor" aria-label="anchor" href="#a-debugging-order"></a>

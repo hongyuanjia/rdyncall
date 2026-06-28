@@ -2,9 +2,14 @@
 <url><loc>https://hongyuanjia.github.io/rdyncall/404.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/rdyncall/LICENSE-text.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/rdyncall/articles/callbacks.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/rdyncall/articles/creating-dynports.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/rdyncall/articles/dynbind-dynport.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/rdyncall/articles/ffi-safety.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/rdyncall/articles/gui-demos.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/rdyncall/articles/index.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/rdyncall/articles/non-gui-demos.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/rdyncall/articles/rdyncall.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/rdyncall/articles/sdl3-non-gui.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/rdyncall/articles/signatures.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/rdyncall/articles/structs-unions-memory.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/rdyncall/articles/troubleshooting.html</loc></url>

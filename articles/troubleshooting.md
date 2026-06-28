@@ -160,6 +160,24 @@ object reachable for as long as C may call it. For stored callbacks,
 pair the registration with the C API’s unregister function and clear the
 R reference only after the foreign registration is gone.
 
+## DynPort and generated packages
+
+When
+[`dynport()`](https://hongyuanjia.github.io/rdyncall/reference/dynport.md)
+builds a generated package but functions are missing, inspect the
+returned report and the generated package name.
+
+``` r
+dynport_lib()
+#> [1] "/home/runner/.cache/R/rdyncall/dynports/R-4.6.1"
+```
+
+Common causes are a stale `.dynport` file, a library candidate that does
+not exist on the current platform, or a function listed in the metadata
+that is not exported by the installed library version. Regenerate the
+DynPort file with [porter](https://github.com/hongyuanjia/porter) when
+the headers or library version change.
+
 ## A debugging order
 
 1.  Load the library with

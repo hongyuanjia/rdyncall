@@ -45,9 +45,16 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Generated bindings</h6></li>
     <li><a class="dropdown-item" href="../articles/dynbind-dynport.html">dynbind and DynPort bindings</a></li>
+    <li><a class="dropdown-item" href="../articles/creating-dynports.html">Creating DynPort files with porter</a></li>
+    <li><a class="dropdown-item" href="../articles/sdl3-non-gui.html">SDL3 non-GUI probing</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Demos</h6></li>
+    <li><a class="dropdown-item" href="../articles/non-gui-demos.html">Non-GUI demos</a></li>
+    <li><a class="dropdown-item" href="../articles/gui-demos.html">GUI demos</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Diagnostics</h6></li>
     <li><a class="dropdown-item" href="../articles/troubleshooting.html">Troubleshooting rdyncall bindings</a></li>
+    <li><a class="dropdown-item" href="../articles/ffi-safety.html">FFI safety boundaries</a></li>
   </ul>
 </li>
       </ul>
@@ -80,6 +87,10 @@
 <p><code>rdyncall</code> uses compact signatures to describe C values
 and C function types. The signature is the contract between R and the
 foreign function. It must match the C declaration.</p>
+<p>Use this article when you have a C prototype, header declaration, or
+manual page and need to turn it into an rdyncall type, call, callback,
+or library signature. Most binding bugs start as translation bugs, so
+this is the article to keep open while writing wrappers.</p>
 <div class="section level2">
 <h2 id="type-signatures">Type signatures<a class="anchor" aria-label="anchor" href="#type-signatures"></a>
 </h2>
@@ -189,6 +200,119 @@ passed by value are written as <code>&lt;TypeName&gt;</code>.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="dt">double</span> sqrt<span class="op">(</span><span class="dt">double</span> x<span class="op">);</span></span></code></pre></div>
 <p>becomes:</p>
 <pre class="text"><code>d)d</code></pre>
+<p>The part before <code>)</code> lists fixed arguments in order. The
+part after <code>)</code> is the return value. Functions with no
+arguments start with <code>)</code>, such as <code>)i</code> for
+<code>int f(void)</code>.</p>
+</div>
+<div class="section level2">
+<h2 id="common-prototype-patterns">Common prototype patterns<a class="anchor" aria-label="anchor" href="#common-prototype-patterns"></a>
+</h2>
+<p>Start from the C prototype and classify each piece before writing the
+compact signature.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">C pattern</th>
+<th align="left">rdyncall pattern</th>
+<th align="left">What to check</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>double x</code></td>
+<td align="left"><code>d</code></td>
+<td align="left">scalar value, copied into C</td>
+</tr>
+<tr class="even">
+<td align="left"><code>const char *s</code></td>
+<td align="left"><code>Z</code></td>
+<td align="left">nul-terminated input string</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>char *buf</code></td>
+<td align="left"><code>p</code></td>
+<td align="left">output or mutable buffer, not an R string</td>
+</tr>
+<tr class="even">
+<td align="left"><code>double *x</code></td>
+<td align="left"><code>p</code></td>
+<td align="left">pointer to mutable numeric memory</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>void *userdata</code></td>
+<td align="left"><code>p</code></td>
+<td align="left">opaque pointer, interpret only if the API documents
+it</td>
+</tr>
+<tr class="even">
+<td align="left"><code>SEXP x</code></td>
+<td align="left"><code>x</code></td>
+<td align="left">R object passed to R API code</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>struct Rect *r</code></td>
+<td align="left">
+<code>p</code> or <code>*&lt;Rect&gt;</code>
+</td>
+<td align="left">use a typed pointer only when an aggregate type is
+registered</td>
+</tr>
+<tr class="even">
+<td align="left"><code>int (*cmp)(const void *, const void *)</code></td>
+<td align="left"><code>p</code></td>
+<td align="left">pass a <code><a href="../reference/callback.html">ccallback()</a></code> pointer with callback
+signature <code>pp)i</code>
+</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>void f(...)</code></td>
+<td align="left">use <code><a href="../reference/dyncall.html">dyncall_variadic()</a></code>
+</td>
+<td align="left">fixed and vararg types are handled separately</td>
+</tr>
+</tbody>
+</table>
+<p>Do not use <code>Z</code> for every <code>char *</code>. It is right
+for nul-terminated strings. It is not enough for writable buffers, byte
+arrays, or strings whose lifetime is owned by a foreign library.</p>
+</div>
+<div class="section level2">
+<h2 id="callback-signatures">Callback signatures<a class="anchor" aria-label="anchor" href="#callback-signatures"></a>
+</h2>
+<p>Callback signatures use the same
+<code>argument-types ) return-type</code> shape, but they describe the
+function pointer that C will call.</p>
+<table class="table">
+<thead><tr class="header">
+<th align="left">C callback type</th>
+<th align="left">rdyncall callback signature</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>int (*)(int, int)</code></td>
+<td align="left"><code>ii)i</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>void (*)(int, void *)</code></td>
+<td align="left"><code>ip)v</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>int (*)(const void *, const void *)</code></td>
+<td align="left"><code>pp)i</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>SEXP (*)(SEXP)</code></td>
+<td align="left"><code>x)x</code></td>
+</tr>
+</tbody>
+</table>
+<p>The C function that receives the callback still sees a pointer
+argument, so its own call signature uses <code>p</code> at that argument
+position.</p>
 </div>
 <div class="section level2">
 <h2 id="translation-examples">Translation examples<a class="anchor" aria-label="anchor" href="#translation-examples"></a>
@@ -208,20 +332,30 @@ used in the articles and demos.</p>
 </tr></thead>
 <tbody>
 <tr class="odd">
+<td align="left"><code>int puts(const char *s);</code></td>
+<td align="left"><code>puts(Z)i</code></td>
+<td align="left">string input and integer status</td>
+</tr>
+<tr class="even">
 <td align="left"><code>double sqrt(double x);</code></td>
 <td align="left"><code>sqrt(d)d</code></td>
 <td align="left">one <code>double</code> argument and return</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><code>size_t strlen(const char *s);</code></td>
 <td align="left"><code>strlen(Z)L</code></td>
 <td align="left">
 <code>Z</code> passes a C string</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left"><code>void R_rsort(double *x, int n);</code></td>
 <td align="left"><code>R_rsort(pi)v</code></td>
 <td align="left">pointer to mutable <code>double</code> data</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>double R_pow(double x, double y);</code></td>
+<td align="left"><code>R_pow(dd)d</code></td>
+<td align="left">two scalar arguments</td>
 </tr>
 <tr class="even">
 <td align="left"><code>void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *));</code></td>
@@ -346,6 +480,22 @@ in <code>varargs</code>.</p>
 <li>Keep callback and struct lifetimes explicit.</li>
 <li>Test with tiny inputs before calling code that allocates, frees,
 opens files, or enters an event loop.</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="next-steps">Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
+</h2>
+<ul>
+<li>Use <a href="rdyncall.html">getting started</a> for the shortest
+load-resolve-call path.</li>
+<li>Use <a href="structs-unions-memory.html">structs, unions, and
+memory</a> when a signature includes aggregate values, raw buffers, or
+output pointers.</li>
+<li>Use <a href="callbacks.html">callbacks</a> when a signature contains
+a C function pointer.</li>
+<li>Use <a href="troubleshooting.html">troubleshooting</a> to diagnose
+unresolved symbols, wrong return values, crashes, and platform
+differences.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

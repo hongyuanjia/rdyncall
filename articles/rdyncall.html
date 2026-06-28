@@ -45,9 +45,16 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Generated bindings</h6></li>
     <li><a class="dropdown-item" href="../articles/dynbind-dynport.html">dynbind and DynPort bindings</a></li>
+    <li><a class="dropdown-item" href="../articles/creating-dynports.html">Creating DynPort files with porter</a></li>
+    <li><a class="dropdown-item" href="../articles/sdl3-non-gui.html">SDL3 non-GUI probing</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Demos</h6></li>
+    <li><a class="dropdown-item" href="../articles/non-gui-demos.html">Non-GUI demos</a></li>
+    <li><a class="dropdown-item" href="../articles/gui-demos.html">GUI demos</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Diagnostics</h6></li>
     <li><a class="dropdown-item" href="../articles/troubleshooting.html">Troubleshooting rdyncall bindings</a></li>
+    <li><a class="dropdown-item" href="../articles/ffi-safety.html">FFI safety boundaries</a></li>
   </ul>
 </li>
       </ul>
@@ -85,6 +92,11 @@ bind.</p>
 direct interfaces. For stable high-level R packages, a compiled
 <code>.Call</code> wrapper may still be the better long-term
 interface.</p>
+<p>Use this article when you already know one C declaration and want to
+prove that R can load the library, resolve the symbol, call the
+function, and handle the basic data shapes involved. It is the shortest
+path through the package before moving on to signatures, memory layouts,
+callbacks, or generated bindings.</p>
 <div class="section level2">
 <h2 id="a-first-direct-call">A first direct call<a class="anchor" aria-label="anchor" href="#a-first-direct-call"></a>
 </h2>
@@ -167,7 +179,7 @@ metadata. Field access reads and writes the raw bytes according to the
 registered layout.</p>
 </div>
 <div class="section level2">
-<h2 id="what-to-learn-next">What to learn next<a class="anchor" aria-label="anchor" href="#what-to-learn-next"></a>
+<h2 id="next-steps">Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
 </h2>
 <ul>
 <li>Use <a href="signatures.html">signatures</a> to translate C
@@ -178,6 +190,8 @@ memory</a> for aggregate layouts and raw memory access.</li>
 later calls an R function pointer.</li>
 <li>Use <a href="dynbind-dynport.html">dynbind and dynport</a> for
 larger bindings.</li>
+<li>Use <a href="troubleshooting.html">troubleshooting</a> when a
+library, symbol, signature, or pointer does not behave as expected.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

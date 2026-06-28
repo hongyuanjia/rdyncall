@@ -4,6 +4,12 @@ Many C APIs exchange data through structs, unions, arrays, and pointers.
 `rdyncall` models those layouts at run time so R code can read and write
 the same memory shape that C expects.
 
+Use this article when a C function takes a struct, fills an output
+buffer, returns a pointer to memory, or expects fields with C-specific
+alignment, packing, arrays, bitfields, or unions. The goal is to choose
+the highest-level rdyncall memory interface that still matches the C API
+exactly.
+
 ## Raw memory with `pack()` and `unpack()`
 
 The lowest-level tools are
@@ -92,6 +98,28 @@ The object returned by
 is a raw vector with class metadata. Field access is translated into
 byte-level reads and writes.
 
+You can inspect the registered layout before passing data to C:
+
+``` r
+c(
+    size = DocRect$size,
+    align = DocRect$align
+)
+#>  size align 
+#>     8     2
+
+DocRect$fields[, c("name", "type", "offset", "array_len")]
+#>   name type offset array_len
+#> 1    x    s      0         1
+#> 2    y    s      2         1
+#> 3    w    S      4         1
+#> 4    h    S      6         1
+```
+
+The field offsets are byte offsets in the aggregate. If values appear
+shifted or truncated after a foreign call, compare this table with the C
+compiler’s layout for the same type.
+
 ## Fixed-size array fields
 
 Array lengths are written after the field type.
@@ -163,6 +191,14 @@ c(
 )
 #> enabled    mode    code 
 #>       1       5     171
+
+DocBits$fields[, c("name", "type", "offset", "bit_offset", "bit_width",
+                   "storage_offset", "storage_size")]
+#>      name type offset bit_offset bit_width storage_offset storage_size
+#> 1 enabled    I      0          0         1              0            4
+#> 2    mode    I      0          1         3              0            4
+#> 3            I      0          4         4              0            4
+#> 4    code    I      1          8         8              0            4
 ```
 
 Unnamed bitfields such as `:4` reserve padding bits. A zero-width
@@ -186,6 +222,11 @@ c(
 )
 #>   packed_size  packed_align   pack4_align aligned_align 
 #>             9             1             4             8
+
+DocPacked$fields[, c("name", "type", "offset")]
+#>    name type offset
+#> 1   tag    C      0
+#> 2 value    d      1
 ```
 
 `@packed` is equivalent to `@pack(1)`. `@pack(n)` caps member alignment
@@ -217,3 +258,19 @@ another field reads from the same bytes.
   bitfields.
 - Treat external pointers as borrowed memory unless the C API explicitly
   says that R owns or must free the pointer.
+
+## Next steps
+
+- Use
+  [signatures](https://hongyuanjia.github.io/rdyncall/articles/signatures.md)
+  to connect these memory layouts to function call signatures.
+- Use
+  [callbacks](https://hongyuanjia.github.io/rdyncall/articles/callbacks.md)
+  when a struct or pointer is passed into an R callback from C.
+- Use [FFI
+  safety](https://hongyuanjia.github.io/rdyncall/articles/ffi-safety.md)
+  before passing ownership-sensitive pointers or memory allocated by a
+  foreign library.
+- Use
+  [troubleshooting](https://hongyuanjia.github.io/rdyncall/articles/troubleshooting.md)
+  when field values look shifted, truncated, or platform-dependent.
