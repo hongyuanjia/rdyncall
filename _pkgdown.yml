@@ -3,22 +3,52 @@ template:
   bootstrap: 5
 articles:
 - title: Start
-  navbar:
+  navbar: Start
   contents:
   - articles/signatures
 - title: Core FFI
-  navbar:
+  navbar: Core FFI
   contents:
   - articles/structs-unions-memory
   - articles/callbacks
 - title: Generated bindings
-  navbar:
+  navbar: Generated bindings
   contents:
   - articles/dynbind-dynport
 - title: Diagnostics
-  navbar:
+  navbar: Diagnostics
   contents:
   - articles/troubleshooting
+reference:
+- title: Find and load shared libraries
+  desc: Locate libraries, open dynamic library handles, and resolve C symbols.
+- contents:
+  - dynfind
+  - dynload
+- title: Call and bind C functions
+  desc: Call C function pointers directly or create thin R wrappers from signatures.
+- contents:
+  - dyncall
+  - dynbind
+- title: Structures, unions, and memory
+  desc: Describe aggregate C types and read or write low-level memory values.
+- contents:
+  - cstruct
+  - typeinfo
+  - pack
+  - is.nullptr
+- title: Callbacks
+  desc: Expose R functions as C callback pointers and inspect callback state.
+- contents:
+  - ccallback
+- title: Generated DynPort bindings
+  desc: Build, load, and manage generated R packages from DynPort metadata.
+- contents:
+  - dynport
+- title: Demos
+  desc: Shared library notes for the bundled demos.
+- contents:
+  - rdyncall-demos
 navbar:
   structure:
     left: [intro, reference, news, articles]
