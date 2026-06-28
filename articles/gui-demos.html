@@ -78,7 +78,7 @@
       <img src="../logo.svg" class="logo" alt=""><h1>GUI demos</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/hongyuanjia/rdyncall/blob/docs-media/vignettes/articles/gui-demos.Rmd" class="external-link"><code>vignettes/articles/gui-demos.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/hongyuanjia/rdyncall/blob/master/vignettes/articles/gui-demos.Rmd" class="external-link"><code>vignettes/articles/gui-demos.Rmd</code></a></small>
       <div class="d-none name"><code>gui-demos.Rmd</code></div>
     </div>
 
@@ -106,12 +106,7 @@ generated <code>SDL_FRect</code> aggregate type, passes a raw buffer to
 <p>The SDL3 audio demo combines a small visual window with planar audio
 buffers. It prepares low-level audio structs and feeds sample data into
 an SDL3 audio stream from R.</p>
-<!-- Replace with a screenshot or video after uploading media:
-<video controls muted loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-audio-poster.png">
-  <source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-audio.mp4" type="video/mp4">
-</video>
--->
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<video controls loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-planar-audio-poster.png"><source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-planar-audio.mp4" type="video/mp4" srcset="NA"></source></video><div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/demo.html" class="external-link">demo</a></span><span class="op">(</span><span class="st">"SDL_audio"</span>, package <span class="op">=</span> <span class="st">"rdyncall"</span>, ask <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p>This example shows how rdyncall can pass aggregate pointers, raw
 sample buffers, and runtime-managed native resources through a C API
@@ -124,12 +119,7 @@ that owns audio playback.</p>
 context and renders a Mandelbrot raster. It is a compact example of
 using rdyncall for a graphics pipeline rather than only individual
 scalar function calls.</p>
-<!-- Replace with a screenshot or video after uploading media:
-<video controls muted loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-raster-poster.png">
-  <source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-raster.mp4" type="video/mp4">
-</video>
--->
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<video controls muted loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-raster-poster.png"><source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-raster.mp4" type="video/mp4" srcset="NA"></source></video><div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/demo.html" class="external-link">demo</a></span><span class="op">(</span><span class="st">"SDL_raster"</span>, package <span class="op">=</span> <span class="st">"rdyncall"</span>, ask <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p>The raster demo exercises SDL3 window creation, OpenGL context setup,
 native buffer uploads, and a timed render loop controlled from R.</p>
@@ -141,15 +131,25 @@ native buffer uploads, and a timed render loop controlled from R.</p>
 raylib. The R side generates branch endpoints and passes raylib
 aggregate values such as <code>Vector2</code> and <code>Color</code> by
 value.</p>
-<!-- Replace with a screenshot or video after uploading media:
-<video controls muted loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-raylib-tree-poster.png">
-  <source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-raylib-tree.mp4" type="video/mp4">
-</video>
--->
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<video controls muted loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-raylib-tree-poster.png"><source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-raylib-tree.mp4" type="video/mp4" srcset="NA"></source></video><div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/demo.html" class="external-link">demo</a></span><span class="op">(</span><span class="st">"raylib"</span>, package <span class="op">=</span> <span class="st">"rdyncall"</span>, ask <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p>This demo highlights aggregate-by-value calls, generated geometry in
 R, and a foreign drawing loop managed through raylib.</p>
+</div>
+<div class="section level2">
+<h2 id="raylib-rtinycc-recursive-tree">raylib Rtinycc recursive tree<a class="anchor" aria-label="anchor" href="#raylib-rtinycc-recursive-tree"></a>
+</h2>
+<p>The raylib Rtinycc recursive tree demo keeps the same control-panel
+shape but compiles the recursive tree renderer with
+<code>Rtinycc</code>. R owns the window loop and slider state, while the
+compiled renderer calls raylib drawing functions through function
+pointers resolved by rdyncall.</p>
+<video controls muted loop playsinline width="100%" poster="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-raylib-rtinycc-tree-poster.png"><source src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-raylib-rtinycc-tree.mp4" type="video/mp4" srcset="NA"></source></video><div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/demo.html" class="external-link">demo</a></span><span class="op">(</span><span class="st">"raylib_tinycc"</span>, package <span class="op">=</span> <span class="st">"rdyncall"</span>, ask <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<p>This variant shows how a demo can combine three layers in one loop: R
+for UI state, rdyncall for native symbol binding, and Rtinycc for a
+small compiled renderer that still draws through the same raylib
+API.</p>
 </div>
 <div class="section level2">
 <h2 id="what-these-demos-exercise">What these demos exercise<a class="anchor" aria-label="anchor" href="#what-these-demos-exercise"></a>
@@ -190,6 +190,12 @@ buffer upload, timed rendering</td>
 <td align="left">raylib</td>
 <td align="left">aggregate by value, generated R geometry, drawing loop,
 downloaded native library</td>
+</tr>
+<tr class="odd">
+<td align="left">raylib Rtinycc recursive tree</td>
+<td align="left">raylib and Rtinycc</td>
+<td align="left">native function pointers, aggregate by value, compiled
+renderer, drawing loop</td>
 </tr>
 </tbody>
 </table>

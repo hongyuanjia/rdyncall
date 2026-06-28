@@ -60,14 +60,30 @@ demo("raylib", package = "rdyncall", ask = FALSE)
 This demo highlights aggregate-by-value calls, generated geometry in R,
 and a foreign drawing loop managed through raylib.
 
+## raylib Rtinycc recursive tree
+
+The raylib Rtinycc recursive tree demo keeps the same control-panel
+shape but compiles the recursive tree renderer with `Rtinycc`. R owns
+the window loop and slider state, while the compiled renderer calls
+raylib drawing functions through function pointers resolved by rdyncall.
+
+``` r
+demo("raylib_tinycc", package = "rdyncall", ask = FALSE)
+```
+
+This variant shows how a demo can combine three layers in one loop: R
+for UI state, rdyncall for native symbol binding, and Rtinycc for a
+small compiled renderer that still draws through the same raylib API.
+
 ## What these demos exercise
 
-| Demo                  | Native library           | rdyncall features                                                                                                                                   |
-|:----------------------|:-------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------|
-| SDL3 Snake            | SDL3 renderer and events | [`dynport()`](https://hongyuanjia.github.io/rdyncall/reference/dynport.md), generated aggregate types, raw event buffer, keyboard state, event loop |
-| SDL3 audio            | SDL3 audio and renderer  | aggregate pointers, raw audio buffers, native resource cleanup                                                                                      |
-| SDL3/OpenGL raster    | SDL3 and OpenGL          | shared-library discovery, OpenGL context setup, raster buffer upload, timed rendering                                                               |
-| raylib recursive tree | raylib                   | aggregate by value, generated R geometry, drawing loop, downloaded native library                                                                   |
+| Demo                          | Native library           | rdyncall features                                                                                                                                   |
+|:------------------------------|:-------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------|
+| SDL3 Snake                    | SDL3 renderer and events | [`dynport()`](https://hongyuanjia.github.io/rdyncall/reference/dynport.md), generated aggregate types, raw event buffer, keyboard state, event loop |
+| SDL3 audio                    | SDL3 audio and renderer  | aggregate pointers, raw audio buffers, native resource cleanup                                                                                      |
+| SDL3/OpenGL raster            | SDL3 and OpenGL          | shared-library discovery, OpenGL context setup, raster buffer upload, timed rendering                                                               |
+| raylib recursive tree         | raylib                   | aggregate by value, generated R geometry, drawing loop, downloaded native library                                                                   |
+| raylib Rtinycc recursive tree | raylib and Rtinycc       | native function pointers, aggregate by value, compiled renderer, drawing loop                                                                       |
 
 Together, the demos show rdyncall operating at the boundary where R code
 owns the application logic while C libraries own windows, renderers,
