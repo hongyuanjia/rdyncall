@@ -238,6 +238,22 @@ work has restored compilation on current toolchains, refreshed the
 bundled DynCall source, modernized CI, added variadic calls, improved
 dynamic library discovery, and expanded aggregate layout support.
 
+## Acknowledgements
+
+`rdyncall` builds on the [DynCall](https://dyncall.org) project. The
+DynCall libraries make portable dynamic calls, callback bridges, and
+low-level library loading possible across platforms.
+
+This package was originally created by Daniel Adler. The current
+repository continues that work for modern R toolchains and expands the
+package with updated documentation, demos, and binding workflows.
+
+The optional [Rtinycc](https://github.com/sounkou-bioinfo/Rtinycc)
+package by Sounkou Mahamane Toure is also a strong companion for
+`rdyncall`. It makes it possible to compile small C kernels at runtime
+from R, while `rdyncall` can bind the surrounding native libraries and
+call through function pointers.
+
 ## References
 
 - Adler, D. (2012). “Foreign Library Interface”. *The R Journal*, 4(1),
