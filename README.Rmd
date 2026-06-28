@@ -35,10 +35,10 @@ drawing calls and drive a rotating 3D scene.
 </tr>
 <tr>
 <td width="50%" valign="top">
-<img src="man/figures/sdl3-demo.svg" alt="Terminal recording of an SDL3 DynPort package opening a window from rdyncall" width="100%" />
+<img src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-sdl3-terminal.svg" alt="Terminal recording of an SDL3 DynPort package opening a window from rdyncall" width="100%" />
 </td>
 <td width="50%" valign="top">
-<img src="man/figures/raylib-3d-demo.svg" alt="Terminal recording of a raylib 3D cube example driven through rdyncall" width="100%" />
+<img src="https://github.com/hongyuanjia/rdyncall/releases/download/docs-media/rdyncall-raylib-3d-terminal.svg" alt="Terminal recording of a raylib 3D cube example driven through rdyncall" width="100%" />
 </td>
 </tr>
 <tr>
