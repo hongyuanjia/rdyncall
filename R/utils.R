@@ -11,7 +11,7 @@
 #' `as.externalptr()` returns an external pointer to the data area of atomic
 #' vector given by `x`.
 #' The external pointer holds an additional reference to the `x` R object to
-#' prevent it from garbage collection.
+#' prevent it from garbage collection. `x` must have length greater than zero.
 #'
 #' `is.externalptr()` tests if the object given by `x` is an external pointer.
 #'
@@ -31,10 +31,11 @@
 #' `ptr2str()`, `strarrayptr()`, `strptr()` are currently experimental.
 #'
 #' `offset_ptr()` creates a new external pointer pointing to `x` plus
-#' the byte `offset`.
+#' the non-negative byte `offset`.
 #' If `x` is given as an external pointer, the address is increased by the
 #' `offset`, or, if `x` is given as a atomic vector, the address of the data
 #' (pointing to offset zero) is taken as basis and increased by the `offset`.
+#' Atomic vector offsets are checked against the vector byte size.
 #' The returned external pointer is protected (as offered by the C function `R_MakeExternalPtr`) by the
 #' external pointer `x`.
 #'

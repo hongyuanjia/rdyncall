@@ -39,6 +39,8 @@
 - Add `struct` and `union` bitfield layout, access, DynPort parsing, and by-value aggregate support (#26).
 - Add the `rdyncall.callvm.size` option to configure CallVM argument stack size at package load (#22).
 - Add by-value aggregate argument and return support to `dyncall()` for registered `struct` and `union` types on supported dyncall backends, including ARM64 aggregate ABI handling (#23).
+- Harden low-level argument validation for typed pointer signatures, packing
+  helpers and pointer offsets (#59).
 - Support fixed-size array fields in `struct` and `union` type signatures via the `type[N]` suffix (#26).
 - Add `@packed`, `@pack(n)` and `@align(n)` layout directives for `cstruct()`, `cunion()` and DynPort aggregate definitions (#26).
 - Refresh roxygen-generated documentation and package metadata for renewed development (#19).

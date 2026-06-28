@@ -14,12 +14,13 @@
 #' object `x` and converts the C value to an R value and returns it.
 #'
 #' Byte `offset` calculations start at 0 relative to the first byte in an atomic
-#' vectors data area.
+#' vectors data area. Offsets must be non-missing, non-negative integer scalars.
 #'
 #' If `x` is an atomic vector, a bound check is carried out before read/write
 #' access.
 #' Otherwise, if `x` is an external pointer, there is only a C NULL pointer
 #' check.
+#' Values read from R vectors must have length greater than zero.
 #'
 #' @param x atomic vector (logical, raw, integer or double) or external pointer.
 #'

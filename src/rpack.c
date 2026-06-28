@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stddef.h>
+#include <limits.h>
 #include "rdyncall_signature.h"
 /** ---------------------------------------------------------------------------
  ** C-Function: C_dataptr
@@ -17,20 +18,34 @@
  **
  **/
 
+static ptrdiff_t C_byte_size(R_xlen_t length, size_t element_size)
+{
+  if (element_size > 0 && length > (R_xlen_t) (PTRDIFF_MAX / (ptrdiff_t) element_size)) {
+    error("R object is too large for pointer offset arithmetic");
+  }
+  return (ptrdiff_t) length * (ptrdiff_t) element_size;
+}
+
 static char* C_dataptr_offset(SEXP x, ptrdiff_t o, size_t element_size)
 {
   char* p = NULL;
   ptrdiff_t s = 0;
-  
+
+  if (o < 0) error("offset must be a non-missing non-negative integer scalar");
+
   switch(TYPEOF(x))
   {
-    case CHARSXP:   p = (char*) CHAR(x);    s = LENGTH(x)*sizeof(char); break;
-    case LGLSXP:    p = (char*) LOGICAL(x); s = LENGTH(x)*sizeof(Rboolean); break;
-    case INTSXP:    p = (char*) INTEGER(x); s = LENGTH(x)*sizeof(int); break;
-    case REALSXP:   p = (char*) REAL(x);    s = LENGTH(x)*sizeof(double); break;
-    case CPLXSXP:   p = (char*) COMPLEX(x); s = LENGTH(x)*sizeof(Rcomplex); break; 
-    case STRSXP:    p = (char*) CHAR( STRING_ELT(x,0) ); s = strlen(p)*sizeof(char); break;
-    case RAWSXP:    p = (char*) RAW(x); s = LENGTH(x)*sizeof(char); break;
+    case CHARSXP:   p = (char*) CHAR(x);    s = (ptrdiff_t) strlen(p); break;
+    case LGLSXP:    p = (char*) LOGICAL(x); s = C_byte_size(XLENGTH(x), sizeof(Rboolean)); break;
+    case INTSXP:    p = (char*) INTEGER(x); s = C_byte_size(XLENGTH(x), sizeof(int)); break;
+    case REALSXP:   p = (char*) REAL(x);    s = C_byte_size(XLENGTH(x), sizeof(double)); break;
+    case CPLXSXP:   p = (char*) COMPLEX(x); s = C_byte_size(XLENGTH(x), sizeof(Rcomplex)); break;
+    case STRSXP:
+      if (XLENGTH(x) == 0) error("value must have length greater zero");
+      p = (char*) CHAR( STRING_ELT(x,0) );
+      s = (ptrdiff_t) strlen(p);
+      break;
+    case RAWSXP:    p = (char*) RAW(x); s = C_byte_size(XLENGTH(x), sizeof(char)); break;
     case EXTPTRSXP:
       p = (char*) R_ExternalPtrAddr(x);
       if (p == NULL) error("NULL address pointer");
@@ -38,14 +53,57 @@ static char* C_dataptr_offset(SEXP x, ptrdiff_t o, size_t element_size)
     default: error("invalid object type"); break;
   }
   if (p == NULL) error("NULL address pointer");
-  if (o < 0 || o+element_size > s) error("offset %td is out-of-bounds of the R object (max size %td)", o, s);
+  if (o > s || element_size > (size_t) (s - o)) error("offset %td is out-of-bounds of the R object (max size %td)", o, s);
   return p + o; 
+}
+
+static ptrdiff_t C_validate_offset(SEXP off)
+{
+  if (TYPEOF(off) != INTSXP || XLENGTH(off) < 1) error("offset must be a non-missing non-negative integer scalar");
+  int value = INTEGER(off)[0];
+  if (value == NA_INTEGER || value < 0) error("offset must be a non-missing non-negative integer scalar");
+  return (ptrdiff_t) value;
+}
+
+static int C_validate_int_scalar(SEXP x, const char *name)
+{
+  if (TYPEOF(x) != INTSXP || XLENGTH(x) < 1 || INTEGER(x)[0] == NA_INTEGER) {
+    error("%s must be a non-missing integer scalar", name);
+  }
+  return INTEGER(x)[0];
+}
+
+static const char* C_validate_sig(SEXP sig_x)
+{
+  if (TYPEOF(sig_x) != STRSXP || XLENGTH(sig_x) < 1 ||
+      STRING_ELT(sig_x, 0) == NA_STRING) {
+    error("sigchar must be a non-missing character scalar");
+  }
+  const char *sig = CHAR(STRING_ELT(sig_x, 0));
+  if (sig[0] == '\0') error("sigchar must not be empty");
+  return sig;
+}
+
+static void C_require_nonempty_vector(SEXP x, const char *name)
+{
+  switch(TYPEOF(x))
+  {
+    case LGLSXP:
+    case INTSXP:
+    case REALSXP:
+    case CPLXSXP:
+    case STRSXP:
+    case RAWSXP:
+      if (XLENGTH(x) == 0) error("%s must have length greater zero", name);
+      break;
+    default:
+      break;
+  }
 }
 
 static char* C_dataptr(SEXP x, SEXP off, size_t element_size)
 {
-  if ( LENGTH(off) == 0 ) error("missing offset");
-  return C_dataptr_offset(x, INTEGER(off)[0], element_size);
+  return C_dataptr_offset(x, C_validate_offset(off), element_size);
 }
 
 static void C_store(SEXP x, SEXP off, const void* value, size_t size)
@@ -113,6 +171,7 @@ static int C_bitfield_sig_is_signed(char sig)
 
 static uint64_t C_bitfield_value(SEXP value_x, int is_signed)
 {
+  C_require_nonempty_vector(value_x, "value");
   switch(TYPEOF(value_x))
   {
     case LGLSXP:
@@ -133,9 +192,12 @@ static uint64_t C_bitfield_value(SEXP value_x, int is_signed)
 
 SEXP C_unpack_bitfield(SEXP ptr_x, SEXP bit_offset_x, SEXP bit_width_x, SEXP sig_x)
 {
-  int bit_offset = INTEGER(bit_offset_x)[0];
-  int width = INTEGER(bit_width_x)[0];
-  const char sig = CHAR(STRING_ELT(sig_x, 0))[0];
+  int bit_offset = C_validate_int_scalar(bit_offset_x, "bit offset");
+  int width = C_validate_int_scalar(bit_width_x, "bit width");
+  const char sig = C_validate_sig(sig_x)[0];
+  if (bit_offset < 0) error("bit offset must be non-negative");
+  if (width < 1 || width > 64) error("bit width must be between 1 and 64");
+  if (bit_offset > INT_MAX - width - 7) error("bitfield range is too large");
   int byte_offset = bit_offset / 8;
   int intra_bit_offset = bit_offset % 8;
   size_t byte_count = (size_t) ((intra_bit_offset + width + 7) / 8);
@@ -181,9 +243,12 @@ SEXP C_unpack_bitfield(SEXP ptr_x, SEXP bit_offset_x, SEXP bit_width_x, SEXP sig
 
 SEXP C_pack_bitfield(SEXP ptr_x, SEXP bit_offset_x, SEXP bit_width_x, SEXP sig_x, SEXP value_x)
 {
-  int bit_offset = INTEGER(bit_offset_x)[0];
-  int width = INTEGER(bit_width_x)[0];
-  const char sig = CHAR(STRING_ELT(sig_x, 0))[0];
+  int bit_offset = C_validate_int_scalar(bit_offset_x, "bit offset");
+  int width = C_validate_int_scalar(bit_width_x, "bit width");
+  const char sig = C_validate_sig(sig_x)[0];
+  if (bit_offset < 0) error("bit offset must be non-negative");
+  if (width < 1 || width > 64) error("bit width must be between 1 and 64");
+  if (bit_offset > INT_MAX - width - 7) error("bitfield range is too large");
   int byte_offset = bit_offset / 8;
   int intra_bit_offset = bit_offset % 8;
   size_t byte_count = (size_t) ((intra_bit_offset + width + 7) / 8);
@@ -205,7 +270,8 @@ SEXP C_pack_bitfield(SEXP ptr_x, SEXP bit_offset_x, SEXP bit_width_x, SEXP sig_x
 SEXP C_pack(SEXP ptr_x, SEXP offset, SEXP sig_x, SEXP value_x)
 {
   int type_of = TYPEOF(value_x);
-  const char* sig = CHAR(STRING_ELT(sig_x,0) );
+  const char* sig = C_validate_sig(sig_x);
+  if (sig[0] != DC_SIGCHAR_SEXP) C_require_nonempty_vector(value_x, "value");
   switch(sig[0])
   {
     case DC_SIGCHAR_BOOL:
@@ -442,7 +508,7 @@ SEXP C_pack(SEXP ptr_x, SEXP offset, SEXP sig_x, SEXP value_x)
  **/
 SEXP C_unpack(SEXP ptr_x, SEXP offset, SEXP sig_x)
 {
-  const char* sig = CHAR(STRING_ELT(sig_x,0) );
+  const char* sig = C_validate_sig(sig_x);
   switch(sig[0])
   {
     case DC_SIGCHAR_BOOL: {

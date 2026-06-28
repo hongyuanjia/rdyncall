@@ -64,7 +64,7 @@ and objects to handle C \code{float} arrays and strings.
 \code{as.externalptr()} returns an external pointer to the data area of atomic
 vector given by \code{x}.
 The external pointer holds an additional reference to the \code{x} R object to
-prevent it from garbage collection.
+prevent it from garbage collection. \code{x} must have length greater than zero.
 
 \code{is.externalptr()} tests if the object given by \code{x} is an external pointer.
 
@@ -84,10 +84,11 @@ This function is useful when calling foreign functions that expect a C
 \code{ptr2str()}, \code{strarrayptr()}, \code{strptr()} are currently experimental.
 
 \code{offset_ptr()} creates a new external pointer pointing to \code{x} plus
-the byte \code{offset}.
+the non-negative byte \code{offset}.
 If \code{x} is given as an external pointer, the address is increased by the
 \code{offset}, or, if \code{x} is given as a atomic vector, the address of the data
 (pointing to offset zero) is taken as basis and increased by the \code{offset}.
+Atomic vector offsets are checked against the vector byte size.
 The returned external pointer is protected (as offered by the C function \code{R_MakeExternalPtr}) by the
 external pointer \code{x}.
 }

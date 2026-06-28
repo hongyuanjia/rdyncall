@@ -156,7 +156,7 @@ types.\tabular{llll}{
    '\code{Z}' \tab char* \tab character,NULL \tab character or NULL \cr
    '\code{x}' \tab SEXP \tab any \tab any \cr
    '\code{v}' \tab void \tab invalid \tab NULL \cr
-   '\code{*}' ... \tab C type* (pointer) \tab any vector,externalptr,NULL \tab externalptr \cr
+   '\code{*}' ... \tab C type* (pointer) \tab compatible vector,externalptr,NULL \tab externalptr \cr
    '\verb{*<}' \emph{typename} '\code{>}' \tab typename* (pointer) \tab raw,externalptr \tab externalptr \cr
    '\code{<}' \emph{typename} '\code{>}' \tab typename (by value) \tab raw \code{struct} from \code{\link[=cdata]{cdata()}} \tab raw \code{struct} \cr
 }
@@ -171,6 +171,11 @@ registered typeinfo.
 The last typed pointer rows of the table above refer to \emph{typed pointer} signatures.
 If they appear as a return type signature, the external pointer returned is a
 S3 \code{struct} object. See \code{\link[=cdata]{cdata()}} for details.
+Low-level typed pointer signatures accept \code{NULL} and external pointers for
+all base pointer types. Vector-backed convenience arguments are available
+when the R vector storage matches the C pointee type, for example integer
+for \verb{*i}/\verb{*I}, numeric for \verb{*d}, \code{floatraw} for \verb{*f}, character/raw for
+\verb{*c}/\verb{*C}, and general vectors for \verb{*v}.
 }
 
 \section{Call Signature}{
