@@ -13,7 +13,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/hongyuanjia/rdyncall/blob/master/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/hongyuanjia/rdyncall/blob/v0.10.1/DESCRIPTION)
 
 Adler D, Jia H (2026). *rdyncall: Improved Foreign Function Interface
 and Dynamic Bindings to C Libraries*. R package version 0.10.1,
