@@ -63,6 +63,10 @@
 #' `.varargs` argument that describes the run-time vararg signature passed to
 #' [dyncall_variadic()].
 #'
+#' `use_errno`, `use_last_error`, and `errcheck` are forwarded to every
+#' generated wrapper. `errcheck` receives the converted result and an info object
+#' whose `function` entry contains the installed R wrapper name.
+#'
 #' @param libnames character vector or external pointer handle specifying the
 #'        shared library. Character values that contain a path separator, or
 #'        name an existing file, are passed directly to [dynload()]. Other
@@ -90,6 +94,16 @@
 #' @param variadic logical, that indicates whether wrappers should call C
 #'        variadic functions using [dyncall_variadic()]. Cannot be combined with
 #'        `funcptr = TRUE`.
+#'
+#' @param use_errno logical. If `TRUE`, every generated wrapper captures C
+#'        `errno` around the foreign call. See [dyncall()].
+#'
+#' @param use_last_error logical. Windows only. If `TRUE`, every generated
+#'        wrapper captures Windows `LastError` around the foreign call. See
+#'        [dyncall()].
+#'
+#' @param errcheck `NULL` or a function called as `errcheck(result, info)` after
+#'        each generated wrapper call. See [dyncall()].
 #'
 #' @param x S3 `dynbind.report` object to print.
 #'
@@ -124,13 +138,16 @@
 #' @export
 # TODO: use named character vector for signatures?
 dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "default",
-                    pattern = NULL, replace = NULL, funcptr = FALSE, variadic = FALSE) {
+                    pattern = NULL, replace = NULL, funcptr = FALSE, variadic = FALSE,
+                    use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
     if (isTRUE(funcptr) && isTRUE(variadic)) {
         stop("'funcptr' and 'variadic' cannot both be TRUE.", call. = FALSE)
     }
     if (isTRUE(variadic) && !callmode %in% c("default", "cdecl")) {
         stop("variadic bindings support only 'default' and 'cdecl' call modes.", call. = FALSE)
     }
+    options <- dyncall_error_options(use_errno, use_last_error, errcheck)
+    callvm <- if (isTRUE(variadic)) callvm.variadic else dyncall_callvm_for_mode(callmode)
 
     # load shared library
     libh <- dynbind_resolve_libhandle(libnames)
@@ -154,12 +171,6 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
 
     # -- install functions
 
-    # make function call symbol
-    dyncallfunc <- if (isTRUE(variadic)) {
-        as.symbol("dyncall_variadic")
-    } else {
-        as.symbol(paste("dyncall.", callmode, sep = ""))
-    }
     # report info
     syms.failed <- character(0)
 
@@ -167,7 +178,7 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
     {
         symname <- sigtab[[i]][[1]]
         rname <- if (!is.null(pattern)) sub(pattern, replace, symname) else symname
-        signature <- sigtab[[i]][[2]]
+        call_signature <- sigtab[[i]][[2]]
         # lookup symbol
         address <- dynsym(libh, symname)
 
@@ -179,25 +190,47 @@ dynbind <- function(libnames, signature, envir = parent.frame(), callmode = "def
                 function(...) NULL
             }
             if (isTRUE(variadic)) {
-                body(f) <- substitute(
-                    dyncallfunc(address, signature, .varargs, ..., callmode = callmode),
-                    list(
-                        dyncallfunc = dyncallfunc, address = address,
-                        signature = signature, callmode = callmode
+                body(f) <- quote(
+                    .call(.callvm, .target, .variadic_signature(.signature, .varargs), ...,
+                        envir = .type_env, use_errno = .use_errno,
+                        use_last_error = .use_last_error, errcheck = .errcheck,
+                        callmode = .callmode, function_name = .function_name,
+                        varargs = .varargs, info_signature = .signature
                     )
                 )
             } else if (funcptr) {
-                body(f) <- substitute(
-                    dyncallfunc(unpack(address, 0, "p"), signature, ...),
-                    list(dyncallfunc = dyncallfunc, address = address, signature = signature)
+                body(f) <- quote(
+                    .call(.callvm, .unpack(.target, 0, "p"), .signature, ...,
+                        envir = .type_env, use_errno = .use_errno,
+                        use_last_error = .use_last_error, errcheck = .errcheck,
+                        callmode = .callmode, function_name = .function_name
+                    )
                 )
             } else {
-                body(f) <- substitute(
-                    dyncallfunc(address, signature, ...),
-                    list(dyncallfunc = dyncallfunc, address = address, signature = signature)
+                body(f) <- quote(
+                    .call(.callvm, .target, .signature, ...,
+                        envir = .type_env, use_errno = .use_errno,
+                        use_last_error = .use_last_error, errcheck = .errcheck,
+                        callmode = .callmode, function_name = .function_name
+                    )
                 )
             }
-            environment(f) <- envir # NEW
+            # Keep generated wrapper constants private while preserving the
+            # user environment as the parent for aggregate type lookup.
+            wrapper_env <- new.env(parent = envir)
+            wrapper_env$.call <- dyncall_call
+            wrapper_env$.callvm <- callvm
+            wrapper_env$.target <- address
+            wrapper_env$.signature <- call_signature
+            wrapper_env$.type_env <- envir
+            wrapper_env$.use_errno <- options$use_errno
+            wrapper_env$.use_last_error <- options$use_last_error
+            wrapper_env$.errcheck <- options$errcheck
+            wrapper_env$.callmode <- callmode
+            wrapper_env$.function_name <- rname
+            wrapper_env$.unpack <- unpack
+            wrapper_env$.variadic_signature <- dyncall_variadic_signature
+            environment(f) <- wrapper_env
             # install symbol
             assign(rname, f, envir = envir)
         } else {

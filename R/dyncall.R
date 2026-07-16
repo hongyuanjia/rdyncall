@@ -27,6 +27,67 @@ callvm_free <- function(x) {
     .Call("C_callvm_free", x, PACKAGE = "rdyncall")
 }
 
+# Validate logical capture flags before entering the C call boundary.
+dyncall_error_flag <- function(x, name) {
+    if (!is.logical(x) || length(x) != 1L || is.na(x)) {
+        stop("'", name, "' must be TRUE or FALSE.", call. = FALSE)
+    }
+    isTRUE(x)
+}
+
+# Keep Windows LastError requests explicit because non-Windows builds cannot
+# provide the corresponding process-local error slot.
+dyncall_require_windows_last_error <- function() {
+    if (.Platform$OS.type != "windows") {
+        stop("'use_last_error' is only supported on Windows.", call. = FALSE)
+    }
+    invisible(TRUE)
+}
+
+# Normalize call error options once so all direct and generated wrappers share
+# the same validation and checker semantics.
+dyncall_error_options <- function(use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    use_errno <- dyncall_error_flag(use_errno, "use_errno")
+    use_last_error <- dyncall_error_flag(use_last_error, "use_last_error")
+    if (use_last_error) dyncall_require_windows_last_error()
+    if (!is.null(errcheck) && !is.function(errcheck)) {
+        stop("'errcheck' must be NULL or a function.", call. = FALSE)
+    }
+    list(use_errno = use_errno, use_last_error = use_last_error, errcheck = errcheck)
+}
+
+# Build the checker context after the foreign call so errcheck functions can
+# make decisions from the converted result and captured native error state.
+dyncall_call_info <- function(address, signature, args, callmode, function_name,
+                              varargs, use_errno, use_last_error) {
+    structure(
+        list(
+            address = address,
+            signature = signature,
+            args = args,
+            callmode = callmode,
+            `function` = function_name,
+            errno = if (use_errno) dyncall_get_errno() else NULL,
+            last_error = if (use_last_error) dyncall_get_last_error() else NULL,
+            varargs = varargs
+        ),
+        class = "rdyncall_call_info"
+    )
+}
+
+# Apply a ctypes-style checker: the checker may replace the result or signal an
+# error, while a NULL checker preserves the original rdyncall return value.
+dyncall_apply_errcheck <- function(result, errcheck, address, signature, args,
+                                   callmode, function_name, varargs,
+                                   use_errno, use_last_error) {
+    if (is.null(errcheck)) return(result)
+    info <- dyncall_call_info(
+        address, signature, args, callmode, function_name, varargs,
+        use_errno, use_last_error
+    )
+    errcheck(result, info)
+}
+
 # ----------------------------------------------------------------------------
 # CallVM's for calling conventions - will be initialized .onLoad
 
@@ -40,6 +101,25 @@ callvm.fastcall      <- NULL
 callvm.fastcall.gcc  <- NULL
 callvm.fastcall.msvc <- NULL
 callvm.variadic      <- NULL
+
+# Resolve a call-mode name to the matching reusable CallVM object.
+dyncall_callvm_for_mode <- function(callmode) {
+    callvm <- switch(callmode,
+        default       = callvm.default,
+        cdecl         = callvm.cdecl,
+        stdcall       = callvm.stdcall,
+        thiscall      = callvm.thiscall.gcc,
+        thiscall.gcc  = callvm.thiscall.gcc,
+        thiscall.msvc = callvm.thiscall.msvc,
+        fastcall      = callvm.fastcall.gcc,
+        fastcall.gcc  = callvm.fastcall.gcc,
+        fastcall.msvc = callvm.fastcall.msvc
+    )
+    if (is.null(callvm)) {
+        stop("invalid 'callmode' found: '", callmode, "'", call. = FALSE)
+    }
+    callvm
+}
 
 # ----------------------------------------------------------------------------
 # aggregate by-value support (internal)
@@ -227,13 +307,24 @@ dyncall_aggregate_layouts <- function(signature, envir = parent.frame()) {
     list(args = args, return = return)
 }
 
-dyncall_call <- function(callvm, address, signature, ..., envir = parent.frame()) {
+dyncall_call <- function(callvm, address, signature, ..., envir = parent.frame(),
+                         use_errno = FALSE, use_last_error = FALSE,
+                         errcheck = NULL, callmode = "default",
+                         function_name = NULL, varargs = NULL,
+                         info_signature = signature) {
+    options <- dyncall_error_options(use_errno, use_last_error, errcheck)
+    args <- list(...)
     aggregates <- dyncall_aggregate_layouts(signature, envir = envir)
-    ans <- .External("C_dyncall", callvm, address, signature, aggregates, ..., PACKAGE = "rdyncall")
+    flags <- c(options$use_errno, options$use_last_error)
+    ans <- .External("C_dyncall", callvm, address, signature, aggregates, flags, ..., PACKAGE = "rdyncall")
     if (!is.null(aggregates$return) && inherits(ans, "struct")) {
         attr(ans, "typeinfo") <- get_typeinfo(aggregates$return$name, envir = envir)
     }
-    ans
+    dyncall_apply_errcheck(
+        ans, options$errcheck, address, info_signature, args,
+        callmode, function_name, varargs,
+        options$use_errno, options$use_last_error
+    )
 }
 
 dyncall_variadic_signature <- function(signature, varargs) {
@@ -314,6 +405,18 @@ dyncall_variadic_signature <- function(signature, varargs) {
 #' `varargs` describes the actual argument types passed through `...` at this
 #' specific call site. C default promotions are the caller's responsibility; for
 #' example, pass promoted variadic `float` values as `double` (`"d"`).
+#'
+#' `use_errno = TRUE` captures C `errno` around a foreign call using rdyncall's
+#' private errno slot. Use `dyncall_get_errno()` and `dyncall_set_errno()` to
+#' inspect or seed that slot. On Windows, `use_last_error = TRUE` does the same
+#' for `GetLastError()` / `SetLastError()` through
+#' `dyncall_get_last_error()` and `dyncall_set_last_error()`.
+#'
+#' `errcheck`, when supplied, is called as `errcheck(result, info)` after the
+#' foreign result has been converted to R. The `info` object contains the call
+#' address, signature, argument list, call mode, function name when known, and
+#' captured native error state. The checker return value becomes the final
+#' result, and errors raised by the checker are propagated.
 #'
 #' Given that the `signature` matches the foreign function type, the FFI
 #' provides a certain level of type-safety to users, when exposing foreign
@@ -488,6 +591,21 @@ dyncall_variadic_signature <- function(signature, varargs) {
 #'        argument has no effect on most platforms, but on Microsoft Windows
 #'        32-Bit Intel/x86 platforms. See details.
 #'
+#' @param use_errno logical. If `TRUE`, swap rdyncall's private C `errno` value
+#'        into the process error slot before the call, then capture the value
+#'        immediately after the call.
+#'
+#' @param use_last_error logical. Windows only. If `TRUE`, swap rdyncall's
+#'        private `LastError` value into the process error slot before the call,
+#'        then capture the value immediately after the call.
+#'
+#' @param errcheck `NULL` or a function called as `errcheck(result, info)` after
+#'        a foreign call. The checker may return a replacement result or throw an
+#'        error.
+#'
+#' @param value integer or numeric scalar used to seed the private `errno` or
+#'        Windows `LastError` slot.
+#'
 #' @return
 #' Functions return the received C return value converted to an R value. See
 #' section "Call Signature" below for details.
@@ -516,55 +634,118 @@ dyncall_variadic_signature <- function(signature, varargs) {
 #' @keywords programming interface
 #' @rdname dyncall
 #' @export
-dyncall <- function(address, signature, ..., callmode = "default") {
-    callvm <- switch(callmode,
-        default       = callvm.default,
-        cdecl         = callvm.cdecl,
-        stdcall       = callvm.stdcall,
-        thiscall      = ,
-        thiscall.gcc  = callvm.thiscall.gcc,
-        thiscall.msvc = callvm.thiscall.msvc,
-        fastcall      = ,
-        fastcall.gcc  = callvm.fastcall.gcc,
-        fastcall.msvc = callvm.fastcall.msvc
+dyncall <- function(address, signature, ..., callmode = "default",
+                    use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    callvm <- dyncall_callvm_for_mode(callmode)
+    dyncall_call(callvm, address, signature, ..., envir = parent.frame(),
+        use_errno = use_errno, use_last_error = use_last_error,
+        errcheck = errcheck, callmode = callmode
     )
-    dyncall_call(callvm, address, signature, ..., envir = parent.frame())
 }
 
 #' @rdname dyncall
 #' @export
-dyncall_variadic <- function(address, signature, varargs = "", ..., callmode = c("default", "cdecl")) {
+dyncall_variadic <- function(address, signature, varargs = "", ...,
+                             callmode = c("default", "cdecl"),
+                             use_errno = FALSE, use_last_error = FALSE,
+                             errcheck = NULL) {
     callmode <- match.arg(callmode)
-    dyncall_call(callvm.variadic, address, dyncall_variadic_signature(signature, varargs), ..., envir = parent.frame())
+    expanded <- dyncall_variadic_signature(signature, varargs)
+    dyncall_call(callvm.variadic, address, expanded, ..., envir = parent.frame(),
+        use_errno = use_errno, use_last_error = use_last_error,
+        errcheck = errcheck, callmode = callmode, varargs = varargs,
+        info_signature = signature
+    )
 }
 
 #' @rdname dyncall
 #' @export
-dyncall.cdecl         <- function(address, signature, ...) dyncall_call(callvm.cdecl,         address, signature, ..., envir = parent.frame())
+dyncall_get_errno <- function() {
+    .Call("C_dyncall_get_errno", PACKAGE = "rdyncall")
+}
 
 #' @rdname dyncall
 #' @export
-dyncall.default       <- function(address, signature, ...) dyncall_call(callvm.default,       address, signature, ..., envir = parent.frame())
+dyncall_set_errno <- function(value) {
+    invisible(.Call("C_dyncall_set_errno", value, PACKAGE = "rdyncall"))
+}
 
 #' @rdname dyncall
 #' @export
-dyncall.stdcall       <- function(address, signature, ...) dyncall_call(callvm.stdcall,       address, signature, ..., envir = parent.frame())
+dyncall_get_last_error <- function() {
+    dyncall_require_windows_last_error()
+    .Call("C_dyncall_get_last_error", PACKAGE = "rdyncall")
+}
 
 #' @rdname dyncall
 #' @export
-dyncall.thiscall.gcc  <- function(address, signature, ...) dyncall_call(callvm.thiscall.gcc,  address, signature, ..., envir = parent.frame())
+dyncall_set_last_error <- function(value) {
+    dyncall_require_windows_last_error()
+    invisible(.Call("C_dyncall_set_last_error", value, PACKAGE = "rdyncall"))
+}
 
 #' @rdname dyncall
 #' @export
-dyncall.thiscall.msvc <- function(address, signature, ...) dyncall_call(callvm.thiscall.msvc, address, signature, ..., envir = parent.frame())
+dyncall.cdecl         <- function(address, signature, ..., use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    dyncall_call(callvm.cdecl, address, signature, ..., envir = parent.frame(),
+        use_errno = use_errno, use_last_error = use_last_error,
+        errcheck = errcheck, callmode = "cdecl"
+    )
+}
 
 #' @rdname dyncall
 #' @export
-dyncall.fastcall.gcc  <- function(address, signature, ...) dyncall_call(callvm.fastcall.gcc,  address, signature, ..., envir = parent.frame())
+dyncall.default       <- function(address, signature, ..., use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    dyncall_call(callvm.default, address, signature, ..., envir = parent.frame(),
+        use_errno = use_errno, use_last_error = use_last_error,
+        errcheck = errcheck, callmode = "default"
+    )
+}
 
 #' @rdname dyncall
 #' @export
-dyncall.fastcall.msvc <- function(address, signature, ...) dyncall_call(callvm.fastcall.msvc, address, signature, ..., envir = parent.frame())
+dyncall.stdcall       <- function(address, signature, ..., use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    dyncall_call(callvm.stdcall, address, signature, ..., envir = parent.frame(),
+        use_errno = use_errno, use_last_error = use_last_error,
+        errcheck = errcheck, callmode = "stdcall"
+    )
+}
+
+#' @rdname dyncall
+#' @export
+dyncall.thiscall.gcc  <- function(address, signature, ..., use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    dyncall_call(callvm.thiscall.gcc, address, signature, ..., envir = parent.frame(),
+        use_errno = use_errno, use_last_error = use_last_error,
+        errcheck = errcheck, callmode = "thiscall.gcc"
+    )
+}
+
+#' @rdname dyncall
+#' @export
+dyncall.thiscall.msvc <- function(address, signature, ..., use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    dyncall_call(callvm.thiscall.msvc, address, signature, ..., envir = parent.frame(),
+        use_errno = use_errno, use_last_error = use_last_error,
+        errcheck = errcheck, callmode = "thiscall.msvc"
+    )
+}
+
+#' @rdname dyncall
+#' @export
+dyncall.fastcall.gcc  <- function(address, signature, ..., use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    dyncall_call(callvm.fastcall.gcc, address, signature, ..., envir = parent.frame(),
+        use_errno = use_errno, use_last_error = use_last_error,
+        errcheck = errcheck, callmode = "fastcall.gcc"
+    )
+}
+
+#' @rdname dyncall
+#' @export
+dyncall.fastcall.msvc <- function(address, signature, ..., use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    dyncall_call(callvm.fastcall.msvc, address, signature, ..., envir = parent.frame(),
+        use_errno = use_errno, use_last_error = use_last_error,
+        errcheck = errcheck, callmode = "fastcall.msvc"
+    )
+}
 
 #' @rdname dyncall
 #' @export

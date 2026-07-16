@@ -15,6 +15,10 @@
 SEXP C_callvm_new(SEXP callmode, SEXP size);
 SEXP C_callvm_free(SEXP callvm);
 SEXP C_dyncall(SEXP args); /* .External() with args = callvm, address, signature, aggregate layouts, args */
+SEXP C_dyncall_get_errno(void);
+SEXP C_dyncall_set_errno(SEXP value);
+SEXP C_dyncall_get_last_error(void);
+SEXP C_dyncall_set_last_error(SEXP value);
 SEXP C_dynpath(SEXP libh);
 SEXP C_dyncount(SEXP libh);
 SEXP C_dynlist(SEXP libh);
@@ -76,6 +80,10 @@ R_CallMethodDef callMethods[] =
   /* --- rdyncall.c -------------------------------------------------------- */
   {"C_callvm_new"               , (DL_FUNC) &C_callvm_new       , 2},
   {"C_callvm_free"              , (DL_FUNC) &C_callvm_free      , 1},
+  {"C_dyncall_get_errno"        , (DL_FUNC) &C_dyncall_get_errno, 0},
+  {"C_dyncall_set_errno"        , (DL_FUNC) &C_dyncall_set_errno, 1},
+  {"C_dyncall_get_last_error"   , (DL_FUNC) &C_dyncall_get_last_error, 0},
+  {"C_dyncall_set_last_error"   , (DL_FUNC) &C_dyncall_set_last_error, 1},
   /* --- rdynload.c -------------------------------------------------------- */
   {"C_dynload"                  , (DL_FUNC) &C_dynload          , 1},
   {"C_dynsym"                   , (DL_FUNC) &C_dynsym           , 3},

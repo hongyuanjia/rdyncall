@@ -71,6 +71,74 @@ expect_error(
     "argument type signatures"
 )
 
+set_errno_return <- dynsym(handle, "rdyncall_dynbind_set_errno_return")
+return_errno <- dynsym(handle, "rdyncall_dynbind_return_errno")
+dyncall_set_errno(0L)
+expect_equal(dyncall_get_errno(), 0L)
+expect_equal(dyncall(set_errno_return, "ii)i", 34L, 7L), 7L)
+expect_equal(dyncall_get_errno(), 0L)
+expect_equal(dyncall(set_errno_return, "ii)i", 34L, 7L, use_errno = TRUE), 7L)
+expect_equal(dyncall_get_errno(), 34L)
+dyncall_set_errno(12L)
+expect_equal(dyncall(return_errno, ")i", use_errno = TRUE), 12L)
+
+# Verify that direct dyncall errcheck receives the converted result and call metadata.
+errno_checker <- function(result, info) {
+    expect_equal(result, 4L)
+    expect_equal(info$signature, "ii)i")
+    expect_equal(info$args, list(9L, 4L))
+    expect_null(info[["function"]])
+    result + info$errno
+}
+expect_equal(
+    dyncall(set_errno_return, "ii)i", 9L, 4L, use_errno = TRUE,
+        errcheck = errno_checker),
+    13L
+)
+
+# Exercise the error-propagation path of an errcheck callback.
+failing_errno_checker <- function(result, info) {
+    stop("checked failure", call. = FALSE)
+}
+expect_error(
+    dyncall(set_errno_return, "ii)i", 1L, 1L, use_errno = TRUE,
+        errcheck = failing_errno_checker),
+    "checked failure"
+)
+
+env <- new.env()
+
+# Check dynbind-provided metadata, including the installed R wrapper name.
+dynbind_errno_checker <- function(result, info) {
+    expect_equal(result, -1L)
+    expect_equal(info[["function"]], "set_errno_return")
+    info$errno
+}
+dynbind(
+    fixture,
+    "rdyncall_dynbind_set_errno_return(ii)i;",
+    pattern = "^rdyncall_dynbind_", replace = "", envir = env,
+    use_errno = TRUE, errcheck = dynbind_errno_checker
+)
+expect_equal(env$set_errno_return(21L, -1L), 21L)
+
+if (.Platform$OS.type == "windows") {
+    set_last_error_return <- dynsym(handle, "rdyncall_dynbind_set_last_error_return")
+    dyncall_set_last_error(0)
+    expect_equal(
+        dyncall(set_last_error_return, "ii)i", 123L, 5L, use_last_error = TRUE),
+        5L
+    )
+    expect_equal(dyncall_get_last_error(), 123)
+} else {
+    expect_error(dyncall_get_last_error(), "Windows")
+    expect_error(dyncall_set_last_error(1), "Windows")
+    expect_error(
+        dyncall(set_errno_return, "ii)i", 1L, 1L, use_last_error = TRUE),
+        "Windows"
+    )
+}
+
 local({
     oldwd <- setwd(dirname(fixture))
     on.exit(setwd(oldwd), add = TRUE)

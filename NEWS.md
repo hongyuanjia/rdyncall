@@ -1,5 +1,8 @@
 # rdyncall 0.10.1
 
+- Add ctypes-style `errno` / Windows `LastError` capture and `errcheck`
+  hooks to `dyncall()`, `dyncall_variadic()` and `dynbind()`.
+- Support `UseErrno` and `UseLastError` metadata in DCF DynPort files.
 - Build compiled tinytest fixtures from temporary source copies so CRAN checks
   do not try to write object files into the read-only installed package library
   (#68).

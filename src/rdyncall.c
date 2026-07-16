@@ -11,6 +11,114 @@
 #include "rdyncall_signature.h"
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
+#include <math.h>
+#if defined(_WIN32)
+#include <windows.h>
+#endif
+
+/** ---------------------------------------------------------------------------
+ ** Native error state helpers
+ **/
+
+static int rdyncall_errno_slot = 0;
+#if defined(_WIN32)
+static DWORD rdyncall_last_error_slot = 0;
+#endif
+
+typedef struct {
+  int use_errno;
+  int saved_errno;
+#if defined(_WIN32)
+  int use_last_error;
+  DWORD saved_last_error;
+#endif
+} rdyncall_error_state;
+
+/* Validate and coerce an R scalar before storing it in the private errno slot. */
+static int rdyncall_as_errno_value(SEXP value_x)
+{
+  if (XLENGTH(value_x) != 1) {
+    Rf_error("'value' must be a single numeric value");
+    return 0;
+  }
+  int value = Rf_asInteger(value_x);
+  if (value == NA_INTEGER) {
+    Rf_error("'value' must not be NA");
+    return 0;
+  }
+  return value;
+}
+
+#if defined(_WIN32)
+/* Validate and coerce an R scalar before storing it in the private LastError slot. */
+static DWORD rdyncall_as_last_error_value(SEXP value_x)
+{
+  if (XLENGTH(value_x) != 1) {
+    Rf_error("'value' must be a single numeric value");
+    return 0;
+  }
+  double value = Rf_asReal(value_x);
+  if (!isfinite(value) || value < 0 || value > 4294967295.0 || value != floor(value)) {
+    Rf_error("'value' must be a finite unsigned 32-bit integer");
+    return 0;
+  }
+  return (DWORD) value;
+}
+#endif
+
+/* Read one logical capture flag from the R-side two-element flag vector. */
+static int rdyncall_error_flag(SEXP flags, int index, const char* name)
+{
+  if (TYPEOF(flags) != LGLSXP || XLENGTH(flags) < index + 1) {
+    Rf_error("internal error: invalid error capture flags");
+    return 0;
+  }
+  int value = LOGICAL(flags)[index];
+  if (value == NA_LOGICAL) {
+    Rf_error("internal error: '%s' capture flag is NA", name);
+    return 0;
+  }
+  return value != 0;
+}
+
+/* Swap rdyncall's private error slots into the process slots before C runs. */
+static void rdyncall_error_state_before(rdyncall_error_state* state, int use_errno, int use_last_error)
+{
+  state->use_errno = use_errno;
+  state->saved_errno = errno;
+  if (use_errno) {
+    errno = rdyncall_errno_slot;
+  }
+
+#if defined(_WIN32)
+  state->use_last_error = use_last_error;
+  state->saved_last_error = GetLastError();
+  if (use_last_error) {
+    SetLastError(rdyncall_last_error_slot);
+  }
+#else
+  if (use_last_error) {
+    Rf_error("'use_last_error' is only supported on Windows");
+  }
+#endif
+}
+
+/* Capture native error slots immediately after C returns, then restore R's slots. */
+static void rdyncall_error_state_after(rdyncall_error_state* state)
+{
+  if (state->use_errno) {
+    rdyncall_errno_slot = errno;
+    errno = state->saved_errno;
+  }
+
+#if defined(_WIN32)
+  if (state->use_last_error) {
+    rdyncall_last_error_slot = GetLastError();
+    SetLastError(state->saved_last_error);
+  }
+#endif
+}
 
 /** ---------------------------------------------------------------------------
  ** C-Function: C_callvm_new
@@ -61,6 +169,60 @@ SEXP C_callvm_free(SEXP callvm_x)
   DCCallVM* callvm_p = (DCCallVM*) R_ExternalPtrAddr( callvm_x );
   dcFree( callvm_p );
   return R_NilValue;
+}
+
+/** ---------------------------------------------------------------------------
+ ** C-Function: C_dyncall_get_errno
+ ** R-Interface: .Call
+ **/
+
+SEXP C_dyncall_get_errno(void)
+{
+  return Rf_ScalarInteger(rdyncall_errno_slot);
+}
+
+/** ---------------------------------------------------------------------------
+ ** C-Function: C_dyncall_set_errno
+ ** R-Interface: .Call
+ **/
+
+SEXP C_dyncall_set_errno(SEXP value_x)
+{
+  int old = rdyncall_errno_slot;
+  rdyncall_errno_slot = rdyncall_as_errno_value(value_x);
+  return Rf_ScalarInteger(old);
+}
+
+/** ---------------------------------------------------------------------------
+ ** C-Function: C_dyncall_get_last_error
+ ** R-Interface: .Call
+ **/
+
+SEXP C_dyncall_get_last_error(void)
+{
+#if defined(_WIN32)
+  return Rf_ScalarReal((double) rdyncall_last_error_slot);
+#else
+  Rf_error("'LastError' is only supported on Windows");
+  return R_NilValue;
+#endif
+}
+
+/** ---------------------------------------------------------------------------
+ ** C-Function: C_dyncall_set_last_error
+ ** R-Interface: .Call
+ **/
+
+SEXP C_dyncall_set_last_error(SEXP value_x)
+{
+#if defined(_WIN32)
+  DWORD old = rdyncall_last_error_slot;
+  rdyncall_last_error_slot = rdyncall_as_last_error_value(value_x);
+  return Rf_ScalarReal((double) old);
+#else
+  Rf_error("'LastError' is only supported on Windows");
+  return R_NilValue;
+#endif
 }
 
 /** ---------------------------------------------------------------------------
@@ -393,12 +555,15 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
   const char* sig;
   SEXP        arg;
   SEXP        aggr_layouts;
+  SEXP        error_flags;
   SEXP        aggr_args;
   SEXP        aggr_return_layout;
   DCaggr*     aggr_return = NULL;
   int         ptrcnt;
   int         argpos;
   int         aggrpos;
+  int         use_errno;
+  int         use_last_error;
   DCaggr*     aggrs[RDYNCALL_MAX_AGGRS];
   int         aggr_count = 0;
 
@@ -422,6 +587,9 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
   }
   signature = CHAR( STRING_ELT( CAR(args), 0 ) ); args = CDR(args);
   aggr_layouts = CAR(args); args = CDR(args);
+  error_flags = CAR(args); args = CDR(args);
+  use_errno = rdyncall_error_flag(error_flags, 0, "use_errno");
+  use_last_error = rdyncall_error_flag(error_flags, 1, "use_last_error");
   aggr_args = rdyncall_get_list_element(aggr_layouts, "args");
   aggr_return_layout = rdyncall_get_list_element(aggr_layouts, "return");
   if (TYPEOF(aggr_args) != VECSXP) {
@@ -799,30 +967,141 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
 
   SEXP ans = R_NilValue;
   int ans_protected = 0;
+  rdyncall_error_state error_state;
 
   switch(*sig++) {
-    case DC_SIGCHAR_BOOL:      ans = Rf_ScalarLogical( ( dcCallBool(pvm, addr) == DC_FALSE ) ? FALSE : TRUE ); break;
+    case DC_SIGCHAR_BOOL:
+    {
+      DCbool value;
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+      value = dcCallBool(pvm, addr);
+      rdyncall_error_state_after(&error_state);
+      ans = Rf_ScalarLogical((value == DC_FALSE) ? FALSE : TRUE);
+    } break;
 
-    case DC_SIGCHAR_CHAR:      ans = Rf_ScalarInteger( (int) dcCallChar(pvm, addr)  ); break;
-    case DC_SIGCHAR_UCHAR:     ans = Rf_ScalarInteger( (int) ( (unsigned char) dcCallChar(pvm, addr ) ) ); break;
+    case DC_SIGCHAR_CHAR:
+    {
+      DCchar value;
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+      value = dcCallChar(pvm, addr);
+      rdyncall_error_state_after(&error_state);
+      ans = Rf_ScalarInteger((int) value);
+    } break;
+    case DC_SIGCHAR_UCHAR:
+    {
+      DCchar value;
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+      value = dcCallChar(pvm, addr);
+      rdyncall_error_state_after(&error_state);
+      ans = Rf_ScalarInteger((int) ((unsigned char) value));
+    } break;
 
-    case DC_SIGCHAR_SHORT:     ans = Rf_ScalarInteger( (int) dcCallShort(pvm,addr) ); break;
-    case DC_SIGCHAR_USHORT:    ans = Rf_ScalarInteger( (int) ( (unsigned short) dcCallShort(pvm,addr) ) ); break;
+    case DC_SIGCHAR_SHORT:
+    {
+      DCshort value;
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+      value = dcCallShort(pvm, addr);
+      rdyncall_error_state_after(&error_state);
+      ans = Rf_ScalarInteger((int) value);
+    } break;
+    case DC_SIGCHAR_USHORT:
+    {
+      DCshort value;
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+      value = dcCallShort(pvm, addr);
+      rdyncall_error_state_after(&error_state);
+      ans = Rf_ScalarInteger((int) ((unsigned short) value));
+    } break;
 
-    case DC_SIGCHAR_INT:       ans = Rf_ScalarInteger( dcCallInt(pvm,addr) ); break;
-    case DC_SIGCHAR_UINT:      ans = Rf_ScalarReal( (double) (unsigned int) dcCallInt(pvm, addr) ); break;
+    case DC_SIGCHAR_INT:
+    {
+      DCint value;
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+      value = dcCallInt(pvm, addr);
+      rdyncall_error_state_after(&error_state);
+      ans = Rf_ScalarInteger(value);
+    } break;
+    case DC_SIGCHAR_UINT:
+    {
+      DCint value;
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+      value = dcCallInt(pvm, addr);
+      rdyncall_error_state_after(&error_state);
+      ans = Rf_ScalarReal((double) (unsigned int) value);
+    } break;
 
-    case DC_SIGCHAR_LONG:      ans = Rf_ScalarReal( (double) dcCallLong(pvm, addr) ); break;
-    case DC_SIGCHAR_ULONG:     ans = Rf_ScalarReal( (double) ( (unsigned long) dcCallLong(pvm, addr) ) ); break;
+    case DC_SIGCHAR_LONG:
+    {
+      DClong value;
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+      value = dcCallLong(pvm, addr);
+      rdyncall_error_state_after(&error_state);
+      ans = Rf_ScalarReal((double) value);
+    } break;
+    case DC_SIGCHAR_ULONG:
+    {
+      DClong value;
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+      value = dcCallLong(pvm, addr);
+      rdyncall_error_state_after(&error_state);
+      ans = Rf_ScalarReal((double) ((unsigned long) value));
+    } break;
 
-    case DC_SIGCHAR_LONGLONG:  ans = Rf_ScalarReal( (double) dcCallLongLong(pvm, addr) ); break;
-    case DC_SIGCHAR_ULONGLONG: ans = Rf_ScalarReal( (double) dcCallLongLong(pvm, addr) ); break;
+    case DC_SIGCHAR_LONGLONG:
+    {
+      DClonglong value;
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+      value = dcCallLongLong(pvm, addr);
+      rdyncall_error_state_after(&error_state);
+      ans = Rf_ScalarReal((double) value);
+    } break;
+    case DC_SIGCHAR_ULONGLONG:
+    {
+      DClonglong value;
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+      value = dcCallLongLong(pvm, addr);
+      rdyncall_error_state_after(&error_state);
+      ans = Rf_ScalarReal((double) value);
+    } break;
 
-    case DC_SIGCHAR_FLOAT:     ans = Rf_ScalarReal( (double) dcCallFloat(pvm,addr) ); break;
-    case DC_SIGCHAR_DOUBLE:    ans = Rf_ScalarReal( dcCallDouble(pvm,addr) ); break;
-    case DC_SIGCHAR_POINTER:   ans = R_MakeExternalPtr( dcCallPointer(pvm,addr), R_NilValue, R_NilValue ); break;
-    case DC_SIGCHAR_STRING:    ans = Rf_mkString( dcCallPointer(pvm, addr) ); break;
-    case DC_SIGCHAR_VOID:      dcCallVoid(pvm,addr); ans = R_NilValue; break;
+    case DC_SIGCHAR_FLOAT:
+    {
+      DCfloat value;
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+      value = dcCallFloat(pvm, addr);
+      rdyncall_error_state_after(&error_state);
+      ans = Rf_ScalarReal((double) value);
+    } break;
+    case DC_SIGCHAR_DOUBLE:
+    {
+      DCdouble value;
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+      value = dcCallDouble(pvm, addr);
+      rdyncall_error_state_after(&error_state);
+      ans = Rf_ScalarReal(value);
+    } break;
+    case DC_SIGCHAR_POINTER:
+    {
+      DCpointer value;
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+      value = dcCallPointer(pvm, addr);
+      rdyncall_error_state_after(&error_state);
+      ans = R_MakeExternalPtr(value, R_NilValue, R_NilValue);
+    } break;
+    case DC_SIGCHAR_STRING:
+    {
+      DCpointer value;
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+      value = dcCallPointer(pvm, addr);
+      rdyncall_error_state_after(&error_state);
+      ans = Rf_mkString(value);
+    } break;
+    case DC_SIGCHAR_VOID:
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+      dcCallVoid(pvm, addr);
+      rdyncall_error_state_after(&error_state);
+      ans = R_NilValue;
+      break;
     case '<':
     {
       char const *b = sig;
@@ -845,7 +1124,10 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
       PROTECT(ans = Rf_allocVector(RAWSXP, rdyncall_layout_size(aggr_return_layout)));
       ans_protected = 1;
       rdyncall_set_struct_attrib(ans, rdyncall_layout_name(aggr_return_layout));
+      /* Capture immediately around the native call, before any later R work can touch errno. */
+      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
       dcCallAggr(pvm, addr, aggr_return, RAW(ans));
+      rdyncall_error_state_after(&error_state);
     } break;
     case '*':
     {
@@ -854,11 +1136,10 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
       switch(*sig) {
         case '<': {
           /* struct/union pointers */
-          PROTECT(ans = R_MakeExternalPtr( dcCallPointer(pvm, addr), R_NilValue, R_NilValue ) );
-          ans_protected = 1;
+          DCpointer value;
           char buf[128];
-          const char* begin = ++sig;
-          const char* end   = strchr(sig, '>');
+          const char* begin = sig + 1;
+          const char* end   = strchr(begin, '>');
           if (end == NULL) {
             Rf_error("Invalid signature '%s' - missing '>' marker for aggregate pointer return.", signature);
             return R_NilValue;
@@ -870,15 +1151,29 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
           }
           memcpy(buf, begin, n);
           buf[n] = '\0';
+          sig = end + 1;
+          rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+          value = dcCallPointer(pvm, addr);
+          rdyncall_error_state_after(&error_state);
+          PROTECT(ans = R_MakeExternalPtr(value, R_NilValue, R_NilValue));
+          ans_protected = 1;
           rdyncall_set_struct_attrib(ans, buf);
         } break;
         case 'C':
         case 'c': {
-          PROTECT(ans = Rf_mkString( dcCallPointer(pvm, addr) ) );
+          DCpointer value;
+          rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+          value = dcCallPointer(pvm, addr);
+          rdyncall_error_state_after(&error_state);
+          PROTECT(ans = Rf_mkString(value));
           ans_protected = 1;
         } break;
         case 'v': {
-          PROTECT(ans = R_MakeExternalPtr( dcCallPointer(pvm, addr), R_NilValue, R_NilValue ) );
+          DCpointer value;
+          rdyncall_error_state_before(&error_state, use_errno, use_last_error);
+          value = dcCallPointer(pvm, addr);
+          rdyncall_error_state_after(&error_state);
+          PROTECT(ans = R_MakeExternalPtr(value, R_NilValue, R_NilValue));
           ans_protected = 1;
         } break;
         default: Rf_error("Unsupported return type signature"); return R_NilValue;
