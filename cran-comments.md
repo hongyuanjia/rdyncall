@@ -1,3 +1,29 @@
+## Resubmission
+
+This maintenance release fixes the CRAN r-devel Debian check error reported for
+`rdyncall` 0.10.0. The tinytest helpers that compile C fixtures now copy those
+fixture sources to the R session temporary directory before invoking
+`R CMD SHLIB`, so object files are no longer written beside C files in the
+read-only installed package library.
+
+The previous resubmission addressed CRAN review feedback:
+
+* Removed single quotes around the FFI acronym and C `struct`/`union` keywords
+  in `DESCRIPTION` while keeping single quotes only for software, package and
+  API names.
+* Added method references to `DESCRIPTION` in CRAN's requested auto-linking
+  form.
+* Added a roxygen `@return` description for the exported aggregate helpers
+  documented in `struct.Rd`, then regenerated the Rd files.
+* Replaced the remaining `\dontrun{}` example wrapper with `\donttest{}` while
+  keeping the existing external-library guard for the SDL3 DynPort example.
+* Added `Rtinycc` to `Suggests` for optional demos that use it, and adjusted the
+  SDL3 demo to avoid static references to the runtime-generated `dyn.SDL3`
+  package.
+* Added Tassilo Philipp and Olivier Chafik to `Authors@R` with contributor and
+  copyright-holder roles for the bundled DynCall and dynload source notices
+  already preserved in `inst/COPYRIGHTS`.
+
 ## CRAN archive status
 
 This is a restored submission of `rdyncall`, which was orphaned and archived

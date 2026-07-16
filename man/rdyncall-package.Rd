@@ -98,5 +98,11 @@ Authors:
   \item Daniel Adler \email{dadler@uni-goettingen.de} [copyright holder]
 }
 
+Other contributors:
+\itemize{
+  \item Tassilo Philipp \email{tphilipp@potion-studios.com} [contributor, copyright holder]
+  \item Olivier Chafik \email{olivier.chafik@gmail.com} [contributor, copyright holder]
+}
+
 }
 \keyword{internal}

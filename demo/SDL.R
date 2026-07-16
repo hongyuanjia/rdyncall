@@ -8,14 +8,11 @@ source(system.file("demo-support", "sdl3.R", package = "rdyncall", mustWork = TR
 
 # Run an SDL3 snake game through wrappers generated from SDL3.dynport.
 run_sdl_demo <- function() {
-    # Generate dyn.SDL3 in a temporary library so this demo leaves no generated
-    # package behind after it exits.
-    dynport_lib <- tempfile("rdyncall-sdl3-demo-lib-")
-    dir.create(dynport_lib, recursive = TRUE)
+    # Load the generated SDL3 bindings into a local environment. Keeping the
+    # demo package-free avoids declaring a runtime-generated package in CRAN
+    # demo dependency checks.
+    sdl <- new.env(parent = globalenv())
     dynport_file <- NULL
-    old_libpaths <- .libPaths()
-    dyn_sdl3_was_attached <- "package:dyn.SDL3" %in% search()
-    dyn_sdl3_was_loaded <- "dyn.SDL3" %in% loadedNamespaces()
 
     sdl_initialized <- FALSE
     window <- NULL
@@ -23,35 +20,22 @@ run_sdl_demo <- function() {
     on.exit(
         {
             if (!is.null(renderer) && !is.nullptr(renderer)) {
-                try(dyn.SDL3::SDL_DestroyRenderer(renderer), silent = TRUE)
+                try(sdl$SDL_DestroyRenderer(renderer), silent = TRUE)
             }
             if (!is.null(window) && !is.nullptr(window)) {
-                try(dyn.SDL3::SDL_DestroyWindow(window), silent = TRUE)
+                try(sdl$SDL_DestroyWindow(window), silent = TRUE)
             }
             if (sdl_initialized) {
-                try(dyn.SDL3::SDL_Quit(), silent = TRUE)
+                try(sdl$SDL_Quit(), silent = TRUE)
             }
-            if (!dyn_sdl3_was_attached && "package:dyn.SDL3" %in% search()) {
-                try(
-                    detach("package:dyn.SDL3", character.only = TRUE),
-                    silent = TRUE
-                )
-            }
-            if (!dyn_sdl3_was_loaded && "dyn.SDL3" %in% loadedNamespaces()) {
-                try(unloadNamespace("dyn.SDL3"), silent = TRUE)
-            }
-            .libPaths(old_libpaths)
-            if (!is.null(dynport_file)) {
-                unlink(dynport_file, force = TRUE)
-            }
-            unlink(dynport_lib, recursive = TRUE, force = TRUE)
+            if (!is.null(dynport_file)) unlink(dynport_file, force = TRUE)
         },
         add = TRUE
     )
 
     dynport_file <- sdl3_demo_dynport()
     tryCatch(
-        dynport(SDL3, portfile = dynport_file, lib = dynport_lib, rebuild = TRUE, quiet = FALSE),
+        dynport_load_into(dynport_file, envir = sdl),
         error = function(e) {
             stop(
                 conditionMessage(e),
@@ -71,12 +55,12 @@ run_sdl_demo <- function() {
     SDL_INIT_VIDEO <- 0x00000020L
 
     # Initialize SDL and use on.exit() to keep native resources paired.
-    if (!isTRUE(dyn.SDL3::SDL_Init(SDL_INIT_VIDEO))) {
-        stop("SDL_Init failed: ", dyn.SDL3::SDL_GetError(), call. = FALSE)
+    if (!isTRUE(sdl$SDL_Init(SDL_INIT_VIDEO))) {
+        stop("SDL_Init failed: ", sdl$SDL_GetError(), call. = FALSE)
     }
     sdl_initialized <- TRUE
 
-    window <- dyn.SDL3::SDL_CreateWindow(
+    window <- sdl$SDL_CreateWindow(
         "rdyncall SDL3 Snake",
         width,
         height,
@@ -85,23 +69,23 @@ run_sdl_demo <- function() {
     if (is.null(window) || is.nullptr(window)) {
         stop(
             "SDL_CreateWindow failed: ",
-            dyn.SDL3::SDL_GetError(),
+            sdl$SDL_GetError(),
             call. = FALSE
         )
     }
 
-    renderer <- dyn.SDL3::SDL_CreateRenderer(window, NULL)
+    renderer <- sdl$SDL_CreateRenderer(window, NULL)
     if (is.null(renderer) || is.nullptr(renderer)) {
         stop(
             "SDL_CreateRenderer failed: ",
-            dyn.SDL3::SDL_GetError(),
+            sdl$SDL_GetError(),
             call. = FALSE
         )
     }
 
     # Construct an SDL_FRect value for one grid cell.
     make_rect <- function(x, y, w = block - 2L, h = block - 2L) {
-        rect <- cdata(dyn.SDL3::SDL_FRect)
+        rect <- cdata(sdl$SDL_FRect)
         rect$x <- as.numeric(x)
         rect$y <- as.numeric(y)
         rect$w <- as.numeric(w)
@@ -111,7 +95,7 @@ run_sdl_demo <- function() {
 
     # Set the current renderer color. SDL expects unsigned byte RGBA channels.
     set_color <- function(r, g, b, a = 255L) {
-        dyn.SDL3::SDL_SetRenderDrawColor(
+        sdl$SDL_SetRenderDrawColor(
             renderer,
             as.integer(r),
             as.integer(g),
@@ -124,7 +108,7 @@ run_sdl_demo <- function() {
     draw_cell <- function(x, y, color) {
         do.call(set_color, as.list(color))
         rect <- make_rect((x - 1L) * block + 1L, (y - 1L) * block + 1L)
-        dyn.SDL3::SDL_RenderFillRect(renderer, rect)
+        sdl$SDL_RenderFillRect(renderer, rect)
     }
 
     # Pick a random empty grid cell for food.
@@ -196,7 +180,7 @@ run_sdl_demo <- function() {
     # Render one frame and show FPS/score text through SDL_RenderDebugText.
     render_game <- function(game, fps) {
         set_color(10L, 12L, 16L)
-        dyn.SDL3::SDL_RenderClear(renderer)
+        sdl$SDL_RenderClear(renderer)
 
         draw_cell(game$food$x, game$food$y, c(230L, 57L, 70L, 255L))
         for (i in seq_len(nrow(game$snake))) {
@@ -209,19 +193,19 @@ run_sdl_demo <- function() {
         }
 
         set_color(255L, 255L, 255L)
-        dyn.SDL3::SDL_RenderDebugText(
+        sdl$SDL_RenderDebugText(
             renderer,
             8,
             8,
             sprintf("FPS %.0f  Score %d", fps, game$score)
         )
-        dyn.SDL3::SDL_RenderPresent(renderer)
+        sdl$SDL_RenderPresent(renderer)
     }
 
     # Main loop: poll events, read keyboard state, update game logic at a fixed
     # cadence, and render as often as the loop allows.
     game <- reset_game()
-    event <- cdata(dyn.SDL3::SDL_Event)
+    event <- cdata(sdl$SDL_Event)
     last_step <- proc.time()[["elapsed"]]
     started <- last_step
     last_fps <- last_step
@@ -234,26 +218,26 @@ run_sdl_demo <- function() {
 
     cat("Use arrow keys to steer; press R to restart or Esc to exit.\n")
     repeat {
-        while (isTRUE(dyn.SDL3::SDL_PollEvent(event))) {
-            if (unpack(event, 0L, "I") == dyn.SDL3::SDL_EVENT_QUIT) {
+        while (isTRUE(sdl$SDL_PollEvent(event))) {
+            if (unpack(event, 0L, "I") == sdl$SDL_EVENT_QUIT) {
                 return(invisible(TRUE))
             }
         }
 
-        keys <- dyn.SDL3::SDL_GetKeyboardState(NULL)
-        if (pressed(keys, dyn.SDL3::SDL_SCANCODE_ESCAPE)) {
+        keys <- sdl$SDL_GetKeyboardState(NULL)
+        if (pressed(keys, sdl$SDL_SCANCODE_ESCAPE)) {
             return(invisible(TRUE))
         }
-        if (pressed(keys, dyn.SDL3::SDL_SCANCODE_R)) {
+        if (pressed(keys, sdl$SDL_SCANCODE_R)) {
             game <- reset_game()
         }
-        if (pressed(keys, dyn.SDL3::SDL_SCANCODE_RIGHT)) {
+        if (pressed(keys, sdl$SDL_SCANCODE_RIGHT)) {
             game <- change_direction(game, c(1L, 0L))
-        } else if (pressed(keys, dyn.SDL3::SDL_SCANCODE_LEFT)) {
+        } else if (pressed(keys, sdl$SDL_SCANCODE_LEFT)) {
             game <- change_direction(game, c(-1L, 0L))
-        } else if (pressed(keys, dyn.SDL3::SDL_SCANCODE_UP)) {
+        } else if (pressed(keys, sdl$SDL_SCANCODE_UP)) {
             game <- change_direction(game, c(0L, -1L))
-        } else if (pressed(keys, dyn.SDL3::SDL_SCANCODE_DOWN)) {
+        } else if (pressed(keys, sdl$SDL_SCANCODE_DOWN)) {
             game <- change_direction(game, c(0L, 1L))
         }
 
@@ -267,7 +251,7 @@ run_sdl_demo <- function() {
             fps <- frames / (now - last_fps)
             frames <- 0L
             last_fps <- now
-            dyn.SDL3::SDL_SetWindowTitle(
+            sdl$SDL_SetWindowTitle(
                 window,
                 sprintf("rdyncall SDL3 Snake - %.0f FPS", fps)
             )
@@ -277,7 +261,7 @@ run_sdl_demo <- function() {
         if (now - started >= duration) {
             return(invisible(TRUE))
         }
-        dyn.SDL3::SDL_Delay(16L)
+        sdl$SDL_Delay(16L)
     }
 }
 

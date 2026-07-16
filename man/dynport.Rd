@@ -133,7 +133,7 @@ other libraries, generate a DCF \code{.dynport} file externally and pass it with
 }
 \examples{
 \dontshow{run_external <- identical(Sys.getenv("RDYNCALL_EXAMPLES_EXTERNAL"), "true")}
-\dontrun{
+\donttest{
 if (run_external) {
     portfile <- system.file("dynports", "SDL3.dynport",
         package = "rdyncall", mustWork = TRUE
