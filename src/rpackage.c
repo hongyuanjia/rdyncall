@@ -14,7 +14,8 @@
 /* rdyncall.c */
 SEXP C_callvm_new(SEXP callmode, SEXP size);
 SEXP C_callvm_free(SEXP callvm);
-SEXP C_dyncall(SEXP args); /* .External() with args = callvm, address, signature, aggregate layouts, args */
+SEXP C_dyncall(SEXP args); /* .External() with args = callvm, address, signature, aggregate layouts, error flags, args */
+SEXP C_dyncall_fast(SEXP args); /* .External() without error flags for ordinary calls */
 SEXP C_dyncall_get_errno(void);
 SEXP C_dyncall_set_errno(SEXP value);
 SEXP C_dyncall_get_last_error(void);
@@ -67,6 +68,7 @@ R_ExternalMethodDef externalMethods[] =
 {
   /* --- rdyncall.c -------------------------------------------------------- */
   {"C_dyncall",     (DL_FUNC) &C_dyncall,      -1},
+  {"C_dyncall_fast",(DL_FUNC) &C_dyncall_fast, -1},
   /* --- end (sentinel) ---------------------------------------------------- */
   {NULL,NULL,0}
 };

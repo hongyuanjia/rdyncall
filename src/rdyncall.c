@@ -86,15 +86,15 @@ static int rdyncall_error_flag(SEXP flags, int index, const char* name)
 static void rdyncall_error_state_before(rdyncall_error_state* state, int use_errno, int use_last_error)
 {
   state->use_errno = use_errno;
-  state->saved_errno = errno;
   if (use_errno) {
+    state->saved_errno = errno;
     errno = rdyncall_errno_slot;
   }
 
 #if defined(_WIN32)
   state->use_last_error = use_last_error;
-  state->saved_last_error = GetLastError();
   if (use_last_error) {
+    state->saved_last_error = GetLastError();
     SetLastError(rdyncall_last_error_slot);
   }
 #else
@@ -103,6 +103,30 @@ static void rdyncall_error_state_before(rdyncall_error_state* state, int use_err
   }
 #endif
 }
+
+/* Dispatch one native call through the error-capture path only when requested. */
+#define RDYNCALL_CALL_CAPTURED(state, capture_errors, use_errno, use_last_error, lvalue, expr) \
+  do { \
+    if (capture_errors) { \
+      rdyncall_error_state_before(&(state), (use_errno), (use_last_error)); \
+      (lvalue) = (expr); \
+      rdyncall_error_state_after(&(state)); \
+    } else { \
+      (lvalue) = (expr); \
+    } \
+  } while (0)
+
+/* Dispatch void-returning native calls without paying capture overhead by default. */
+#define RDYNCALL_CALL_VOID_CAPTURED(state, capture_errors, use_errno, use_last_error, expr) \
+  do { \
+    if (capture_errors) { \
+      rdyncall_error_state_before(&(state), (use_errno), (use_last_error)); \
+      (expr); \
+      rdyncall_error_state_after(&(state)); \
+    } else { \
+      (expr); \
+    } \
+  } while (0)
 
 /* Capture native error slots immediately after C returns, then restore R's slots. */
 static void rdyncall_error_state_after(rdyncall_error_state* state)
@@ -543,11 +567,12 @@ static int rdyncall_mode_from_signature_char(char ch)
 }
 
 /** ---------------------------------------------------------------------------
- ** C-Function: C_dyncall
- ** R-Interface: .External
+ ** C-Function: rdyncall_dispatch
+ ** R-Interface: shared .External implementation
  **/
 
-SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args ... */
+/* Run the common dyncall implementation, optionally consuming error flags. */
+static SEXP rdyncall_dispatch(SEXP args, int expect_error_flags) /* callvm, address, signature, aggregate layouts, [error flags,] args ... */
 {
   DCCallVM*   pvm;
   void*       addr;
@@ -587,9 +612,15 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
   }
   signature = CHAR( STRING_ELT( CAR(args), 0 ) ); args = CDR(args);
   aggr_layouts = CAR(args); args = CDR(args);
-  error_flags = CAR(args); args = CDR(args);
-  use_errno = rdyncall_error_flag(error_flags, 0, "use_errno");
-  use_last_error = rdyncall_error_flag(error_flags, 1, "use_last_error");
+  if (expect_error_flags) {
+    /* Only the full entry point pays to validate native error capture flags. */
+    error_flags = CAR(args); args = CDR(args);
+    use_errno = rdyncall_error_flag(error_flags, 0, "use_errno");
+    use_last_error = rdyncall_error_flag(error_flags, 1, "use_last_error");
+  } else {
+    use_errno = 0;
+    use_last_error = 0;
+  }
   aggr_args = rdyncall_get_list_element(aggr_layouts, "args");
   aggr_return_layout = rdyncall_get_list_element(aggr_layouts, "return");
   if (TYPEOF(aggr_args) != VECSXP) {
@@ -967,139 +998,124 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
 
   SEXP ans = R_NilValue;
   int ans_protected = 0;
+  int capture_errors = use_errno || use_last_error;
   rdyncall_error_state error_state;
 
   switch(*sig++) {
     case DC_SIGCHAR_BOOL:
     {
       DCbool value;
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      value = dcCallBool(pvm, addr);
-      rdyncall_error_state_after(&error_state);
+      RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                             value, dcCallBool(pvm, addr));
       ans = Rf_ScalarLogical((value == DC_FALSE) ? FALSE : TRUE);
     } break;
 
     case DC_SIGCHAR_CHAR:
     {
       DCchar value;
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      value = dcCallChar(pvm, addr);
-      rdyncall_error_state_after(&error_state);
+      RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                             value, dcCallChar(pvm, addr));
       ans = Rf_ScalarInteger((int) value);
     } break;
     case DC_SIGCHAR_UCHAR:
     {
       DCchar value;
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      value = dcCallChar(pvm, addr);
-      rdyncall_error_state_after(&error_state);
+      RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                             value, dcCallChar(pvm, addr));
       ans = Rf_ScalarInteger((int) ((unsigned char) value));
     } break;
 
     case DC_SIGCHAR_SHORT:
     {
       DCshort value;
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      value = dcCallShort(pvm, addr);
-      rdyncall_error_state_after(&error_state);
+      RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                             value, dcCallShort(pvm, addr));
       ans = Rf_ScalarInteger((int) value);
     } break;
     case DC_SIGCHAR_USHORT:
     {
       DCshort value;
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      value = dcCallShort(pvm, addr);
-      rdyncall_error_state_after(&error_state);
+      RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                             value, dcCallShort(pvm, addr));
       ans = Rf_ScalarInteger((int) ((unsigned short) value));
     } break;
 
     case DC_SIGCHAR_INT:
     {
       DCint value;
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      value = dcCallInt(pvm, addr);
-      rdyncall_error_state_after(&error_state);
+      RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                             value, dcCallInt(pvm, addr));
       ans = Rf_ScalarInteger(value);
     } break;
     case DC_SIGCHAR_UINT:
     {
       DCint value;
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      value = dcCallInt(pvm, addr);
-      rdyncall_error_state_after(&error_state);
+      RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                             value, dcCallInt(pvm, addr));
       ans = Rf_ScalarReal((double) (unsigned int) value);
     } break;
 
     case DC_SIGCHAR_LONG:
     {
       DClong value;
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      value = dcCallLong(pvm, addr);
-      rdyncall_error_state_after(&error_state);
+      RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                             value, dcCallLong(pvm, addr));
       ans = Rf_ScalarReal((double) value);
     } break;
     case DC_SIGCHAR_ULONG:
     {
       DClong value;
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      value = dcCallLong(pvm, addr);
-      rdyncall_error_state_after(&error_state);
+      RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                             value, dcCallLong(pvm, addr));
       ans = Rf_ScalarReal((double) ((unsigned long) value));
     } break;
 
     case DC_SIGCHAR_LONGLONG:
     {
       DClonglong value;
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      value = dcCallLongLong(pvm, addr);
-      rdyncall_error_state_after(&error_state);
+      RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                             value, dcCallLongLong(pvm, addr));
       ans = Rf_ScalarReal((double) value);
     } break;
     case DC_SIGCHAR_ULONGLONG:
     {
       DClonglong value;
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      value = dcCallLongLong(pvm, addr);
-      rdyncall_error_state_after(&error_state);
+      RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                             value, dcCallLongLong(pvm, addr));
       ans = Rf_ScalarReal((double) value);
     } break;
 
     case DC_SIGCHAR_FLOAT:
     {
       DCfloat value;
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      value = dcCallFloat(pvm, addr);
-      rdyncall_error_state_after(&error_state);
+      RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                             value, dcCallFloat(pvm, addr));
       ans = Rf_ScalarReal((double) value);
     } break;
     case DC_SIGCHAR_DOUBLE:
     {
       DCdouble value;
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      value = dcCallDouble(pvm, addr);
-      rdyncall_error_state_after(&error_state);
+      RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                             value, dcCallDouble(pvm, addr));
       ans = Rf_ScalarReal(value);
     } break;
     case DC_SIGCHAR_POINTER:
     {
       DCpointer value;
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      value = dcCallPointer(pvm, addr);
-      rdyncall_error_state_after(&error_state);
+      RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                             value, dcCallPointer(pvm, addr));
       ans = R_MakeExternalPtr(value, R_NilValue, R_NilValue);
     } break;
     case DC_SIGCHAR_STRING:
     {
       DCpointer value;
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      value = dcCallPointer(pvm, addr);
-      rdyncall_error_state_after(&error_state);
+      RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                             value, dcCallPointer(pvm, addr));
       ans = Rf_mkString(value);
     } break;
     case DC_SIGCHAR_VOID:
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      dcCallVoid(pvm, addr);
-      rdyncall_error_state_after(&error_state);
+      RDYNCALL_CALL_VOID_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                                  dcCallVoid(pvm, addr));
       ans = R_NilValue;
       break;
     case '<':
@@ -1124,10 +1140,9 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
       PROTECT(ans = Rf_allocVector(RAWSXP, rdyncall_layout_size(aggr_return_layout)));
       ans_protected = 1;
       rdyncall_set_struct_attrib(ans, rdyncall_layout_name(aggr_return_layout));
-      /* Capture immediately around the native call, before any later R work can touch errno. */
-      rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-      dcCallAggr(pvm, addr, aggr_return, RAW(ans));
-      rdyncall_error_state_after(&error_state);
+      /* When requested, capture before any later R work can touch errno. */
+      RDYNCALL_CALL_VOID_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                                  dcCallAggr(pvm, addr, aggr_return, RAW(ans)));
     } break;
     case '*':
     {
@@ -1152,9 +1167,8 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
           memcpy(buf, begin, n);
           buf[n] = '\0';
           sig = end + 1;
-          rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-          value = dcCallPointer(pvm, addr);
-          rdyncall_error_state_after(&error_state);
+          RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                                 value, dcCallPointer(pvm, addr));
           PROTECT(ans = R_MakeExternalPtr(value, R_NilValue, R_NilValue));
           ans_protected = 1;
           rdyncall_set_struct_attrib(ans, buf);
@@ -1162,17 +1176,15 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
         case 'C':
         case 'c': {
           DCpointer value;
-          rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-          value = dcCallPointer(pvm, addr);
-          rdyncall_error_state_after(&error_state);
+          RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                                 value, dcCallPointer(pvm, addr));
           PROTECT(ans = Rf_mkString(value));
           ans_protected = 1;
         } break;
         case 'v': {
           DCpointer value;
-          rdyncall_error_state_before(&error_state, use_errno, use_last_error);
-          value = dcCallPointer(pvm, addr);
-          rdyncall_error_state_after(&error_state);
+          RDYNCALL_CALL_CAPTURED(error_state, capture_errors, use_errno, use_last_error,
+                                 value, dcCallPointer(pvm, addr));
           PROTECT(ans = R_MakeExternalPtr(value, R_NilValue, R_NilValue));
           ans_protected = 1;
         } break;
@@ -1186,4 +1198,26 @@ SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, args
   rdyncall_free_aggrs(aggrs, aggr_count);
   if (ans_protected) UNPROTECT(1);
   return ans;
+}
+
+/** ---------------------------------------------------------------------------
+ ** C-Function: C_dyncall
+ ** R-Interface: .External
+ **/
+
+/* Entry point used when callers request errno or LastError capture. */
+SEXP C_dyncall(SEXP args) /* callvm, address, signature, aggregate layouts, error flags, args ... */
+{
+  return rdyncall_dispatch(args, 1);
+}
+
+/** ---------------------------------------------------------------------------
+ ** C-Function: C_dyncall_fast
+ ** R-Interface: .External
+ **/
+
+/* Entry point for ordinary calls that do not request native error capture. */
+SEXP C_dyncall_fast(SEXP args) /* callvm, address, signature, aggregate layouts, args ... */
+{
+  return rdyncall_dispatch(args, 0);
 }

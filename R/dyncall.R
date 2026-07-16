@@ -307,19 +307,40 @@ dyncall_aggregate_layouts <- function(signature, envir = parent.frame()) {
     list(args = args, return = return)
 }
 
+# Dispatch the common no-error-capture path through the legacy-shaped native
+# entry point so ordinary calls do not allocate or validate error option flags.
+dyncall_call_fast <- function(callvm, address, signature, ..., envir = parent.frame()) {
+    aggregates <- dyncall_aggregate_layouts(signature, envir = envir)
+    ans <- .External(
+        "C_dyncall_fast", callvm, address, signature, aggregates,
+        ..., PACKAGE = "rdyncall"
+    )
+    if (!is.null(aggregates$return) && inherits(ans, "struct")) {
+        attr(ans, "typeinfo") <- get_typeinfo(aggregates$return$name, envir = envir)
+    }
+    ans
+}
+
 dyncall_call <- function(callvm, address, signature, ..., envir = parent.frame(),
                          use_errno = FALSE, use_last_error = FALSE,
                          errcheck = NULL, callmode = "default",
                          function_name = NULL, varargs = NULL,
                          info_signature = signature) {
+    # Keep the default hot path close to the pre-error-capture implementation.
+    if (identical(use_errno, FALSE) && identical(use_last_error, FALSE) && is.null(errcheck)) {
+        return(dyncall_call_fast(callvm, address, signature, ..., envir = envir))
+    }
+
     options <- dyncall_error_options(use_errno, use_last_error, errcheck)
-    args <- list(...)
+    args <- if (is.null(options$errcheck)) NULL else list(...)
     aggregates <- dyncall_aggregate_layouts(signature, envir = envir)
     flags <- c(options$use_errno, options$use_last_error)
     ans <- .External("C_dyncall", callvm, address, signature, aggregates, flags, ..., PACKAGE = "rdyncall")
     if (!is.null(aggregates$return) && inherits(ans, "struct")) {
         attr(ans, "typeinfo") <- get_typeinfo(aggregates$return$name, envir = envir)
     }
+    if (is.null(options$errcheck)) return(ans)
+
     dyncall_apply_errcheck(
         ans, options$errcheck, address, info_signature, args,
         callmode, function_name, varargs,
@@ -636,6 +657,26 @@ dyncall_variadic_signature <- function(signature, varargs) {
 #' @export
 dyncall <- function(address, signature, ..., callmode = "default",
                     use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    # The overwhelmingly common call omits all new options; handle it first.
+    if (missing(callmode) && missing(use_errno) && missing(use_last_error) && missing(errcheck)) {
+        return(dyncall_call_fast(callvm.default, address, signature, ..., envir = parent.frame()))
+    }
+    # Keep ordinary calls on the shortest path unless an error feature is enabled.
+    if (missing(use_errno) && missing(use_last_error) && missing(errcheck)) {
+        # Most calls use the default convention, so skip mode lookup in that case.
+        if (identical(callmode, "default")) {
+            return(dyncall_call_fast(callvm.default, address, signature, ..., envir = parent.frame()))
+        }
+        callvm <- dyncall_callvm_for_mode(callmode)
+        return(dyncall_call_fast(callvm, address, signature, ..., envir = parent.frame()))
+    }
+    if (identical(use_errno, FALSE) && identical(use_last_error, FALSE) && is.null(errcheck)) {
+        if (identical(callmode, "default")) {
+            return(dyncall_call_fast(callvm.default, address, signature, ..., envir = parent.frame()))
+        }
+        callvm <- dyncall_callvm_for_mode(callmode)
+        return(dyncall_call_fast(callvm, address, signature, ..., envir = parent.frame()))
+    }
     callvm <- dyncall_callvm_for_mode(callmode)
     dyncall_call(callvm, address, signature, ..., envir = parent.frame(),
         use_errno = use_errno, use_last_error = use_last_error,
@@ -651,6 +692,11 @@ dyncall_variadic <- function(address, signature, varargs = "", ...,
                              errcheck = NULL) {
     callmode <- match.arg(callmode)
     expanded <- dyncall_variadic_signature(signature, varargs)
+    # Variadic calls can use the same fast path after their signature is expanded.
+    if ((missing(use_errno) && missing(use_last_error) && missing(errcheck)) ||
+        (identical(use_errno, FALSE) && identical(use_last_error, FALSE) && is.null(errcheck))) {
+        return(dyncall_call_fast(callvm.variadic, address, expanded, ..., envir = parent.frame()))
+    }
     dyncall_call(callvm.variadic, address, expanded, ..., envir = parent.frame(),
         use_errno = use_errno, use_last_error = use_last_error,
         errcheck = errcheck, callmode = callmode, varargs = varargs,
@@ -687,6 +733,11 @@ dyncall_set_last_error <- function(value) {
 #' @rdname dyncall
 #' @export
 dyncall.cdecl         <- function(address, signature, ..., use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    # Keep ordinary calls on the shortest path unless an error feature is enabled.
+    if ((missing(use_errno) && missing(use_last_error) && missing(errcheck)) ||
+        (identical(use_errno, FALSE) && identical(use_last_error, FALSE) && is.null(errcheck))) {
+        return(dyncall_call_fast(callvm.cdecl, address, signature, ..., envir = parent.frame()))
+    }
     dyncall_call(callvm.cdecl, address, signature, ..., envir = parent.frame(),
         use_errno = use_errno, use_last_error = use_last_error,
         errcheck = errcheck, callmode = "cdecl"
@@ -696,6 +747,11 @@ dyncall.cdecl         <- function(address, signature, ..., use_errno = FALSE, us
 #' @rdname dyncall
 #' @export
 dyncall.default       <- function(address, signature, ..., use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    # Keep ordinary calls on the shortest path unless an error feature is enabled.
+    if ((missing(use_errno) && missing(use_last_error) && missing(errcheck)) ||
+        (identical(use_errno, FALSE) && identical(use_last_error, FALSE) && is.null(errcheck))) {
+        return(dyncall_call_fast(callvm.default, address, signature, ..., envir = parent.frame()))
+    }
     dyncall_call(callvm.default, address, signature, ..., envir = parent.frame(),
         use_errno = use_errno, use_last_error = use_last_error,
         errcheck = errcheck, callmode = "default"
@@ -705,6 +761,11 @@ dyncall.default       <- function(address, signature, ..., use_errno = FALSE, us
 #' @rdname dyncall
 #' @export
 dyncall.stdcall       <- function(address, signature, ..., use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    # Keep ordinary calls on the shortest path unless an error feature is enabled.
+    if ((missing(use_errno) && missing(use_last_error) && missing(errcheck)) ||
+        (identical(use_errno, FALSE) && identical(use_last_error, FALSE) && is.null(errcheck))) {
+        return(dyncall_call_fast(callvm.stdcall, address, signature, ..., envir = parent.frame()))
+    }
     dyncall_call(callvm.stdcall, address, signature, ..., envir = parent.frame(),
         use_errno = use_errno, use_last_error = use_last_error,
         errcheck = errcheck, callmode = "stdcall"
@@ -714,6 +775,11 @@ dyncall.stdcall       <- function(address, signature, ..., use_errno = FALSE, us
 #' @rdname dyncall
 #' @export
 dyncall.thiscall.gcc  <- function(address, signature, ..., use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    # Keep ordinary calls on the shortest path unless an error feature is enabled.
+    if ((missing(use_errno) && missing(use_last_error) && missing(errcheck)) ||
+        (identical(use_errno, FALSE) && identical(use_last_error, FALSE) && is.null(errcheck))) {
+        return(dyncall_call_fast(callvm.thiscall.gcc, address, signature, ..., envir = parent.frame()))
+    }
     dyncall_call(callvm.thiscall.gcc, address, signature, ..., envir = parent.frame(),
         use_errno = use_errno, use_last_error = use_last_error,
         errcheck = errcheck, callmode = "thiscall.gcc"
@@ -723,6 +789,11 @@ dyncall.thiscall.gcc  <- function(address, signature, ..., use_errno = FALSE, us
 #' @rdname dyncall
 #' @export
 dyncall.thiscall.msvc <- function(address, signature, ..., use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    # Keep ordinary calls on the shortest path unless an error feature is enabled.
+    if ((missing(use_errno) && missing(use_last_error) && missing(errcheck)) ||
+        (identical(use_errno, FALSE) && identical(use_last_error, FALSE) && is.null(errcheck))) {
+        return(dyncall_call_fast(callvm.thiscall.msvc, address, signature, ..., envir = parent.frame()))
+    }
     dyncall_call(callvm.thiscall.msvc, address, signature, ..., envir = parent.frame(),
         use_errno = use_errno, use_last_error = use_last_error,
         errcheck = errcheck, callmode = "thiscall.msvc"
@@ -732,6 +803,11 @@ dyncall.thiscall.msvc <- function(address, signature, ..., use_errno = FALSE, us
 #' @rdname dyncall
 #' @export
 dyncall.fastcall.gcc  <- function(address, signature, ..., use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    # Keep ordinary calls on the shortest path unless an error feature is enabled.
+    if ((missing(use_errno) && missing(use_last_error) && missing(errcheck)) ||
+        (identical(use_errno, FALSE) && identical(use_last_error, FALSE) && is.null(errcheck))) {
+        return(dyncall_call_fast(callvm.fastcall.gcc, address, signature, ..., envir = parent.frame()))
+    }
     dyncall_call(callvm.fastcall.gcc, address, signature, ..., envir = parent.frame(),
         use_errno = use_errno, use_last_error = use_last_error,
         errcheck = errcheck, callmode = "fastcall.gcc"
@@ -741,6 +817,11 @@ dyncall.fastcall.gcc  <- function(address, signature, ..., use_errno = FALSE, us
 #' @rdname dyncall
 #' @export
 dyncall.fastcall.msvc <- function(address, signature, ..., use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
+    # Keep ordinary calls on the shortest path unless an error feature is enabled.
+    if ((missing(use_errno) && missing(use_last_error) && missing(errcheck)) ||
+        (identical(use_errno, FALSE) && identical(use_last_error, FALSE) && is.null(errcheck))) {
+        return(dyncall_call_fast(callvm.fastcall.msvc, address, signature, ..., envir = parent.frame()))
+    }
     dyncall_call(callvm.fastcall.msvc, address, signature, ..., envir = parent.frame(),
         use_errno = use_errno, use_last_error = use_last_error,
         errcheck = errcheck, callmode = "fastcall.msvc"
