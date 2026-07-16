@@ -24,12 +24,14 @@ bind raylib drawing calls and drive a rotating 3D scene.
 ## Installation
 
 ``` r
-remotes::install_github("hongyuanjia/rdyncall")
+install.packages("rdyncall")
 ```
 
-`rdyncall` was previously archived on CRAN. This repository contains the
-active modernization work toward a maintainable package and current R
-toolchains.
+You can install the development version from GitHub:
+
+``` r
+remotes::install_github("hongyuanjia/rdyncall")
+```
 
 ## Quick Start
 

@@ -1,6 +1,15 @@
 # Changelog
 
+## rdyncall 0.10.1
+
+- Build compiled tinytest fixtures from temporary source copies so CRAN
+  checks do not try to write object files into the read-only installed
+  package library
+  ([\#68](https://github.com/hongyuanjia/rdyncall/issues/68)).
+
 ## rdyncall 0.10.0
+
+CRAN release: 2026-07-15
 
 - Restore package compilation on current R toolchains
   ([\#19](https://github.com/hongyuanjia/rdyncall/issues/19)).

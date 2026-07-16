@@ -122,6 +122,14 @@ Authors:
 
 - Daniel Adler <dadler@uni-goettingen.de> \[copyright holder\]
 
+Other contributors:
+
+- Tassilo Philipp <tphilipp@potion-studios.com> \[contributor, copyright
+  holder\]
+
+- Olivier Chafik <olivier.chafik@gmail.com> \[contributor, copyright
+  holder\]
+
 ## Examples
 
 ``` r

@@ -174,7 +174,7 @@ Daniel Adler <dadler@uni-goettingen.de>
 ## Examples
 
 ``` r
-# \dontrun{
+# \donttest{
 if (run_external) {
     portfile <- system.file("dynports", "SDL3.dynport",
         package = "rdyncall", mustWork = TRUE

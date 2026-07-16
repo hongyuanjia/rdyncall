@@ -66,6 +66,30 @@ print(x, ...)
   additional arguments to be passed to
   [`base::print()`](https://rdrr.io/r/base/print.html) method.
 
+## Value
+
+The functions in this help topic have the following return values:
+
+- `cstruct()` and `cunion()` return `NULL`; they are called for the side
+  effect of registering `typeinfo` objects in `envir`.
+
+- `cdata()` returns an atomic raw vector of S3 class `struct`. The raw
+  bytes store an R-managed C aggregate object, and attributes record its
+  run-time type information.
+
+- `as.ctype()` returns `x` tagged with S3 classes `ctype` and `struct`,
+  together with the associated type-information attributes.
+
+- The `$.struct` method returns the named field converted from its
+  underlying C representation. Fixed-size arrays return a vector or
+  list, and nested aggregate fields return `struct` object(s).
+
+- The `$<-.struct` method returns the modified `struct` object after
+  packing the replacement value into the selected field.
+
+- `print.struct()` and `print.ctype()` return `x` invisibly after
+  printing a field summary.
+
 ## Details
 
 References to foreign C data objects are represented by objects of class
@@ -217,5 +241,5 @@ str(r)
 #>   .. ..$ storage_size  : int [1:4] NA NA NA NA
 #>   ..$ signature: chr "ssSS"
 #>   ..- attr(*, "class")= chr "typeinfo"
-#>  - attr(*, "typeinfo_env")=<environment: 0x56259dada760> 
+#>  - attr(*, "typeinfo_env")=<environment: 0x5652be4fb6c0> 
 ```

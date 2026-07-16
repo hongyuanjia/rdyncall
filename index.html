@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Improved Foreign Function Interface and Dynamic Bindings to C Libraries">
-<meta name="description" content="Provides a cross-platform framework for dynamic binding of C libraries using a flexible Foreign Function Interface (FFI). The FFI supports almost all fundamental C types, multiple calling conventions, symbolic access to foreign C struct/union data types and wrapping of R functions as C callback function pointers. Dynamic bindings to shared C libraries are data-driven by cross-platform binding specifications using a compact plain text format; the package includes an SDL3 DynPort generated from current headers with porter. The package includes a variety of technology demos and OS-specific notes for installation of shared libraries.">
-<meta property="og:description" content="Provides a cross-platform framework for dynamic binding of C libraries using a flexible Foreign Function Interface (FFI). The FFI supports almost all fundamental C types, multiple calling conventions, symbolic access to foreign C struct/union data types and wrapping of R functions as C callback function pointers. Dynamic bindings to shared C libraries are data-driven by cross-platform binding specifications using a compact plain text format; the package includes an SDL3 DynPort generated from current headers with porter. The package includes a variety of technology demos and OS-specific notes for installation of shared libraries.">
+<meta name="description" content="Provides a cross-platform framework for dynamic binding of C libraries using a flexible Foreign Function Interface (FFI). The FFI supports almost all fundamental C types, multiple calling conventions, symbolic access to foreign C struct/union data types and wrapping of R functions as C callback function pointers. Dynamic bindings to shared C libraries are data-driven by cross-platform binding specifications using a compact plain text format; the package includes a DynPort binding specification for SDL3 generated from current headers with porter. The package includes a variety of technology demos and OS-specific notes for installation of shared libraries. For the underlying methods and bundled DynCall libraries, see Adler (2012) &lt;doi:10.32614/RJ-2012-004&gt; and Adler and Philipp (2008) &lt;https://dyncall.org&gt;.">
+<meta property="og:description" content="Provides a cross-platform framework for dynamic binding of C libraries using a flexible Foreign Function Interface (FFI). The FFI supports almost all fundamental C types, multiple calling conventions, symbolic access to foreign C struct/union data types and wrapping of R functions as C callback function pointers. Dynamic bindings to shared C libraries are data-driven by cross-platform binding specifications using a compact plain text format; the package includes a DynPort binding specification for SDL3 generated from current headers with porter. The package includes a variety of technology demos and OS-specific notes for installation of shared libraries. For the underlying methods and bundled DynCall libraries, see Adler (2012) &lt;doi:10.32614/RJ-2012-004&gt; and Adler and Philipp (2008) &lt;https://dyncall.org&gt;.">
 <meta property="og:image" content="https://hongyuanjia.github.io/rdyncall/logo.svg">
 </head>
 <body>
@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">rdyncall</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -116,19 +116,21 @@ raylib 3D rendering from R
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"rdyncall"</span><span class="op">)</span></span></code></pre></div>
+<p>You can install the development version from GitHub:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"hongyuanjia/rdyncall"</span><span class="op">)</span></span></code></pre></div>
-<p><code>rdyncall</code> was previously archived on CRAN. This repository contains the active modernization work toward a maintainable package and current R toolchains.</p>
 </div>
 <div class="section level2">
 <h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
 <p>Generated DynPort packages can be called through ordinary package namespaces:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/dynport.html">dynport</a></span><span class="op">(</span><span class="va">SDL3</span>, package <span class="op">=</span> <span class="st">"SDL3"</span><span class="op">)</span></span>
 <span><span class="fu">SDL3</span><span class="fu">::</span><span class="fu">SDL_GetPlatform</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb3"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="do">## [1] "macOS"</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="do">## [1] "macOS"</span></span></code></pre></div>
 <p>You can also call a C function directly by loading a library, resolving a symbol, and providing a call signature:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/hongyuanjia/rdyncall" class="external-link">rdyncall</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">mathlib</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/dynfind.html">dynfind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"msvcrt"</span>, <span class="st">"m"</span>, <span class="st">"m.so.6"</span><span class="op">)</span><span class="op">)</span></span>
@@ -137,11 +139,11 @@ raylib 3D rendering from R
 <span><span class="fu"><a href="reference/dyncall.html">dyncall</a></span><span class="op">(</span><span class="va">sqrt_addr</span>, <span class="st">"d)d"</span>, <span class="fl">144</span><span class="op">)</span></span></code></pre></div>
 <p>The signature <code>"d)d"</code> means one C <code>double</code> argument and a C <code>double</code> return value. Signatures must match the target C function type.</p>
 <p>R functions can also be wrapped as C callback pointers:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">add</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/callback.html">ccallback</a></span><span class="op">(</span><span class="st">"ii)i"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span> <span class="va">x</span> <span class="op">+</span> <span class="va">y</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/dyncall.html">dyncall</a></span><span class="op">(</span><span class="va">add</span>, <span class="st">"ii)i"</span>, <span class="fl">20L</span>, <span class="fl">3L</span><span class="op">)</span></span></code></pre></div>
 <p>Foreign aggregate layouts are described once and then used through raw-backed objects:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/struct.html">cstruct</a></span><span class="op">(</span><span class="st">"Rect{ssSS}x y w h;"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">rect</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/struct.html">cdata</a></span><span class="op">(</span><span class="va">Rect</span><span class="op">)</span></span>
@@ -151,7 +153,7 @@ raylib 3D rendering from R
 <span><span class="va">rect</span><span class="op">$</span><span class="va">h</span> <span class="op">&lt;-</span> <span class="fl">15</span></span>
 <span></span>
 <span><span class="va">rect</span><span class="op">$</span><span class="va">w</span> <span class="op">*</span> <span class="va">rect</span><span class="op">$</span><span class="va">h</span></span></code></pre></div>
-<div class="sourceCode" id="cb7"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="do">## [1] 150</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="do">## [1] 150</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="learn-rdyncall">Learn rdyncall<a class="anchor" aria-label="anchor" href="#learn-rdyncall"></a>
@@ -270,12 +272,14 @@ raylib 3D rendering from R
 <ul class="list-unstyled">
 <li>Daniel Adler <br><small class="roles"> Author, copyright holder </small>   </li>
 <li>Hongyuan Jia <br><small class="roles"> Author, maintainer, copyright holder </small>   </li>
+<li><a href="authors.html">More about authors...</a></li>
 </ul>
 </div>
 
 <div class="dev-status">
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
+<li><a href="https://CRAN.R-project.org/package=rdyncall" class="external-link"><img src="https://www.r-pkg.org/badges/version/rdyncall" alt="CRAN status"></a></li>
 <li><a href="https://github.com/hongyuanjia/rdyncall/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/hongyuanjia/rdyncall/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
 </ul>
 </div>
@@ -289,7 +293,7 @@ raylib 3D rendering from R
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>
