@@ -47,6 +47,25 @@ by field index.}
 
 \item{...}{additional arguments to be passed to \code{\link[base:print]{base::print()}} method.}
 }
+\value{
+The functions in this help topic have the following return values:
+\itemize{
+\item \code{cstruct()} and \code{cunion()} return \code{NULL}; they are called for the side
+effect of registering \code{typeinfo} objects in \code{envir}.
+\item \code{cdata()} returns an atomic raw vector of S3 class \code{struct}. The raw bytes
+store an R-managed C aggregate object, and attributes record its
+run-time type information.
+\item \code{as.ctype()} returns \code{x} tagged with S3 classes \code{ctype} and \code{struct},
+together with the associated type-information attributes.
+\item The \verb{$.struct} method returns the named field converted from its
+underlying C representation. Fixed-size arrays return a vector or list, and
+nested aggregate fields return \code{struct} object(s).
+\item The \verb{$<-.struct} method returns the modified \code{struct} object after packing
+the replacement value into the selected field.
+\item \code{print.struct()} and \code{print.ctype()} return \code{x} invisibly after printing a
+field summary.
+}
+}
 \description{
 Functions for allocation, access and registration of foreign C \code{struct} and
 \code{union} data type.

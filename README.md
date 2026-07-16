@@ -3,6 +3,7 @@
 
 <!-- badges: start -->
 
+[![CRAN status](https://www.r-pkg.org/badges/version/rdyncall)](https://CRAN.R-project.org/package=rdyncall)
 [![R-CMD-check](https://github.com/hongyuanjia/rdyncall/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hongyuanjia/rdyncall/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
@@ -71,12 +72,14 @@ raylib 3D rendering from R
 ## Installation
 
 ``` r
-remotes::install_github("hongyuanjia/rdyncall")
+install.packages("rdyncall")
 ```
 
-`rdyncall` was previously archived on CRAN. This repository contains the
-active modernization work toward a maintainable package and current R
-toolchains.
+You can install the development version from GitHub:
+
+``` r
+remotes::install_github("hongyuanjia/rdyncall")
+```
 
 ## Quick Start
 

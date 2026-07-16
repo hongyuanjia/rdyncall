@@ -1,21 +1,27 @@
 Package: rdyncall
-Version: 0.10.0
+Version: 0.10.1
 Title: Improved Foreign Function Interface and Dynamic Bindings to C Libraries
 Authors@R: c(
     person("Daniel", "Adler", role = c("aut", "cph"),
            email = "dadler@uni-goettingen.de"),
     person("Hongyuan", "Jia", role = c("aut", "cre", "cph"),
-           email = "hongyuanjia@cqust.edu.cn")
+           email = "hongyuanjia@cqust.edu.cn"),
+    person("Tassilo", "Philipp", role = c("ctb", "cph"),
+           email = "tphilipp@potion-studios.com"),
+    person("Olivier", "Chafik", role = c("ctb", "cph"),
+           email = "olivier.chafik@gmail.com")
     )
 Depends: R (>= 3.0.0)
-Description: Provides a cross-platform framework for dynamic binding of C libraries using a flexible Foreign Function Interface ('FFI').
-  The FFI supports almost all fundamental C types, multiple calling conventions, symbolic access to foreign C 'struct'/'union' data types and wrapping of R functions as C callback function pointers.
-  Dynamic bindings to shared C libraries are data-driven by cross-platform binding specifications using a compact plain text format; the package includes an 'SDL3' DynPort generated from current headers with 'porter'.
-  The package includes a variety of technology demos and OS-specific notes for installation of shared libraries.
+Description: Provides a cross-platform framework for dynamic binding of C libraries using a flexible Foreign Function Interface (FFI).
+  The FFI supports almost all fundamental C types, multiple calling conventions, symbolic access to foreign C struct/union data types and wrapping of R functions as C callback function pointers.
+  Dynamic bindings to shared C libraries are data-driven by cross-platform binding specifications using a compact plain text format; the package includes a 'DynPort' binding specification for 'SDL3' generated from current headers with 'porter'.
+  The package includes a variety of technology demos and OS-specific notes for installation of shared libraries. For the underlying methods and bundled 'DynCall' libraries, see Adler (2012) <doi:10.32614/RJ-2012-004> and Adler and Philipp (2008) <https://dyncall.org>.
 License: MIT + file LICENSE
 URL: https://github.com/hongyuanjia/rdyncall, https://dyncall.org
 BugReports: https://github.com/hongyuanjia/rdyncall/issues
-Suggests: tinytest
+Suggests:
+    Rtinycc,
+    tinytest
 Config/Needs/website: r-lib/asciicast
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3

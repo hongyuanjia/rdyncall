@@ -32,14 +32,14 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macos-latest,    r: 'release', id: 'macos-arm64'}
-          - {os: macos-15-intel,  r: 'release', id: 'macos-intel'}
-          - {os: windows-latest,  r: 'release', id: 'windows-release'}
-          - {os: windows-latest,  r: 'oldrel-4', id: 'windows-oldrel-4'}
-          - {os: ubuntu-latest,   r: 'devel', id: 'ubuntu-devel', http-user-agent: 'release'}
-          - {os: ubuntu-latest,   r: 'release', id: 'ubuntu-release'}
-          - {os: ubuntu-latest,   r: 'oldrel-1', id: 'ubuntu-oldrel-1'}
-          - {os: ubuntu-latest,   r: 'oldrel-4', id: 'ubuntu-oldrel-4'}
+          - {os: macos-latest,    r: 'release', id: 'macos-arm64', dependencies: '"all"'}
+          - {os: macos-15-intel,  r: 'release', id: 'macos-intel', dependencies: '"all"'}
+          - {os: windows-latest,  r: 'release', id: 'windows-release', dependencies: '"all"'}
+          - {os: windows-latest,  r: 'oldrel-4', id: 'windows-oldrel-4', dependencies: '"hard"'}
+          - {os: ubuntu-latest,   r: 'devel', id: 'ubuntu-devel', http-user-agent: 'release', dependencies: '"all"'}
+          - {os: ubuntu-latest,   r: 'release', id: 'ubuntu-release', dependencies: '"all"'}
+          - {os: ubuntu-latest,   r: 'oldrel-1', id: 'ubuntu-oldrel-1', dependencies: '"all"'}
+          - {os: ubuntu-latest,   r: 'oldrel-4', id: 'ubuntu-oldrel-4', dependencies: '"hard"'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -58,8 +58,11 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck
+          extra-packages: |
+            any::rcmdcheck
+            any::tinytest
           needs: check
+          dependencies: ${{ matrix.config.dependencies }}
 
       - uses: r-lib/actions/check-r-package@v2
         with:

@@ -756,6 +756,24 @@ make_struct_info <- function(name, signature, field_names, envir = parent.frame(
 #'        by field index.
 #' @param ... additional arguments to be passed to [base::print()] method.
 #'
+#' @return
+#' The functions in this help topic have the following return values:
+#'
+#' - `cstruct()` and `cunion()` return `NULL`; they are called for the side
+#'   effect of registering `typeinfo` objects in `envir`.
+#' - `cdata()` returns an atomic raw vector of S3 class `struct`. The raw bytes
+#'   store an R-managed C aggregate object, and attributes record its
+#'   run-time type information.
+#' - `as.ctype()` returns `x` tagged with S3 classes `ctype` and `struct`,
+#'   together with the associated type-information attributes.
+#' - The `$.struct` method returns the named field converted from its
+#'   underlying C representation. Fixed-size arrays return a vector or list, and
+#'   nested aggregate fields return `struct` object(s).
+#' - The `$<-.struct` method returns the modified `struct` object after packing
+#'   the replacement value into the selected field.
+#' - `print.struct()` and `print.ctype()` return `x` invisibly after printing a
+#'   field summary.
+#'
 #' @seealso
 #' [dyncall()] for type signatures and [typeinfo()] for details on run-time type
 #' information S3 objects.

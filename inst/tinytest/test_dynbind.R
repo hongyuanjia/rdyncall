@@ -26,9 +26,15 @@ build_dynbind_fixture <- function() {
     outdir <- tempfile("rdyncall-dynbind-fixture-")
     dir.create(outdir)
     outdir <- normalizePath(outdir, winslash = "/", mustWork = TRUE)
+    src_copy <- file.path(outdir, basename(src))
+    # CRAN check libraries are read-only, so compile a temporary source copy
+    # instead of letting R CMD SHLIB create object files beside the installed C file.
+    if (!file.copy(src, src_copy, overwrite = TRUE)) {
+        stop("failed to copy dynbind test fixture source", call. = FALSE)
+    }
     lib <- file.path(outdir, paste0("dynbind", .Platform$dynlib.ext))
     out <- system2(file.path(R.home("bin"), "R"),
-        c("CMD", "SHLIB", "-o", lib, src),
+        c("CMD", "SHLIB", "-o", lib, src_copy),
         stdout = TRUE, stderr = TRUE
     )
     if (!is.null(attr(out, "status"))) {
