@@ -19,8 +19,12 @@ if (Sys.info()[["sysname"]] == "Darwin") {
     expect_true(length(libm_symbols) < 1000L)
 }
 expect_null(dynunload(libm))
+expect_null(dynunload(libm))
+expect_false(rdyncall:::dynload_is_handle(libm))
+expect_error(dynsym(libm, "sqrt"), "not a lib handle")
 
 libr <- dynfind("R")
 expect_true(is.externalptr(libr))
 expect_true(is.externalptr(dynsym(libr, "R_ShowMessage")))
+expect_null(dynunload(libr))
 expect_null(dynunload(libr))

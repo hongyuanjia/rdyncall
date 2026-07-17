@@ -18,11 +18,27 @@ static SEXP C_libhandle_tag(void)
   return Rf_install(RDYNCALL_LIBHANDLE_TAG);
 }
 
-static int C_is_libhandle(SEXP libh)
+/* A cleared libhandle can still be the same external pointer object, so keep
+ * tag validation separate from the live-address check below. */
+static int C_is_tagged_libhandle(SEXP libh)
 {
   return TYPEOF(libh) == EXTPTRSXP &&
-    R_ExternalPtrAddr(libh) != NULL &&
     R_ExternalPtrTag(libh) == C_libhandle_tag();
+}
+
+static int C_is_libhandle(SEXP libh)
+{
+  return C_is_tagged_libhandle(libh) &&
+    R_ExternalPtrAddr(libh) != NULL;
+}
+
+/* Centralize live-handle validation before passing the address to the dynload
+ * backend, which keeps post-unload handles from being dereferenced. */
+static void* C_checked_libhandle(SEXP libh)
+{
+  if (!C_is_libhandle(libh)) error("not a lib handle");
+
+  return R_ExternalPtrAddr(libh);
 }
 
 #if defined(__APPLE__)
@@ -175,11 +191,14 @@ SEXP C_dynunload(SEXP libobj_x)
 
   if (TYPEOF(libobj_x) != EXTPTRSXP) error("first argument is not of type external ptr.");
 
+  if (!C_is_tagged_libhandle(libobj_x)) error("not a lib handle");
+
   libHandle = R_ExternalPtrAddr(libobj_x);
 
-  if (!libHandle) error("not a lib handle");
+  if (!libHandle) return R_NilValue;
 
   dlFreeLibrary( libHandle );
+  R_ClearExternalPtr(libobj_x);
 
   return R_NilValue;
 }
@@ -197,7 +216,7 @@ SEXP C_dynsym(SEXP libh, SEXP symname_x, SEXP protectlib)
   const char* symbol;
   void* addr;
   SEXP protect;
-  libHandle = R_ExternalPtrAddr(libh);
+  libHandle = C_checked_libhandle(libh);
   symbol = CHAR(STRING_ELT(symname_x,0) );
   addr = dlFindSymbol( libHandle, symbol );
   protect = (LOGICAL(protectlib)[0]) ? libh : R_NilValue;
@@ -212,9 +231,9 @@ SEXP C_dynpath(SEXP libh)
   void* libHandle;
   SEXP ans;
 
-  ans = PROTECT(Rf_allocVector(STRSXP, 1));
+  libHandle = C_checked_libhandle(libh);
 
-  libHandle = R_ExternalPtrAddr(libh);
+  ans = PROTECT(Rf_allocVector(STRSXP, 1));
   size = dlGetLibraryPath(libHandle, buf, 1024);
   if (size >= 1) {
     if (size <= 1024) {
