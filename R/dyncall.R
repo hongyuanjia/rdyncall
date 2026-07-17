@@ -247,9 +247,19 @@ dyncall_aggregate_signature_type <- function(signature, i) {
     )
 }
 
+dyncall.no.aggregate.layouts <- list(args = list(), return = NULL)
+
 dyncall_aggregate_layouts <- function(signature, envir = parent.frame()) {
     if (!is.character(signature) || length(signature) != 1L || is.na(signature)) {
         stop("signature must be a single character string", call. = FALSE)
+    }
+    # Most calls use only scalar or pointer types, so avoid a full R-level
+    # signature scan when no aggregate marker can possibly be present.
+    if (!grepl("<", signature, fixed = TRUE)) {
+        if (!grepl(")", signature, fixed = TRUE)) {
+            stop("function-call signature '", signature, "' is invalid: missing argument terminator ')'", call. = FALSE)
+        }
+        return(dyncall.no.aggregate.layouts)
     }
 
     n <- nchar(signature)
@@ -657,14 +667,10 @@ dyncall_variadic_signature <- function(signature, varargs) {
 #' @export
 dyncall <- function(address, signature, ..., callmode = "default",
                     use_errno = FALSE, use_last_error = FALSE, errcheck = NULL) {
-    # The overwhelmingly common call omits all new options; handle it first.
-    if (missing(callmode) && missing(use_errno) && missing(use_last_error) && missing(errcheck)) {
-        return(dyncall_call_fast(callvm.default, address, signature, ..., envir = parent.frame()))
-    }
     # Keep ordinary calls on the shortest path unless an error feature is enabled.
     if (missing(use_errno) && missing(use_last_error) && missing(errcheck)) {
         # Most calls use the default convention, so skip mode lookup in that case.
-        if (identical(callmode, "default")) {
+        if (missing(callmode) || identical(callmode, "default")) {
             return(dyncall_call_fast(callvm.default, address, signature, ..., envir = parent.frame()))
         }
         callvm <- dyncall_callvm_for_mode(callmode)
