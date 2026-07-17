@@ -1,7 +1,7 @@
 # rdyncall 0.10.2
 
 - Make `dynunload()` idempotent after explicit unloads so finalizers do not
-  attempt to unload the same dynamic library handle twice (#70).
+  attempt to unload the same dynamic library handle twice (#71).
 
 # rdyncall 0.10.1
 
