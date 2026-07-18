@@ -1,5 +1,5 @@
 Package: rdyncall
-Version: 0.10.1
+Version: 0.10.2
 Title: Improved Foreign Function Interface and Dynamic Bindings to C Libraries
 Authors@R: c(
     person("Daniel", "Adler", role = c("aut", "cph"),
