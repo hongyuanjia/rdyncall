@@ -202,6 +202,39 @@ expect_dynport_portfile_error(c(
     "    printf"
 ), "Duplicate function name")
 
+metadata_errno <- rdyncall:::dynport_read(write_dynport(c(
+    "Package: ErrMeta",
+    "Function:",
+    "    f()i;",
+    "FuncPtr:",
+    "    fp()i;",
+    "UseErrno:",
+    "    f",
+    "UseLastError:",
+    "    fp"
+)))
+expect_true(metadata_errno$Function$f$use_errno)
+expect_true(metadata_errno$FuncPtr$fp$use_last_error)
+
+expect_dynport_portfile_error(c(
+    "Package: ErrMissing",
+    "UseErrno:",
+    "    missing"
+), "not defined")
+expect_dynport_portfile_error(c(
+    "Package: ErrDuplicate",
+    "Function:",
+    "    f()i;",
+    "UseLastError:",
+    "    f",
+    "    f"
+), "Duplicate function name")
+expect_dynport_portfile_error(c(
+    "Package: ErrInvalid",
+    "UseErrno:",
+    "    `bad`"
+), "function name")
+
 parsed_port <- rdyncall:::dynport_read(write_dynport(c(
     "Package: ParsePort",
     "Version: 1.0.0",

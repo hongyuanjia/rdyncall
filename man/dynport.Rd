@@ -116,6 +116,8 @@ The DCF format records the following binding metadata:
 \itemize{
 \item Functions (and pointer-to-function variables) are mapped via \code{\link[=dynbind]{dynbind()}}
 and a description of the C library using a \emph{library signatures}.
+\item \code{UseErrno} and \code{UseLastError} fields can mark existing function bindings
+that should capture C \code{errno} or Windows \code{LastError} around each call.
 \item Symbolic names are assigned to its values for object-like macro defines and
 C enum types.
 \item Run-time type-information objects for aggregate C data types (struct and

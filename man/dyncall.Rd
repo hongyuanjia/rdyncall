@@ -5,6 +5,10 @@
 \alias{call-signature}
 \alias{type-signature}
 \alias{dyncall_variadic}
+\alias{dyncall_get_errno}
+\alias{dyncall_set_errno}
+\alias{dyncall_get_last_error}
+\alias{dyncall_set_last_error}
 \alias{dyncall.cdecl}
 \alias{dyncall.default}
 \alias{dyncall.stdcall}
@@ -16,33 +20,115 @@
 \alias{dyncall.fastcall}
 \title{Foreign Function Interface with support for almost all C types}
 \usage{
-dyncall(address, signature, ..., callmode = "default")
+dyncall(
+  address,
+  signature,
+  ...,
+  callmode = "default",
+  use_errno = FALSE,
+  use_last_error = FALSE,
+  errcheck = NULL
+)
 
 dyncall_variadic(
   address,
   signature,
   varargs = "",
   ...,
-  callmode = c("default", "cdecl")
+  callmode = c("default", "cdecl"),
+  use_errno = FALSE,
+  use_last_error = FALSE,
+  errcheck = NULL
 )
 
-dyncall.cdecl(address, signature, ...)
+dyncall_get_errno()
 
-dyncall.default(address, signature, ...)
+dyncall_set_errno(value)
 
-dyncall.stdcall(address, signature, ...)
+dyncall_get_last_error()
 
-dyncall.thiscall.gcc(address, signature, ...)
+dyncall_set_last_error(value)
 
-dyncall.thiscall.msvc(address, signature, ...)
+dyncall.cdecl(
+  address,
+  signature,
+  ...,
+  use_errno = FALSE,
+  use_last_error = FALSE,
+  errcheck = NULL
+)
 
-dyncall.fastcall.gcc(address, signature, ...)
+dyncall.default(
+  address,
+  signature,
+  ...,
+  use_errno = FALSE,
+  use_last_error = FALSE,
+  errcheck = NULL
+)
 
-dyncall.fastcall.msvc(address, signature, ...)
+dyncall.stdcall(
+  address,
+  signature,
+  ...,
+  use_errno = FALSE,
+  use_last_error = FALSE,
+  errcheck = NULL
+)
 
-dyncall.thiscall(address, signature, ...)
+dyncall.thiscall.gcc(
+  address,
+  signature,
+  ...,
+  use_errno = FALSE,
+  use_last_error = FALSE,
+  errcheck = NULL
+)
 
-dyncall.fastcall(address, signature, ...)
+dyncall.thiscall.msvc(
+  address,
+  signature,
+  ...,
+  use_errno = FALSE,
+  use_last_error = FALSE,
+  errcheck = NULL
+)
+
+dyncall.fastcall.gcc(
+  address,
+  signature,
+  ...,
+  use_errno = FALSE,
+  use_last_error = FALSE,
+  errcheck = NULL
+)
+
+dyncall.fastcall.msvc(
+  address,
+  signature,
+  ...,
+  use_errno = FALSE,
+  use_last_error = FALSE,
+  errcheck = NULL
+)
+
+dyncall.thiscall(
+  address,
+  signature,
+  ...,
+  use_errno = FALSE,
+  use_last_error = FALSE,
+  errcheck = NULL
+)
+
+dyncall.fastcall(
+  address,
+  signature,
+  ...,
+  use_errno = FALSE,
+  use_last_error = FALSE,
+  errcheck = NULL
+)
 }
 \arguments{
 \item{address}{external pointer to foreign function.}
@@ -58,10 +144,25 @@ details.}
 argument has no effect on most platforms, but on Microsoft Windows
 32-Bit Intel/x86 platforms. See details.}
 
+\item{use_errno}{logical. If \code{TRUE}, swap rdyncall's private C \code{errno} value
+into the process error slot before the call, then capture the value
+immediately after the call.}
+
+\item{use_last_error}{logical. Windows only. If \code{TRUE}, swap rdyncall's
+private \code{LastError} value into the process error slot before the call,
+then capture the value immediately after the call.}
+
+\item{errcheck}{\code{NULL} or a function called as \code{errcheck(result, info)} after
+a foreign call. The checker may return a replacement result or throw an
+error.}
+
 \item{varargs}{character string specifying the type signatures for the
 arguments passed through the C \code{...} portion of a variadic function.
 This string contains argument types only, without \verb{)} and without a
 return type.}
+
+\item{value}{integer or numeric scalar used to seed the private \code{errno} or
+Windows \code{LastError} slot.}
 }
 \value{
 Functions return the received C return value converted to an R value. See
@@ -116,6 +217,18 @@ argument describes the fixed parameter prefix and return type, while
 \code{varargs} describes the actual argument types passed through \code{...} at this
 specific call site. C default promotions are the caller's responsibility; for
 example, pass promoted variadic \code{float} values as \code{double} (\code{"d"}).
+
+\code{use_errno = TRUE} captures C \code{errno} around a foreign call using rdyncall's
+private errno slot. Use \code{dyncall_get_errno()} and \code{dyncall_set_errno()} to
+inspect or seed that slot. On Windows, \code{use_last_error = TRUE} does the same
+for \code{GetLastError()} / \code{SetLastError()} through
+\code{dyncall_get_last_error()} and \code{dyncall_set_last_error()}.
+
+\code{errcheck}, when supplied, is called as \code{errcheck(result, info)} after the
+foreign result has been converted to R. The \code{info} object contains the call
+address, signature, argument list, call mode, function name when known, and
+captured native error state. The checker return value becomes the final
+result, and errors raised by the checker are propagated.
 
 Given that the \code{signature} matches the foreign function type, the FFI
 provides a certain level of type-safety to users, when exposing foreign

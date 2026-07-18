@@ -13,7 +13,10 @@ dynbind(
   pattern = NULL,
   replace = NULL,
   funcptr = FALSE,
-  variadic = FALSE
+  variadic = FALSE,
+  use_errno = FALSE,
+  use_last_error = FALSE,
+  errcheck = NULL
 )
 
 \method{print}{dynbind.report}(x, ...)
@@ -47,6 +50,16 @@ functions (\code{FALSE}, default) or to function pointer variables
 \item{variadic}{logical, that indicates whether wrappers should call C
 variadic functions using \code{\link[=dyncall_variadic]{dyncall_variadic()}}. Cannot be combined with
 \code{funcptr = TRUE}.}
+
+\item{use_errno}{logical. If \code{TRUE}, every generated wrapper captures C
+\code{errno} around the foreign call. See \code{\link[=dyncall]{dyncall()}}.}
+
+\item{use_last_error}{logical. Windows only. If \code{TRUE}, every generated
+wrapper captures Windows \code{LastError} around the foreign call. See
+\code{\link[=dyncall]{dyncall()}}.}
+
+\item{errcheck}{\code{NULL} or a function called as \code{errcheck(result, info)} after
+each generated wrapper call. See \code{\link[=dyncall]{dyncall()}}.}
 
 \item{x}{S3 \code{dynbind.report} object to print.}
 
@@ -124,6 +137,10 @@ to dereference \verb{<TARGET>} as a pointer-to-function variable at call-time.
 Generated wrappers accept normal call arguments through \code{...} and a named
 \code{.varargs} argument that describes the run-time vararg signature passed to
 \code{\link[=dyncall_variadic]{dyncall_variadic()}}.
+
+\code{use_errno}, \code{use_last_error}, and \code{errcheck} are forwarded to every
+generated wrapper. \code{errcheck} receives the converted result and an info object
+whose \code{function} entry contains the installed R wrapper name.
 }
 \examples{
 \donttest{

@@ -35,6 +35,8 @@
 #'
 #' - Functions (and pointer-to-function variables) are mapped via [dynbind()]
 #'   and a description of the C library using a _library signatures_.
+#' - `UseErrno` and `UseLastError` fields can mark existing function bindings
+#'   that should capture C `errno` or Windows `LastError` around each call.
 #' - Symbolic names are assigned to its values for object-like macro defines and
 #'   C enum types.
 #' - Run-time type-information objects for aggregate C data types (struct and
@@ -260,6 +262,8 @@ dynport_parse_fields <- function(keys, values, lnums, envir = parent.frame()) {
         out <- c(out[!is_enum], list(Enum = enums))
     }
     out <- dynport_apply_variadic_metadata(out)
+    out <- dynport_apply_error_metadata(out, "UseErrno", "use_errno")
+    out <- dynport_apply_error_metadata(out, "UseLastError", "use_last_error")
     dynport_export_names(out)
     out
 }
@@ -276,6 +280,8 @@ dynport_parse_field <- function(key, value, lnum, envir = parent.frame()) {
             "Function" = dynport_parse_function(value, lnum, envir),
             "FuncPtr"  = dynport_parse_funcptr(value,  lnum, envir),
             "Variadic" = dynport_parse_variadic(value, lnum, envir),
+            "UseErrno" = dynport_parse_error_flags(value, lnum, "UseErrno"),
+            "UseLastError" = dynport_parse_error_flags(value, lnum, "UseLastError"),
             "Struct"   = dynport_parse_struct(value,   lnum, envir),
             "Union"    = dynport_parse_union(value,    lnum, envir),
             "Enum"     = dynport_parse_enum(value,     lnum, key = "Enum"),
@@ -588,6 +594,21 @@ dynport_parse_variadic <- function(value, lnum = 1L, envir = parent.frame()) {
     vals
 }
 
+# Parse DynPort error-capture metadata as names of existing function bindings.
+dynport_parse_error_flags <- function(value, lnum = 1L, field = c("UseErrno", "UseLastError")) {
+    field <- match.arg(field)
+    vals <- unlist(strsplit(value, "[;\r\n]+"), FALSE, FALSE)
+    vals <- trimws(vals)
+    vals <- vals[nzchar(vals)]
+    if (!length(vals)) return(character())
+
+    dynport_check_names(vals, field, lnums = lnum, values = vals,
+        what = "function", check_duplicates = TRUE
+    )
+
+    vals
+}
+
 dynport_apply_variadic_metadata <- function(port) {
     variadic <- port[["Variadic"]]
     if (!length(variadic)) return(port)
@@ -612,6 +633,32 @@ dynport_apply_variadic_metadata <- function(port) {
     }
     for (nm in intersect(variadic, names(funcptrs))) {
         funcptrs[[nm]]$variadic <- TRUE
+    }
+
+    port[["Function"]] <- functions
+    port[["FuncPtr"]] <- funcptrs
+    port
+}
+
+# Apply UseErrno/UseLastError metadata by marking already parsed functions.
+dynport_apply_error_metadata <- function(port, field, flag) {
+    marked <- port[[field]]
+    if (!length(marked)) return(port)
+
+    functions <- port[["Function"]]
+    funcptrs <- port[["FuncPtr"]]
+    known <- c(names(functions), names(funcptrs))
+    missing <- setdiff(marked, known)
+    if (length(missing)) {
+        stop(field, " DynPort symbols are not defined as functions: ",
+            paste(sQuote(missing), collapse = ", "), call. = FALSE)
+    }
+
+    for (nm in intersect(marked, names(functions))) {
+        functions[[nm]][[flag]] <- TRUE
+    }
+    for (nm in intersect(marked, names(funcptrs))) {
+        funcptrs[[nm]][[flag]] <- TRUE
     }
 
     port[["Function"]] <- functions
@@ -1119,6 +1166,8 @@ dynport_assign_unresolved <- function(symbols, envir) {
 
 dynport_make_wrapper <- function(fun, address, envir, funcptr = FALSE) {
     variadic <- isTRUE(fun$variadic)
+    use_errno <- isTRUE(fun$use_errno)
+    use_last_error <- isTRUE(fun$use_last_error)
     signature <- dynport_call_signature(fun)
     arg_names <- dynport_function_arg_names(fun)
 
@@ -1141,12 +1190,14 @@ dynport_make_wrapper <- function(fun, address, envir, funcptr = FALSE) {
         c(
             list(as.name(".call"), target, as.name(".signature"), as.name(".varargs")),
             lapply(arg_names, as.name),
-            list(as.name("..."))
+            list(as.name("...")),
+            list(use_errno = as.name(".use_errno"), use_last_error = as.name(".use_last_error"))
         )
     } else {
         c(
             list(as.name(".call"), target, as.name(".signature")),
-            lapply(arg_names, as.name)
+            lapply(arg_names, as.name),
+            list(use_errno = as.name(".use_errno"), use_last_error = as.name(".use_last_error"))
         )
     }
     body(f) <- as.call(call_args)
@@ -1155,6 +1206,8 @@ dynport_make_wrapper <- function(fun, address, envir, funcptr = FALSE) {
     wrapper_env$.address <- address
     wrapper_env$.signature <- signature
     wrapper_env$.call <- if (variadic) dyncall_variadic else dyncall.default
+    wrapper_env$.use_errno <- use_errno
+    wrapper_env$.use_last_error <- use_last_error
     if (funcptr) wrapper_env$.unpack <- unpack
     environment(f) <- wrapper_env
     f
