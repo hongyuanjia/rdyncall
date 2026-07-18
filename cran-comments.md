@@ -1,16 +1,15 @@
-## Resubmission
+## Submission
 
-This maintenance release addresses the CRAN Debian check failure reported for
-`rdyncall` 0.10.0, where package code run during checks attempted to write
-compiled fixture object files into the read-only installed package library.
+This maintenance release addresses the BDR `valgrind` additional issue reported
+for `rdyncall` 0.10.1.
 
-The compiled tinytest fixtures now copy their C sources to the R session
-temporary directory before invoking `R CMD SHLIB`, so generated object and
-shared-library files are written only under `tempdir()`.
+Explicit `dynunload()` calls could previously be followed by an
+`auto.unload` finalizer attempting to unload the same dynamic library handle
+again. `C_dynunload()` now clears the external pointer after a successful
+`dlFreeLibrary()` call and treats already-cleared `rdyncall` library handles as
+no-ops.
 
-The GitHub Actions `R-CMD-check` matrix was also adjusted so old R jobs install
-only hard dependencies. `Rtinycc` remains an optional `Suggests` dependency and
-is not required for the CRAN check fix.
+A manual `R-hub` check on the `valgrind` platform passed for this release.
 
 ## R CMD check results
 
