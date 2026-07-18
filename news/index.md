@@ -1,6 +1,16 @@
 # Changelog
 
+## rdyncall 0.10.2
+
+- Make
+  [`dynunload()`](https://hongyuanjia.github.io/rdyncall/reference/dynload.md)
+  idempotent after explicit unloads so finalizers do not attempt to
+  unload the same dynamic library handle twice
+  ([\#71](https://github.com/hongyuanjia/rdyncall/issues/71)).
+
 ## rdyncall 0.10.1
+
+CRAN release: 2026-07-16
 
 - Build compiled tinytest fixtures from temporary source copies so CRAN
   checks do not try to write object files into the read-only installed
