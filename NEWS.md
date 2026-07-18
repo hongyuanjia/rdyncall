@@ -3,7 +3,7 @@
 - Make `dynunload()` idempotent after explicit unloads so finalizers do not
   attempt to unload the same dynamic library handle twice (#71).
 - Restore the manual `R-hub` workflow so `valgrind` checks can start from
-  GitHub Actions (#72).
+  GitHub Actions (#73).
 
 # rdyncall 0.10.1
 
