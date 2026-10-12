@@ -29,7 +29,7 @@ dynport_install_package(
   quiet = FALSE
 )
 
-dynport_load_into(portfile, envir)
+dynport_load_into(portfile, envir, libhandle = NULL)
 
 dynport_lib(create = TRUE, add = FALSE)
 
@@ -81,6 +81,16 @@ dynport_clear_lib(lib = dynport_lib(create = FALSE), unload = TRUE)
 
   environment to populate from a DynPort file.
 
+- libhandle:
+
+  `NULL` or a live library handle returned by
+  [`dynload()`](https://hongyuanjia.github.io/rdyncall/reference/dynload.md)
+  or
+  [`dynfind()`](https://hongyuanjia.github.io/rdyncall/reference/dynfind.md).
+  When supplied to `dynport_load_into()`, it overrides the `Library`
+  field without reopening the library. The caller owns the handle and
+  must keep it live while using the bindings, then unload it.
+
 - create:
 
   logical. If `TRUE`, create the default DynPort package library when it
@@ -101,9 +111,11 @@ dynport_clear_lib(lib = dynport_lib(create = FALSE), unload = TRUE)
 `dynport()` invisibly returns the generated package name.
 `dynport_install_package()` invisibly returns the installed package path
 with the generated package name stored in attribute `"package"`.
-`dynport_load_into()` invisibly returns `envir`. `dynport_lib()` returns
-the DynPort package library path. `dynport_clear_lib()` invisibly
-returns the paths it removed.
+`dynport_load_into()` invisibly returns `envir`. Generated function
+wrappers expose their native call signature through
+`attr(function, "signature")`. `dynport_lib()` returns the DynPort
+package library path. `dynport_clear_lib()` invisibly returns the paths
+it removed.
 
 ## Details
 

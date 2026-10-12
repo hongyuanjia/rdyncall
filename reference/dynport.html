@@ -9,7 +9,7 @@ wrappers for C functions, object-like macros, enums and data types."><meta prope
 
     <a class="navbar-brand me-2" href="../index.html">rdyncall</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.2.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,7 +86,7 @@ wrappers for C functions, object-like macros, enums and data types.</p>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">dynport_load_into</span><span class="op">(</span><span class="va">portfile</span>, <span class="va">envir</span><span class="op">)</span></span>
+<span><span class="fu">dynport_load_into</span><span class="op">(</span><span class="va">portfile</span>, <span class="va">envir</span>, libhandle <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">dynport_lib</span><span class="op">(</span>create <span class="op">=</span> <span class="cn">TRUE</span>, add <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
@@ -142,6 +142,13 @@ where possible.</p></dd>
 <dd><p>environment to populate from a DynPort file.</p></dd>
 
 
+<dt id="arg-libhandle">libhandle<a class="anchor" aria-label="anchor" href="#arg-libhandle"></a></dt>
+<dd><p><code>NULL</code> or a live library handle returned by <code><a href="dynload.html">dynload()</a></code> or
+<code><a href="dynfind.html">dynfind()</a></code>. When supplied to <code>dynport_load_into()</code>, it overrides the
+<code>Library</code> field without reopening the library. The caller owns the
+handle and must keep it live while using the bindings, then unload it.</p></dd>
+
+
 <dt id="arg-create">create<a class="anchor" aria-label="anchor" href="#arg-create"></a></dt>
 <dd><p>logical. If <code>TRUE</code>, create the default DynPort package library
 when it does not exist.</p></dd>
@@ -163,6 +170,8 @@ current session before removing them from <code>lib</code>.</p></dd>
 <code>dynport_install_package()</code> invisibly returns the installed package path with
 the generated package name stored in attribute <code>"package"</code>.
 <code>dynport_load_into()</code> invisibly returns <code>envir</code>.
+Generated function wrappers expose their native call signature through
+<code>attr(function, "signature")</code>.
 <code>dynport_lib()</code> returns the DynPort package library path.
 <code>dynport_clear_lib()</code> invisibly returns the paths it removed.</p>
     </div>
