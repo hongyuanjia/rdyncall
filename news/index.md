@@ -2,6 +2,8 @@
 
 ## rdyncall 0.10.2
 
+CRAN release: 2026-07-18
+
 - Make
   [`dynunload()`](https://hongyuanjia.github.io/rdyncall/reference/dynload.md)
   idempotent after explicit unloads so finalizers do not attempt to

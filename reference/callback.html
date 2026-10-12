@@ -132,13 +132,20 @@ signature syntax as <code><a href="dyncall.html">dyncall()</a></code>. An aggreg
 callback as a raw-backed <code>cdata</code> object with <code>struct</code> and <code>typeinfo</code>
 attributes. An aggregate return value must be a raw-backed object for the
 same aggregate type and size. Type or storage mismatches disable the callback
-and emit a warning.</p>
+and record diagnostic state; no warning is emitted from the foreign frame.</p>
 <p>Aggregate callbacks are supported on the implemented 64-bit x86 and ARM64
 dyncallback backends. On unsupported backends, creating a callback whose
 signature contains <code>&lt;Type&gt;</code> fails early.</p>
 <p>If an error occurs during the evaluation, the callback will be disabled for
 further invocations. Use <code>callback_status()</code> or <code>callback_last_error()</code> to
-inspect a callback after foreign code has invoked it.</p>
+inspect a callback after foreign code has invoked it. The entire conversion
+and evaluation boundary catches non-local exits, including interrupts and
+warnings promoted to errors. A failed callback returns zero (or an empty
+string/aggregate) to the foreign caller; the foreign operation may continue.
+Failure notifications are recorded in <code>callback_status()</code> instead of signalling
+warnings from foreign frames. Applications that must stop it should catch
+conditions inside <code>fun</code>, request
+an orderly stop from their foreign library, and rethrow after it returns.</p>
 <p><code>callback_status()</code> reports whether a callback is still active, how many
 times it has been invoked, and why it was disabled. A disabled callback is
 not re-enabled by these helpers; create a new callback if foreign code needs
