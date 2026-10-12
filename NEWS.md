@@ -1,3 +1,11 @@
+# rdyncall (development)
+
+- Contain errors, interrupts and marshalling failures throughout native callback
+  invocation, including nested callbacks and warnings promoted to errors.
+- Record callback failure diagnostics instead of signalling warnings from foreign
+  frames. Failed callbacks return an allocation-free zero value; applications
+  remain responsible for requesting an orderly stop from their foreign library.
+
 # rdyncall 0.10.2
 
 - Make `dynunload()` idempotent after explicit unloads so finalizers do not

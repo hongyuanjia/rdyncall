@@ -46,7 +46,7 @@ err_cb <- ccallback("i)i", function(x) {
     x
 })
 expect_equal(dyncall(err_cb, "i)i", 10L), 10L)
-expect_warning(invisible(dyncall(err_cb, "i)i", -1L)), "Callback disabled")
+expect_equal(dyncall(err_cb, "i)i", -1L), 0L)
 expect_false(callback_is_active(err_cb))
 expect_equal(runs, 2L)
 last_error <- callback_last_error(err_cb)
@@ -77,7 +77,7 @@ expect_equal(status$error_invocations, 1)
 expect_equal(status$disabled_invocations, 1)
 
 string_cb <- ccallback(")Z", function() "abc")
-expect_warning(invisible(dyncall(string_cb, ")Z")), "string return values")
+expect_equal(dyncall(string_cb, ")Z"), "")
 string_status <- callback_status(string_cb)
 expect_false(callback_is_active(string_cb))
 expect_false(string_status$active)

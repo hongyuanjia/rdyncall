@@ -39,10 +39,13 @@ typedef struct
   const char* disable_reason;
   DCaggr**    callback_aggrs;
   DCaggr**    all_aggrs;
+  void*       argument_scratch; /* Native drain storage; never allocate during fallback. */
+  void*       zero_return; /* Preallocated: the failure path must not allocate in R. */
 } R_Callback;
 
 static SEXP rcallback_get_list_element(SEXP list, const char *name)
 {
+  if (TYPEOF(list) != VECSXP) return R_NilValue;
   SEXP names = Rf_getAttrib(list, R_NamesSymbol);
   if (names == R_NilValue) return R_NilValue;
   for (R_xlen_t i = 0; i < XLENGTH(list); i++) {
@@ -281,6 +284,12 @@ static void C_callback_disable(R_Callback* rdata, const char* reason, const char
 
 static void C_callback_disable_error(R_Callback* rdata, const char* reason, const char* message)
 {
+  /* Retain the interrupt classification captured by the R wrapper. */
+  SEXP details = C_callback_last_error_object(rdata);
+  SEXP stored_reason = rcallback_get_list_element(details, "reason");
+  if (strcmp(reason, "r_error") == 0 && TYPEOF(stored_reason) == STRSXP &&
+      XLENGTH(stored_reason) > 0 && strcmp(CHAR(STRING_ELT(stored_reason, 0)), "r_interrupt") == 0)
+    reason = "r_interrupt";
   rdata->error_invocations++;
   C_callback_disable(rdata, reason, message);
 }
@@ -309,8 +318,49 @@ static char C_callback_return_type(R_Callback* rdata, int* return_aggr_index)
   return *(ptr + 1) ? *(ptr + 1) : DC_SIGCHAR_VOID;
 }
 
-static char C_callback_zero_return(R_Callback* rdata, DCArgs* args, DCValue* result)
+/* Each invocation tracks its native cursor independently, including recursive calls. */
+typedef struct {
+  R_Callback* rdata;
+  DCArgs* args;
+  DCValue* result;
+  char return_type;
+  const char* next_argument;
+} R_CallbackFrame;
+
+/* Advance the opaque backend cursor to its return descriptor without allocating in R. */
+static void rcallback_drain_arguments(R_CallbackFrame* frame)
 {
+  const char* ptr = frame->next_argument;
+  while (*ptr && *ptr != ')') {
+    switch (*ptr++) {
+    case DC_SIGCHAR_BOOL: (void)dcbArgBool(frame->args); break;
+    case DC_SIGCHAR_CHAR: (void)dcbArgChar(frame->args); break;
+    case DC_SIGCHAR_UCHAR: (void)dcbArgUChar(frame->args); break;
+    case DC_SIGCHAR_SHORT: (void)dcbArgShort(frame->args); break;
+    case DC_SIGCHAR_USHORT: (void)dcbArgUShort(frame->args); break;
+    case DC_SIGCHAR_INT: (void)dcbArgInt(frame->args); break;
+    case DC_SIGCHAR_UINT: (void)dcbArgUInt(frame->args); break;
+    case DC_SIGCHAR_LONG: (void)dcbArgLong(frame->args); break;
+    case DC_SIGCHAR_ULONG: (void)dcbArgULong(frame->args); break;
+    case DC_SIGCHAR_LONGLONG: (void)dcbArgLongLong(frame->args); break;
+    case DC_SIGCHAR_ULONGLONG: (void)dcbArgULongLong(frame->args); break;
+    case DC_SIGCHAR_FLOAT: (void)dcbArgFloat(frame->args); break;
+    case DC_SIGCHAR_DOUBLE: (void)dcbArgDouble(frame->args); break;
+    case DC_SIGCHAR_POINTER:
+    case DC_SIGCHAR_STRING: (void)dcbArgPointer(frame->args); break;
+    case DC_SIGCHAR_AGGREGATE:
+      (void)dcbArgAggr(frame->args, frame->rdata->argument_scratch); break;
+    default: return;
+    }
+    frame->next_argument = ptr;
+  }
+}
+
+static char C_callback_zero_return(R_CallbackFrame* frame)
+{
+  R_Callback* rdata = frame->rdata;
+  DCArgs* args = frame->args;
+  DCValue* result = frame->result;
   int return_aggr_index = 0;
   char ch = C_callback_return_type(rdata, &return_aggr_index);
 
@@ -333,9 +383,9 @@ static char C_callback_zero_return(R_Callback* rdata, DCArgs* args, DCValue* res
   case DC_SIGCHAR_AGGREGATE:
     if (rdata && return_aggr_index < rdata->naggrs) {
       DCaggr *ag = rdata->callback_aggrs[return_aggr_index];
-      void *empty = R_alloc(ag->size, 1);
-      memset(empty, 0, ag->size);
-      dcbReturnAggr(args, result, empty);
+      (void) ag;
+      rcallback_drain_arguments(frame);
+      dcbReturnAggr(args, result, rdata->zero_return);
       break;
     }
     return DC_SIGCHAR_VOID;
@@ -348,7 +398,8 @@ static char C_callback_zero_return(R_Callback* rdata, DCArgs* args, DCValue* res
   return ch;
 }
 
-char R_dcCallbackHandler( DCCallback* pcb, DCArgs* args, DCValue* result, void* userdata )
+/* Convert arguments, evaluate R, and convert results inside the protected frame. */
+static char rcallback_invoke(R_CallbackFrame* frame)
 {
 	R_Callback* rdata;
 	const char* ptr;
@@ -357,13 +408,15 @@ char R_dcCallbackHandler( DCCallback* pcb, DCArgs* args, DCValue* result, void* 
 	SEXP s, x, ans, item;
 	char ch;
 
-	rdata = (R_Callback*) userdata;
+	rdata = frame->rdata;
+	DCArgs* args = frame->args;
+	DCValue* result = frame->result;
 
 	rdata->invocations++;
 
 	if (rdata->disabled) {
 		rdata->disabled_invocations++;
-		return C_callback_zero_return(rdata, args, result);
+		return C_callback_zero_return(frame);
 	}
 
 	ptr = rdata->signature;
@@ -381,59 +434,108 @@ char R_dcCallbackHandler( DCCallback* pcb, DCArgs* args, DCValue* result, void* 
 	i = 1;
 	for( ;; ++i) {
 		int item_protected = 0;
+		DCValue value;
 		ch = *ptr++;
 		if (ch == ')') break;
 		if (i >= n) {
-			warning("invalid callback signature. Callback disabled.");
 			C_callback_disable_error(rdata, "invalid_signature", "invalid callback signature");
+
 			UNPROTECT(1);
-			return C_callback_zero_return(rdata, args, result);
+			return C_callback_zero_return(frame);
 		}
 		switch(ch) {
-		case DC_SIGCHAR_BOOL:      item = ScalarLogical( ( dcbArgBool(args) == DC_FALSE ) ? FALSE : TRUE ); break;
-		case DC_SIGCHAR_CHAR:      item = ScalarInteger( (int) dcbArgChar(args) ); break;
-		case DC_SIGCHAR_UCHAR:     item = ScalarInteger( (int) dcbArgUChar(args) ); break;
-		case DC_SIGCHAR_SHORT:     item = ScalarInteger( (int) dcbArgShort(args) ); break;
-		case DC_SIGCHAR_USHORT:    item = ScalarInteger( (int) dcbArgUShort(args) ); break;
-		case DC_SIGCHAR_INT:       item = ScalarInteger( (int) dcbArgInt(args) ); break;
-		case DC_SIGCHAR_UINT:      item = ScalarReal( (double) dcbArgUInt(args) ); break;
-		case DC_SIGCHAR_LONG:      item = ScalarReal( (double) dcbArgLong(args) ); break;
-		case DC_SIGCHAR_ULONG:     item = ScalarReal( (double) dcbArgULong(args) ); break;
-		case DC_SIGCHAR_LONGLONG:  item = ScalarReal( (double) dcbArgLongLong(args) ); break;
-		case DC_SIGCHAR_ULONGLONG: item = ScalarReal( (double) dcbArgULongLong(args) ); break;
-		case DC_SIGCHAR_FLOAT:     item = ScalarReal( (double) dcbArgFloat(args) ); break;
-		case DC_SIGCHAR_DOUBLE:    item = ScalarReal( dcbArgDouble(args) ); break;
-		case DC_SIGCHAR_POINTER:   item = R_MakeExternalPtr( dcbArgPointer(args), R_NilValue, R_NilValue ); break;
-		case DC_SIGCHAR_STRING:    item = mkString( dcbArgPointer(args) ); break;
+		/* Native getters precede R allocation; fallback knows exactly what remains. */
+		case DC_SIGCHAR_BOOL:
+			value.B = dcbArgBool(args);
+			frame->next_argument = ptr;
+			item = ScalarLogical(value.B == DC_FALSE ? FALSE : TRUE); break;
+		case DC_SIGCHAR_CHAR:
+			value.c = dcbArgChar(args);
+			frame->next_argument = ptr;
+			item = ScalarInteger((int)value.c); break;
+		case DC_SIGCHAR_UCHAR:
+			value.C = dcbArgUChar(args);
+			frame->next_argument = ptr;
+			item = ScalarInteger((int)value.C); break;
+		case DC_SIGCHAR_SHORT:
+			value.s = dcbArgShort(args);
+			frame->next_argument = ptr;
+			item = ScalarInteger((int)value.s); break;
+		case DC_SIGCHAR_USHORT:
+			value.S = dcbArgUShort(args);
+			frame->next_argument = ptr;
+			item = ScalarInteger((int)value.S); break;
+		case DC_SIGCHAR_INT:
+			value.i = dcbArgInt(args);
+			frame->next_argument = ptr;
+			item = ScalarInteger(value.i); break;
+		case DC_SIGCHAR_UINT:
+			value.I = dcbArgUInt(args);
+			frame->next_argument = ptr;
+			item = ScalarReal((double)value.I); break;
+		case DC_SIGCHAR_LONG:
+			value.j = dcbArgLong(args);
+			frame->next_argument = ptr;
+			item = ScalarReal((double)value.j); break;
+		case DC_SIGCHAR_ULONG:
+			value.J = dcbArgULong(args);
+			frame->next_argument = ptr;
+			item = ScalarReal((double)value.J); break;
+		case DC_SIGCHAR_LONGLONG:
+			value.l = dcbArgLongLong(args);
+			frame->next_argument = ptr;
+			item = ScalarReal((double)value.l); break;
+		case DC_SIGCHAR_ULONGLONG:
+			value.L = dcbArgULongLong(args);
+			frame->next_argument = ptr;
+			item = ScalarReal((double)value.L); break;
+		case DC_SIGCHAR_FLOAT:
+			value.f = dcbArgFloat(args);
+			frame->next_argument = ptr;
+			item = ScalarReal((double)value.f); break;
+		case DC_SIGCHAR_DOUBLE:
+			value.d = dcbArgDouble(args);
+			frame->next_argument = ptr;
+			item = ScalarReal(value.d); break;
+		case DC_SIGCHAR_POINTER:
+			value.p = dcbArgPointer(args);
+			frame->next_argument = ptr;
+			item = R_MakeExternalPtr(value.p, R_NilValue, R_NilValue); break;
+		case DC_SIGCHAR_STRING:
+			value.p = dcbArgPointer(args);
+			frame->next_argument = ptr;
+			item = mkString(value.p); break;
 		case DC_SIGCHAR_AGGREGATE:
 		{
 			SEXP typeinfo;
 			DCaggr *ag;
 			if (aggr_index >= rdata->naggrs) {
-				warning("invalid aggregate callback signature. Callback disabled.");
 				C_callback_disable_error(rdata, "invalid_signature", "invalid aggregate callback signature");
+
 				UNPROTECT(1);
-				return C_callback_zero_return(rdata, args, result);
+				return C_callback_zero_return(frame);
 			}
 			typeinfo = VECTOR_ELT(rdata->aggr_typeinfos, aggr_index);
 			ag = rdata->callback_aggrs[aggr_index++];
 			PROTECT(item = Rf_allocVector(RAWSXP, ag->size));
 			item_protected = 1;
-			if (!dcbArgAggr(args, RAW(item))) {
-				warning("aggregate callback argument is unsupported by this backend. Callback disabled.");
+			void* consumed = dcbArgAggr(args, RAW(item));
+			frame->next_argument = ptr;
+			if (!consumed) {
 				C_callback_disable_error(rdata, "unsupported_argument", "aggregate callback argument is unsupported by this backend");
+
 				UNPROTECT(2);
-				return C_callback_zero_return(rdata, args, result);
+				return C_callback_zero_return(frame);
 			}
 			rcallback_set_struct_attrib(item, typeinfo);
 			break;
 		}
 		default:
 		case '\0':
-			warning("invalid callback signature. Callback disabled.");
 			C_callback_disable_error(rdata, "invalid_signature", "invalid callback signature");
+
 			UNPROTECT(1);
-			return C_callback_zero_return(rdata, args, result);
+			return C_callback_zero_return(frame);
 		}
 		SETCAR( x, item);
 		if (item_protected) {
@@ -450,10 +552,10 @@ char R_dcCallbackHandler( DCCallback* pcb, DCArgs* args, DCValue* result, void* 
 
 	if (error)
 	{
-		warning("an error occurred during callback invocation in R. Callback disabled.");
 		C_callback_disable_error(rdata, "r_error", "an error occurred during callback invocation in R");
+
 		UNPROTECT(2);
-		return C_callback_zero_return(rdata, args, result);
+		return C_callback_zero_return(frame);
 	}
 
 	/* propagate return value */
@@ -461,10 +563,15 @@ char R_dcCallbackHandler( DCCallback* pcb, DCArgs* args, DCValue* result, void* 
 	ch = *ptr;	/* scan return value type character */
 
 	/* handle NULL and len(x) == 0 expressions special */
-	if ( (ans == R_NilValue) || (LENGTH(ans) == 0) )
+	if (ch == DC_SIGCHAR_VOID || (ans == R_NilValue) || (LENGTH(ans) == 0))
 	{
-		/* handle NULL */
-		result->L = 0;
+		/* Empty scalar results retain their zero convention; aggregates require ABI marshalling. */
+		if (ch == DC_SIGCHAR_AGGREGATE) {
+			C_callback_disable_error(rdata, "invalid_return", "empty aggregate callback return");
+			UNPROTECT(2);
+			return C_callback_zero_return(frame);
+		}
+		C_callback_zero_return(frame);
 	}
 	else
 	{
@@ -530,27 +637,27 @@ char R_dcCallbackHandler( DCCallback* pcb, DCArgs* args, DCValue* result, void* 
 			}
 			break;
 		case DC_SIGCHAR_STRING:
-			warning("callback string return values are not implemented. Callback disabled.");
 			C_callback_disable_error(rdata, "unsupported_return", "callback string return values are not implemented");
+
 			UNPROTECT(2);
-			return C_callback_zero_return(rdata, args, result);
+			return C_callback_zero_return(frame);
 		case DC_SIGCHAR_AGGREGATE:
 		{
 			SEXP typeinfo;
 			DCaggr *ag;
 			if (aggr_index >= rdata->naggrs) {
-				warning("invalid aggregate callback return signature. Callback disabled.");
 				C_callback_disable_error(rdata, "invalid_signature", "invalid aggregate callback return signature");
+
 				UNPROTECT(2);
-				return C_callback_zero_return(rdata, args, result);
+				return C_callback_zero_return(frame);
 			}
 			typeinfo = VECTOR_ELT(rdata->aggr_typeinfos, aggr_index);
 			ag = rdata->callback_aggrs[aggr_index];
 			if (!rcallback_expect_struct(ans, typeinfo, ag->size)) {
-				warning("aggregate callback return value has incompatible type or storage. Callback disabled.");
 				C_callback_disable_error(rdata, "invalid_return", "aggregate callback return value has incompatible type or storage");
+
 				UNPROTECT(2);
-				return C_callback_zero_return(rdata, args, result);
+				return C_callback_zero_return(frame);
 			}
 			dcbReturnAggr(args, result, RAW(ans));
 			break;
@@ -560,6 +667,32 @@ char R_dcCallbackHandler( DCCallback* pcb, DCArgs* args, DCValue* result, void* 
 	rdata->successful_invocations++;
 	UNPROTECT(2);
 	return ch;
+}
+
+
+/* R_ToplevelExec restores R contexts and protection stacks on any non-local exit. */
+static void rcallback_protected_invoke(void* data)
+{
+  R_CallbackFrame* frame = (R_CallbackFrame*) data;
+  frame->return_type = rcallback_invoke(frame);
+}
+
+/* Never let R errors, interrupts, allocations, or warning handlers unwind foreign code. */
+char R_dcCallbackHandler(DCCallback* pcb, DCArgs* args, DCValue* result, void* userdata)
+{
+  (void) pcb;
+  R_Callback* rdata = (R_Callback*) userdata;
+  R_CallbackFrame frame = {rdata, args, result, DC_SIGCHAR_VOID, rdata->signature};
+  if (!R_ToplevelExec(rcallback_protected_invoke, &frame)) {
+    /* This recovery path uses only native writes and an allocation-free zero return. */
+    if (!rdata->disabled) {
+      rdata->disabled = 1;
+      rdata->disable_reason = "boundary_error";
+      rdata->error_invocations++;
+    }
+    return C_callback_zero_return(&frame);
+  }
+  return frame.return_type;
 }
 
 void R_callback_finalizer(SEXP x);
@@ -638,6 +771,19 @@ SEXP C_callback(SEXP sig_x, SEXP aggr_layouts_x, SEXP aggr_typeinfos_x, SEXP fun
     ch = *ptr++;
   }
   rdata->nargs = nargs;
+  /* Allocate aggregate fallback storage before any foreign callback can run. */
+  int return_aggr_index = 0;
+  if (C_callback_return_type(rdata, &return_aggr_index) == DC_SIGCHAR_AGGREGATE &&
+      return_aggr_index < rdata->naggrs) {
+    rdata->zero_return = R_Calloc(rdata->callback_aggrs[return_aggr_index]->size, char);
+  }
+  /* Draining skipped aggregate arguments needs the largest native argument storage. */
+  size_t scratch_size = 0;
+  for (int i = 0; i < return_aggr_index; i++) {
+    if (rdata->callback_aggrs[i]->size > scratch_size)
+      scratch_size = rdata->callback_aggrs[i]->size;
+  }
+  if (scratch_size) rdata->argument_scratch = R_Calloc(scratch_size, char);
   DCCallback* cb = naggrs > 0 ?
     dcbNewCallback2(signature, R_dcCallbackHandler, rdata, rdata->callback_aggrs) :
     dcbNewCallback(signature, R_dcCallbackHandler, rdata);
@@ -652,6 +798,8 @@ SEXP C_callback(SEXP sig_x, SEXP aggr_layouts_x, SEXP aggr_typeinfos_x, SEXP fun
     R_ReleaseObject(rdata->aggr_typeinfos);
     if (rdata->last_error != R_NilValue)
       R_ReleaseObject(rdata->last_error);
+    if (rdata->zero_return) R_Free(rdata->zero_return);
+    if (rdata->argument_scratch) R_Free(rdata->argument_scratch);
     R_Free(rdata);
     Rf_error("failed to create callback");
   }
@@ -675,6 +823,8 @@ void R_callback_finalizer(SEXP x)
   rcallback_free_aggrs(rdata);
   if (rdata->callback_aggrs) R_Free(rdata->callback_aggrs);
   if (rdata->all_aggrs) R_Free(rdata->all_aggrs);
+  if (rdata->zero_return) R_Free(rdata->zero_return);
+  if (rdata->argument_scratch) R_Free(rdata->argument_scratch);
   R_Free(rdata);
   dcbFreeCallback(cb);
   R_ClearExternalPtr(x);

@@ -559,10 +559,11 @@ for (field in names(more_values)) {
 }
 
 wrong_color_type_callback <- ccallback("CCCC)<Color>", function(r, g, b, a) cdata(Vec2))
-expect_warning(
-    dyncall(call_make_color_callback, "pCCCC)<Color>", wrong_color_type_callback, 1L, 2L, 3L, 4L),
-    "aggregate callback return value has incompatible type or storage"
-)
+# A rejected aggregate returns zero storage and records its failure safely.
+zero_color <- dyncall(call_make_color_callback, "pCCCC)<Color>", wrong_color_type_callback, 1L, 2L, 3L, 4L)
+expect_equal(as.integer(zero_color), rep(0L, length(zero_color)))
+expect_equal(callback_status(wrong_color_type_callback)$disable_reason, "invalid_return")
+expect_equal(callback_status(wrong_color_type_callback)$error_invocations, 1)
 
 wrong_color_size_callback <- ccallback("CCCC)<Color>", function(r, g, b, a) {
     out <- raw(1L)
@@ -570,10 +571,11 @@ wrong_color_size_callback <- ccallback("CCCC)<Color>", function(r, g, b, a) {
     class(out) <- "struct"
     out
 })
-expect_warning(
-    dyncall(call_make_color_callback, "pCCCC)<Color>", wrong_color_size_callback, 1L, 2L, 3L, 4L),
-    "aggregate callback return value has incompatible type or storage"
-)
+# A rejected aggregate returns zero storage and records its failure safely.
+zero_color <- dyncall(call_make_color_callback, "pCCCC)<Color>", wrong_color_size_callback, 1L, 2L, 3L, 4L)
+expect_equal(as.integer(zero_color), rep(0L, length(zero_color)))
+expect_equal(callback_status(wrong_color_size_callback)$disable_reason, "invalid_return")
+expect_equal(callback_status(wrong_color_size_callback)$error_invocations, 1)
 
 # Aggregate errors remain explicit.
 wrong_color <- color
@@ -581,3 +583,25 @@ attr(wrong_color, "struct") <- "Vec2"
 expect_error(dyncall(color_sum, "<Color>)i", wrong_color), "incompatible aggregate types")
 expect_error(dyncall(color_sum, "<Missing>)i", color), "unknown aggregate type")
 expect_error(ccallback("<Missing>)i", function(x) 0L), "unknown aggregate type")
+
+# Empty aggregate returns must zero every register or hidden-return byte and disable reuse.
+for (empty in list(NULL, raw())) {
+    empty_vec2 <- ccallback("ff)<Vec2>", function(x, y) empty)
+    zero <- dyncall(call_make_vec2_callback, "pff)<Vec2>", empty_vec2, 1.5, 2.5)
+    expect_equal(as.integer(zero), rep(0L, length(zero)))
+    expect_equal(callback_status(empty_vec2)$disable_reason, "invalid_return")
+    empty_more <- ccallback("d)<MoreThanRegs>", function(base) empty)
+    zero <- dyncall(
+        call_make_more_callback,
+        "pd)<MoreThanRegs>",
+        empty_more,
+        20
+    )
+    expect_equal(as.integer(zero), rep(0L, length(zero)))
+    expect_equal(callback_status(empty_more)$disable_reason, "invalid_return")
+}
+
+# Void callbacks ignore arbitrary R values and do not invoke return marshalling.
+void_environment <- ccallback(")v", function() new.env())
+expect_null(dyncall(void_environment, ")v"))
+expect_true(callback_is_active(void_environment))
