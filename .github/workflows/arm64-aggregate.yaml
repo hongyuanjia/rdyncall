@@ -100,3 +100,4 @@ jobs:
       - name: Run focused aggregate tinytest
         run: |
           Rscript --vanilla -e '.libPaths(c(Sys.getenv("RDYNCALL_LIB"), .libPaths())); library(rdyncall); tinytest::run_test_file(system.file("tinytest", "test_dyncall.R", package = "rdyncall"))'
+          Rscript --vanilla -e '.libPaths(c(Sys.getenv("RDYNCALL_LIB"), .libPaths())); library(rdyncall); x <- tinytest::run_test_file(system.file("tinytest", "test_callback_boundary.R", package = "rdyncall")); stopifnot(all(as.logical(x)))'

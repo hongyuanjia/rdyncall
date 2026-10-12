@@ -44,7 +44,7 @@
 #' callback as a raw-backed `cdata` object with `struct` and `typeinfo`
 #' attributes. An aggregate return value must be a raw-backed object for the
 #' same aggregate type and size. Type or storage mismatches disable the callback
-#' and emit a warning.
+#' and record diagnostic state; no warning is emitted from the foreign frame.
 #'
 #' Aggregate callbacks are supported on the implemented 64-bit x86 and ARM64
 #' dyncallback backends. On unsupported backends, creating a callback whose
@@ -52,7 +52,14 @@
 #'
 #' If an error occurs during the evaluation, the callback will be disabled for
 #' further invocations. Use `callback_status()` or `callback_last_error()` to
-#' inspect a callback after foreign code has invoked it.
+#' inspect a callback after foreign code has invoked it. The entire conversion
+#' and evaluation boundary catches non-local exits, including interrupts and
+#' warnings promoted to errors. A failed callback returns zero (or an empty
+#' string/aggregate) to the foreign caller; the foreign operation may continue.
+#' Failure notifications are recorded in `callback_status()` instead of signalling
+#' warnings from foreign frames. Applications that must stop it should catch
+#' conditions inside `fun`, request
+#' an orderly stop from their foreign library, and rethrow after it returns.
 #'
 #' @return
 #' An external pointer to a synthetically generated C function.
@@ -106,7 +113,9 @@
 #' @export
 ccallback <- function(signature, fun, envir = new.env()) {
     caller <- parent.frame()
-    if (!is.character(signature) || length(signature) != 1L || is.na(signature)) {
+    if (
+        !is.character(signature) || length(signature) != 1L || is.na(signature)
+    ) {
         stop("'signature' must be a single character string", call. = FALSE)
     }
     stopifnot(is.function(fun))
@@ -115,9 +124,18 @@ ccallback <- function(signature, fun, envir = new.env()) {
     info <- callback_signature_info(signature, caller)
     state <- new.env(parent = emptyenv())
     state$last_error <- NULL
+    # Preserve condition details before native code catches the non-local exit.
     wrapped <- function(...) {
         tryCatch(
             fun(...),
+            interrupt = function(err) {
+                state$last_error <- list(
+                    message = conditionMessage(err),
+                    class = class(err),
+                    reason = "r_interrupt"
+                )
+                stop(err)
+            },
             error = function(err) {
                 state$last_error <- list(
                     message = conditionMessage(err),
@@ -130,8 +148,14 @@ ccallback <- function(signature, fun, envir = new.env()) {
     }
 
     .Call(
-        "C_callback", info$signature, info$aggregates, info$typeinfos,
-        wrapped, envir, state, PACKAGE = "rdyncall"
+        "C_callback",
+        info$signature,
+        info$aggregates,
+        info$typeinfos,
+        wrapped,
+        envir,
+        state,
+        PACKAGE = "rdyncall"
     )
 }
 
