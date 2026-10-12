@@ -84,12 +84,18 @@
 #'        current session before removing them from `lib`.
 #'
 #' @param envir environment to populate from a DynPort file.
+#' @param libhandle `NULL` or a live library handle returned by [dynload()] or
+#'        [dynfind()]. When supplied to `dynport_load_into()`, it overrides the
+#'        `Library` field without reopening the library. The caller owns the
+#'        handle and must keep it live while using the bindings, then unload it.
 #'
 #' @return
 #' `dynport()` invisibly returns the generated package name.
 #' `dynport_install_package()` invisibly returns the installed package path with
 #' the generated package name stored in attribute `"package"`.
 #' `dynport_load_into()` invisibly returns `envir`.
+#' Generated function wrappers expose their native call signature through
+#' `attr(function, "signature")`.
 #' `dynport_lib()` returns the DynPort package library path.
 #' `dynport_clear_lib()` invisibly returns the paths it removed.
 #'
@@ -865,9 +871,21 @@ dynport_install_package_impl <- function(portname, portfile = NULL, repo, packag
 
 #' @rdname dynport
 #' @export
-dynport_load_into <- function(portfile, envir) {
+dynport_load_into <- function(portfile, envir, libhandle = NULL) {
     if (!is.environment(envir)) {
         stop("'envir' must be an environment.", call. = FALSE)
+    }
+    # A borrowed handle belongs to the caller; never resolve or replace it here.
+    if (
+        !is.null(libhandle) &&
+            (!is.externalptr(libhandle) ||
+                !dynload_is_handle(libhandle) ||
+                is.nullptr(libhandle))
+    ) {
+        stop(
+            "'libhandle' must be a live handle returned by dynload() or dynfind().",
+            call. = FALSE
+        )
     }
 
     port <- dynport_read(portfile)
@@ -880,8 +898,20 @@ dynport_load_into <- function(portfile, envir) {
     dynport_assign_typeinfos(port[["Union"]], envir)
     dynport_assign_constants(port[["Constant"]], envir)
     dynport_assign_enums(port[["Enum"]], envir)
-    dynport_assign_functions(port, "Function", envir, funcptr = FALSE)
-    dynport_assign_functions(port, "FuncPtr", envir, funcptr = TRUE)
+    dynport_assign_functions(
+        port,
+        "Function",
+        envir,
+        funcptr = FALSE,
+        libhandle = libhandle
+    )
+    dynport_assign_functions(
+        port,
+        "FuncPtr",
+        envir,
+        funcptr = TRUE,
+        libhandle = libhandle
+    )
 
     invisible(envir)
 }
@@ -1062,16 +1092,31 @@ dynport_assign_enums <- function(enums, envir) {
     invisible()
 }
 
-dynport_assign_functions <- function(port, field, envir, funcptr = FALSE) {
+dynport_assign_functions <- function(
+    port,
+    field,
+    envir,
+    funcptr = FALSE,
+    libhandle = NULL
+) {
     functions <- port[[field]]
-    if (!length(functions)) return(invisible())
-
-    libraries <- port[["Library"]]
-    if (!length(libraries)) {
-        stop("The 'dynport' file must define 'Library' before binding functions.", call. = FALSE)
+    if (!length(functions)) {
+        return(invisible())
     }
 
-    libh <- dynbind_resolve_libhandle(libraries)
+    libraries <- port[["Library"]]
+    if (is.null(libhandle) && !length(libraries)) {
+        stop(
+            "The 'dynport' file must define 'Library' before binding functions.",
+            call. = FALSE
+        )
+    }
+
+    libh <- if (is.null(libhandle)) {
+        dynbind_resolve_libhandle(libraries)
+    } else {
+        libhandle
+    }
     if (is.null(libh)) {
         liblabel <- dynbind_libnames_label(libraries)
         stop("unable to find shared library '", liblabel, "'.", call. = FALSE)
@@ -1085,7 +1130,9 @@ dynport_assign_functions <- function(port, field, envir, funcptr = FALSE) {
             next
         }
 
-        assign(fun$name, dynport_make_wrapper(fun, address, envir, funcptr = funcptr),
+        assign(
+            fun$name,
+            dynport_make_wrapper(fun, address, envir, funcptr = funcptr),
             envir = envir
         )
     }
@@ -1123,7 +1170,8 @@ dynport_make_wrapper <- function(fun, address, envir, funcptr = FALSE) {
     arg_names <- dynport_function_arg_names(fun)
 
     if (variadic && funcptr) {
-        stop("Variadic function-pointer DynPort bindings are not supported.",
+        stop(
+            "Variadic function-pointer DynPort bindings are not supported.",
             call. = FALSE
         )
     }
@@ -1139,7 +1187,12 @@ dynport_make_wrapper <- function(fun, address, envir, funcptr = FALSE) {
 
     call_args <- if (variadic) {
         c(
-            list(as.name(".call"), target, as.name(".signature"), as.name(".varargs")),
+            list(
+                as.name(".call"),
+                target,
+                as.name(".signature"),
+                as.name(".varargs")
+            ),
             lapply(arg_names, as.name),
             list(as.name("..."))
         )
@@ -1155,8 +1208,12 @@ dynport_make_wrapper <- function(fun, address, envir, funcptr = FALSE) {
     wrapper_env$.address <- address
     wrapper_env$.signature <- signature
     wrapper_env$.call <- if (variadic) dyncall_variadic else dyncall.default
-    if (funcptr) wrapper_env$.unpack <- unpack
+    if (funcptr) {
+        wrapper_env$.unpack <- unpack
+    }
     environment(f) <- wrapper_env
+    # Consumers can inspect the generated ABI without reaching into closure internals.
+    attr(f, "signature") <- signature
     f
 }
 

@@ -22,6 +22,54 @@ unload_test_package <- function(package) {
 
 libc_names <- c("msvcrt", "c", "c.so.6")
 
+# Borrowed handles bypass the port's library search and remain under caller ownership.
+local({
+    handle <- dynfind(libc_names)
+    on.exit(dynunload(handle), add = TRUE)
+    portfile <- write_dynport(c(
+        "Package: BorrowedPort",
+        "Library: missingDynportLibrary",
+        "Function: abs(i)i value;"
+    ))
+    env <- new.env()
+    expect_identical(dynport_load_into(portfile, env, libhandle = handle), env)
+    expect_identical(attr(env$abs, "signature"), "i)i")
+    expect_identical(env$abs(-7L), 7L)
+    gc()
+    expect_identical(env$abs(-11L), 11L)
+    expect_false(is.nullptr(handle))
+    expect_false(is.null(dynsym(handle, "abs")))
+    expect_error(
+        dynport_load_into(portfile, new.env(), libhandle = "c"),
+        "live handle"
+    )
+    expect_error(
+        dynport_load_into(
+            portfile,
+            new.env(),
+            libhandle = as.externalptr(integer(1L))
+        ),
+        "live handle"
+    )
+    dynunload(handle)
+    expect_error(
+        dynport_load_into(portfile, new.env(), libhandle = handle),
+        "live handle"
+    )
+})
+
+# Omitting a handle retains library resolution through the port's existing metadata.
+local({
+    portfile <- write_dynport(c(
+        "Package: DefaultLibraryPort",
+        "Library:",
+        paste("    ", libc_names),
+        "Function: abs(i)i value;"
+    ))
+    env <- new.env()
+    expect_identical(dynport_load_into(portfile, env), env)
+    expect_identical(env$abs(-3L), 3L)
+})
 env <- new.env()
 expect_equal(
     class(bind <- dynbind(

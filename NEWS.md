@@ -1,5 +1,8 @@
 # rdyncall (development)
 
+- Allow `dynport_load_into()` to reuse a caller-owned library handle and expose
+  generated wrapper signatures for ABI introspection (#76).
+
 - Contain errors, interrupts and marshalling failures throughout native callback
   invocation, including nested callbacks and warnings promoted to errors (#75).
 - Record callback failure diagnostics instead of signalling warnings from foreign
