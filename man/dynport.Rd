@@ -30,7 +30,7 @@ dynport_install_package(
   quiet = FALSE
 )
 
-dynport_load_into(portfile, envir)
+dynport_load_into(portfile, envir, libhandle = NULL)
 
 dynport_lib(create = TRUE, add = FALSE)
 
@@ -64,6 +64,11 @@ where possible.}
 
 \item{envir}{environment to populate from a DynPort file.}
 
+\item{libhandle}{\code{NULL} or a live library handle returned by \code{\link[=dynload]{dynload()}} or
+\code{\link[=dynfind]{dynfind()}}. When supplied to \code{dynport_load_into()}, it overrides the
+\code{Library} field without reopening the library. The caller owns the
+handle and must keep it live while using the bindings, then unload it.}
+
 \item{create}{logical. If \code{TRUE}, create the default DynPort package library
 when it does not exist.}
 
@@ -78,6 +83,8 @@ current session before removing them from \code{lib}.}
 \code{dynport_install_package()} invisibly returns the installed package path with
 the generated package name stored in attribute \code{"package"}.
 \code{dynport_load_into()} invisibly returns \code{envir}.
+Generated function wrappers expose their native call signature through
+\verb{attr(function, "signature")}.
 \code{dynport_lib()} returns the DynPort package library path.
 \code{dynport_clear_lib()} invisibly returns the paths it removed.
 }
