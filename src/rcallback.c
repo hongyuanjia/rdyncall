@@ -775,7 +775,10 @@ SEXP C_callback(SEXP sig_x, SEXP aggr_layouts_x, SEXP aggr_typeinfos_x, SEXP fun
   int return_aggr_index = 0;
   if (C_callback_return_type(rdata, &return_aggr_index) == DC_SIGCHAR_AGGREGATE &&
       return_aggr_index < rdata->naggrs) {
-    rdata->zero_return = R_Calloc(rdata->callback_aggrs[return_aggr_index]->size, char);
+    /* System V returns read whole 8-byte register slots, even for smaller structs. */
+    size_t bytes = rdata->callback_aggrs[return_aggr_index]->size;
+    bytes = (bytes + 7) & ~(size_t)7;
+    rdata->zero_return = R_Calloc(bytes, char);
   }
   /* Draining skipped aggregate arguments needs the largest native argument storage. */
   size_t scratch_size = 0;
