@@ -1,10 +1,10 @@
 # rdyncall (development)
 
 - Contain errors, interrupts and marshalling failures throughout native callback
-  invocation, including nested callbacks and warnings promoted to errors.
+  invocation, including nested callbacks and warnings promoted to errors (#75).
 - Record callback failure diagnostics instead of signalling warnings from foreign
   frames. Failed callbacks return an allocation-free zero value; applications
-  remain responsible for requesting an orderly stop from their foreign library.
+  remain responsible for requesting an orderly stop from their foreign library (#75).
 
 # rdyncall 0.10.2
 
